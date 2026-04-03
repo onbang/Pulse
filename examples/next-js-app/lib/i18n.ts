@@ -141,7 +141,7 @@ export const messages = {
     "swap.prediction.selectorEyebrow": "Prediction token",
     "swap.prediction.selectorTitle": "Choose a token for the forecast round",
     "swap.prediction.selectorBody":
-      "If you have not selected a swap pair yet, choose a token, set the forecast horizon, and then place the stake from this panel.",
+      "Choose the token you want to forecast, set the horizon, and place the stake directly from this panel.",
     "prediction.title": "Community price outlook",
     "prediction.subtitle": "Vote where the market moves next for {label}.",
     "prediction.roundStatus": "Round status",
@@ -168,7 +168,7 @@ export const messages = {
     "prediction.stakePlaceholder": "Enter stake in TON",
     "prediction.selectTokenFirst": "Choose a token first",
     "prediction.selectTimeframeFirst": "Choose a horizon first",
-    "prediction.pendingSelectionLabel": "the selected market",
+    "prediction.pendingSelectionLabel": "the selected token",
     "prediction.payoutHint":
       "Your TON stake is sent through the wallet. Payout preview is calculated from the current pool split on each side.",
     "prediction.bullish": "Bullish",
@@ -180,7 +180,7 @@ export const messages = {
     "prediction.settleDown": "Settle Down",
     "prediction.history": "Highest stakes history",
     "prediction.betsCount": "{count} bets",
-    "prediction.noBets": "No bets yet for this pair.",
+    "prediction.noBets": "No bets yet for this token.",
     "prediction.settled": "Settled",
     "prediction.awaitingSettlement": "Awaiting settlement",
     "prediction.up": "Up",
@@ -567,7 +567,7 @@ export const messages = {
     "swap.prediction.selectorEyebrow": "Токен прогноза",
     "swap.prediction.selectorTitle": "Выбери токен для раунда прогноза",
     "swap.prediction.selectorBody":
-      "Если пара в swap-форме еще не выбрана, выбери токен, срок прогноза и затем сразу поставь ставку из этого блока.",
+      "Выбери токен, задай срок прогноза и поставь ставку прямо из этой панели.",
     "prediction.title": "Прогноз движения цены",
     "prediction.subtitle": "Голосуй, куда двинется рынок для {label}.",
     "prediction.roundStatus": "Статус раунда",
@@ -594,7 +594,7 @@ export const messages = {
     "prediction.stakePlaceholder": "Введи ставку в TON",
     "prediction.selectTokenFirst": "Сначала выбери токен",
     "prediction.selectTimeframeFirst": "Сначала выбери срок",
-    "prediction.pendingSelectionLabel": "выбранного рынка",
+    "prediction.pendingSelectionLabel": "выбранного токена",
     "prediction.payoutHint":
       "Ставка в TON отправляется через кошелек. Предпросмотр выплаты считается по текущему распределению пула на каждой стороне.",
     "prediction.bullish": "Вверх",

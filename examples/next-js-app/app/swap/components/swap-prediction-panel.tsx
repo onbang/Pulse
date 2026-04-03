@@ -11,7 +11,6 @@ import {
   type PredictionTimeframeId,
 } from "@/lib/prediction-timeframes";
 import { validateFloatValue } from "@/lib/utils";
-import { useSwapForm } from "../providers/swap-form";
 
 import { PricePredictionCard } from "@/components/community/price-prediction-card";
 import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
@@ -26,7 +25,6 @@ function normalizeLabel(label?: string | null) {
 
 export function SwapPredictionPanel() {
   const { t } = useI18n();
-  const { offerAsset, askAsset } = useSwapForm();
   const assetsQuery = useAssetsQuery();
   const [selectedPredictionAsset, setSelectedPredictionAsset] =
     useState<AssetInfo | null>(null);
@@ -39,10 +37,6 @@ export function SwapPredictionPanel() {
   }, [assetsQuery.data]);
 
   useEffect(() => {
-    if (offerAsset && askAsset) {
-      return;
-    }
-
     if (typeof window === "undefined" || selectedPredictionAsset) {
       return;
     }
@@ -63,13 +57,9 @@ export function SwapPredictionPanel() {
     if (matchedAsset) {
       setSelectedPredictionAsset(matchedAsset);
     }
-  }, [offerAsset, askAsset, predictionAssets, selectedPredictionAsset]);
+  }, [predictionAssets, selectedPredictionAsset]);
 
   useEffect(() => {
-    if (offerAsset && askAsset) {
-      return;
-    }
-
     if (typeof window === "undefined" || selectedPredictionTimeframe) {
       return;
     }
@@ -84,7 +74,7 @@ export function SwapPredictionPanel() {
     ) {
       setSelectedPredictionTimeframe(savedTimeframe as PredictionTimeframeId);
     }
-  }, [offerAsset, askAsset, selectedPredictionTimeframe]);
+  }, [selectedPredictionTimeframe]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -118,32 +108,25 @@ export function SwapPredictionPanel() {
     window.localStorage.removeItem(PREDICTION_TIMEFRAME_STORAGE_KEY);
   }, [selectedPredictionTimeframe]);
 
-  const offerLabel = normalizeLabel(offerAsset?.meta?.symbol);
-  const askLabel = normalizeLabel(askAsset?.meta?.symbol);
   const selectedAssetLabel = normalizeLabel(
     selectedPredictionAsset?.meta?.symbol,
   );
 
   const pairId =
-    offerAsset && askAsset
-      ? `${offerAsset.contractAddress}:${askAsset.contractAddress}`
-      : selectedPredictionAsset && selectedPredictionTimeframe
-        ? buildPredictionTokenMarketId(
-            selectedPredictionAsset.contractAddress,
-            selectedPredictionTimeframe,
-          )
-        : "market-overview";
+    selectedPredictionAsset && selectedPredictionTimeframe
+      ? buildPredictionTokenMarketId(
+          selectedPredictionAsset.contractAddress,
+          selectedPredictionTimeframe,
+        )
+      : "market-overview";
   const pairLabel =
-    offerAsset && askAsset
-      ? `${offerLabel}/${askLabel}`
-      : selectedPredictionAsset && selectedPredictionTimeframe
-        ? `${selectedAssetLabel}/TON • ${selectedPredictionTimeframe}`
-        : t("prediction.pendingSelectionLabel");
+    selectedPredictionAsset && selectedPredictionTimeframe
+      ? `${selectedAssetLabel} • ${selectedPredictionTimeframe}`
+      : t("prediction.pendingSelectionLabel");
   const isPredictionEnabled = Boolean(
-    (offerAsset && askAsset) ||
-      (selectedPredictionAsset && selectedPredictionTimeframe),
+    selectedPredictionAsset && selectedPredictionTimeframe,
   );
-  const showExternalControls = !offerAsset || !askAsset;
+  const showExternalControls = true;
 
   return (
     <div className="space-y-4">
