@@ -143,6 +143,9 @@ export const messages = {
     "prediction.potentialPayout": "Potential payout",
     "prediction.potentialPreview":
       "Live preview based on the current pool split and your existing exposure.",
+    "prediction.potentialPreviewBeforeBet":
+      "Preview for the entered stake before you confirm a direction.",
+    "prediction.previewPayoutSplit": "Up {up} TON · Down {down} TON",
     "prediction.stakeAmount": "Stake amount",
     "prediction.stakePlaceholder": "Enter stake in TON",
     "prediction.selectTokenFirst": "Choose a token first",
@@ -456,6 +459,9 @@ export const messages = {
     "prediction.potentialPayout": "Потенциальная выплата",
     "prediction.potentialPreview":
       "Живой предпросмотр на основе текущего распределения пула и твоей позиции.",
+    "prediction.potentialPreviewBeforeBet":
+      "Предпросмотр по введенной ставке до подтверждения направления.",
+    "prediction.previewPayoutSplit": "Вверх {up} TON · Вниз {down} TON",
     "prediction.stakeAmount": "Размер ставки",
     "prediction.stakePlaceholder": "Введи ставку в TON",
     "prediction.selectTokenFirst": "Сначала выбери токен",

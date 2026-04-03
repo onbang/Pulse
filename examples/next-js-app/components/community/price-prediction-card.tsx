@@ -76,6 +76,12 @@ export function PricePredictionCard(props: {
     myUpStake === myDownStake ? null : myUpStake > myDownStake ? "up" : "down";
   const myStake =
     myDirection === "up" ? myUpStake : myDirection === "down" ? myDownStake : 0;
+  const numericStake = Number(stakeAmount);
+  const isStakeValid =
+    stakeAmount.trim().length > 0 &&
+    validateFloatValue(stakeAmount, 2) &&
+    Number.isFinite(numericStake) &&
+    numericStake > 0;
   const myPotentialPayout =
     myDirection === "up"
       ? myStake > 0 && upPool > 0
@@ -86,6 +92,14 @@ export function PricePredictionCard(props: {
           ? (myStake / downPool) * totalPool
           : 0
         : 0;
+  const previewUpPayout = isStakeValid
+    ? (numericStake / Math.max(upPool + numericStake, numericStake)) *
+      (totalPool + numericStake)
+    : 0;
+  const previewDownPayout = isStakeValid
+    ? (numericStake / Math.max(downPool + numericStake, numericStake)) *
+      (totalPool + numericStake)
+    : 0;
   const latestSettlement = useMemo(() => {
     const settledRound =
       round?.status === "settled" && round.settlementDirection
@@ -101,12 +115,6 @@ export function PricePredictionCard(props: {
   }, [round, totalPool]);
   const showStakeInput = props.showStakeInput ?? true;
   const isDisabled = props.disabled || !walletAddress;
-  const numericStake = Number(stakeAmount);
-  const isStakeValid =
-    stakeAmount.trim().length > 0 &&
-    validateFloatValue(stakeAmount, 2) &&
-    Number.isFinite(numericStake) &&
-    numericStake > 0;
   const upOdds = upPool > 0 ? totalPool / upPool : 0;
   const downOdds = downPool > 0 ? totalPool / downPool : 0;
   const isRoundOpen = round?.status === "open";
@@ -286,9 +294,20 @@ export function PricePredictionCard(props: {
               <p className="text-lg font-semibold text-slate-900">
                 {myPotentialPayout > 0
                   ? `${myPotentialPayout.toFixed(2)} TON`
+                  : isStakeValid
+                    ? t("prediction.previewPayoutSplit", {
+                        up: previewUpPayout.toFixed(2),
+                        down: previewDownPayout.toFixed(2),
+                      })
                   : "-"}
               </p>
-              <p className="text-sm text-slate-600">{t("prediction.potentialPreview")}</p>
+              <p className="text-sm text-slate-600">
+                {myPotentialPayout > 0
+                  ? t("prediction.potentialPreview")
+                  : isStakeValid
+                    ? t("prediction.potentialPreviewBeforeBet")
+                    : t("prediction.potentialPreview")}
+              </p>
             </div>
           </div>
         ) : null}
