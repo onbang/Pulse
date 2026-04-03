@@ -346,24 +346,25 @@ export function SwapPriceChart() {
             </div>
           </div>
 
-          <div className="flex min-w-[260px] max-w-[320px] flex-col gap-3">
+          <div className="flex w-full min-w-[280px] max-w-[420px] flex-col gap-3">
             <AssetSelect
+              className="h-14 rounded-[20px] border-sky-100 bg-white px-4 text-base shadow-none"
               assets={(assetsQuery.data ?? []).slice(0, 24)}
               selectedAsset={selectedChartAsset}
               onAssetSelect={setSelectedChartAsset}
               loading={assetsQuery.isLoading}
             />
-            <div className="flex flex-wrap gap-2 rounded-full border border-sky-100 bg-white p-1">
+            <div className="grid grid-cols-3 gap-2 rounded-[28px] border border-sky-100 bg-white p-2 md:grid-cols-6">
               {TIMEFRAMES.map((frame) => (
                 <button
                   key={frame.key}
                   type="button"
                   onClick={() => setTimeframe(frame.key)}
                   className={cn(
-                    "rounded-full px-4 py-2 text-sm font-semibold transition-all",
+                    "flex h-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-all",
                     frame.key === timeframe
                       ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
-                      : "text-slate-500 hover:bg-sky-50 hover:text-slate-900",
+                      : "border border-transparent bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-slate-900",
                     !trackedAsset &&
                       "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-slate-500",
                   )}
