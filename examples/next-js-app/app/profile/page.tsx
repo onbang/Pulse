@@ -9,11 +9,13 @@ import { ProfileBetHistory } from "@/components/community/profile-bet-history";
 import { ProfileSummary } from "@/components/community/profile-summary";
 import { ProfileTonPanel } from "@/components/community/profile-ton-panel";
 import { WatchlistPanel } from "@/components/community/watchlist-panel";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { TelegramLaunchCard } from "@/components/telegram/telegram-launch-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WalletGuard } from "@/components/wallet-guard";
 
 function ProfileCheckInHistory() {
+  const { t } = useI18n();
   const { profile } = useCommunityProfile();
 
   if (!profile) {
@@ -23,12 +25,14 @@ function ProfileCheckInHistory() {
   return (
     <Card className="surface-panel">
       <CardHeader className="pb-3">
-        <p className="eyebrow">Recent check-ins</p>
-        <CardTitle className="text-slate-950">Your streak history</CardTitle>
+        <p className="eyebrow">{t("profile.history.eyebrow")}</p>
+        <CardTitle className="text-slate-950">
+          {t("profile.history.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-2">
         {profile.checkInDates.length === 0 ? (
-          <p className="text-sm text-slate-500">No check-ins yet.</p>
+          <p className="text-sm text-slate-500">{t("profile.history.empty")}</p>
         ) : (
           profile.checkInDates
             .slice(-14)
@@ -48,26 +52,26 @@ function ProfileCheckInHistory() {
 }
 
 export default function ProfilePage() {
+  const { t } = useI18n();
+
   return (
     <WalletGuard
       fallback={
         <Card className="surface-panel mx-auto mt-10 max-w-xl">
           <CardContent className="p-8 text-center text-slate-600">
-            Connect your wallet to unlock your STON profile, achievements, and
-            community activity.
+            {t("profile.walletGuard")}
           </CardContent>
         </Card>
       }
     >
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-6">
         <div className="hero-shell">
-          <p className="eyebrow">Profile Hub</p>
+          <p className="eyebrow">{t("profile.hero.eyebrow")}</p>
           <h1 className="page-heading mt-3">
-            Build your onchain identity inside STON Pulse.
+            {t("profile.hero.title")}
           </h1>
           <p className="page-subheading mt-4">
-            Track points, achievements, watched pools, prediction history, and
-            wallet activity in one polished personal dashboard.
+            {t("profile.hero.subtitle")}
           </p>
         </div>
         <ProfileSummary />

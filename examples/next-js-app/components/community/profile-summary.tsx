@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getAchievementScore, getUserLevel } from "@/lib/community";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { useCommunityProfile } from "./community-provider";
 
 function initials(name: string) {
@@ -27,6 +28,7 @@ function initials(name: string) {
 }
 
 export function ProfileSummary() {
+  const { t } = useI18n();
   const { achievements, profile, walletAddress, updateProfile } =
     useCommunityProfile();
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
@@ -43,6 +45,7 @@ export function ProfileSummary() {
 
   const achievementScore = Math.round(getAchievementScore(achievements));
   const userLevel = getUserLevel(achievementScore);
+  const localizedLevel = t(`profile.level.${userLevel.id}`);
 
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
@@ -55,24 +58,23 @@ export function ProfileSummary() {
             </Avatar>
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100/80">
-                Profile Identity
+                {t("profile.summary.identity")}
               </p>
               <CardTitle className="text-3xl text-white md:text-4xl">
                 {profile.displayName}
               </CardTitle>
               <CardDescription className="max-w-lg text-sm text-white/76">
-                Connected through TON Connect. This profile powers comments,
-                predictions, check-ins, and achievement progress.
+                {t("profile.summary.connected")}
               </CardDescription>
               <div className="flex flex-wrap gap-2">
                 <Badge className={`border-0 ${userLevel.accentClassName}`}>
-                  {userLevel.label}
+                  {localizedLevel}
                 </Badge>
                 <Badge className="border-0 bg-white text-slate-950">
-                  {profile.totalPoints} points
+                  {t("profile.summary.points", { count: String(profile.totalPoints) })}
                 </Badge>
                 <Badge className="border border-white/25 bg-white/10 text-white">
-                  {profile.streak} day streak
+                  {t("profile.summary.streak", { count: String(profile.streak) })}
                 </Badge>
                 <Badge className="border border-white/25 bg-white/10 text-white">
                   {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
@@ -83,33 +85,33 @@ export function ProfileSummary() {
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                Achievement power
+                {t("profile.summary.achievementPower")}
               </p>
               <p className="mt-2 text-3xl font-semibold">{achievementScore}</p>
               <p className="mt-1 text-sm text-white/72">
-                Signals profile maturity
+                {t("profile.summary.achievementPowerBody")}
               </p>
             </div>
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                Social reach
+                {t("profile.summary.socialReach")}
               </p>
               <p className="mt-2 text-3xl font-semibold">
                 {profile.commentsCount}
               </p>
               <p className="mt-1 text-sm text-white/72">
-                Pool comments published
+                {t("profile.summary.socialReachBody")}
               </p>
             </div>
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                Market calls
+                {t("profile.summary.marketCalls")}
               </p>
               <p className="mt-2 text-3xl font-semibold">
                 {profile.predictionsCount}
               </p>
               <p className="mt-1 text-sm text-white/72">
-                Predictions submitted
+                {t("profile.summary.marketCallsBody")}
               </p>
             </div>
           </div>
@@ -118,7 +120,7 @@ export function ProfileSummary() {
       <CardContent className="grid gap-5 p-6 md:grid-cols-[1.2fr,0.8fr]">
         <div className="space-y-3">
           <label className="space-y-2 text-sm font-medium">
-            Display name
+            {t("profile.summary.displayName")}
             <Input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
@@ -126,7 +128,7 @@ export function ProfileSummary() {
             />
           </label>
           <label className="space-y-2 text-sm font-medium">
-            Bio
+            {t("profile.summary.bio")}
             <Textarea
               value={bio}
               onChange={(event) => setBio(event.target.value)}
@@ -137,7 +139,7 @@ export function ProfileSummary() {
             className="rounded-full bg-[linear-gradient(135deg,#082f49,#0284c7)] px-5 shadow-[0_16px_40px_-22px_rgba(2,132,199,0.8)]"
             onClick={() => void updateProfile({ displayName, bio })}
           >
-            Save profile
+            {t("profile.summary.save")}
           </Button>
         </div>
 
@@ -145,45 +147,49 @@ export function ProfileSummary() {
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Level
+                {t("profile.summary.level")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
-                {userLevel.label}
+                {localizedLevel}
               </p>
-              <p>{achievementScore} achievement power</p>
+              <p>
+                {t("profile.summary.achievementPowerCount", {
+                  count: String(achievementScore),
+                })}
+              </p>
             </CardContent>
           </Card>
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Social footprint
+                {t("profile.summary.socialFootprint")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
                 {profile.commentsCount}
               </p>
-              <p>Comments posted</p>
+              <p>{t("profile.summary.commentsPosted")}</p>
             </CardContent>
           </Card>
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Market reads
+                {t("profile.summary.marketReads")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
                 {profile.predictionsCount}
               </p>
-              <p>Predictions submitted</p>
+              <p>{t("profile.summary.predictionsSubmitted")}</p>
             </CardContent>
           </Card>
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Since
+                {t("profile.summary.since")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
                 {new Date(profile.joinedAt).toLocaleDateString()}
               </p>
-              <p>Joined STON Pulse</p>
+              <p>{t("profile.summary.joined")}</p>
             </CardContent>
           </Card>
         </div>

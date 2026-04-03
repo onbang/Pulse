@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,6 +12,7 @@ import {
 import { useCommunityProfile } from "./community-provider";
 
 export function AchievementsPanel() {
+  const { t } = useI18n();
   const { achievements } = useCommunityProfile();
 
   return (
@@ -18,19 +20,22 @@ export function AchievementsPanel() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
-            Badge Collection
+            {t("profile.achievements.eyebrow")}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-            Achievements that define your profile
+            {t("profile.achievements.title")}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Your badges combine long-term onchain activity, social presence,
-            market participation, and seasonal momentum.
+            {t("profile.achievements.subtitle")}
           </p>
         </div>
         <Badge className="border-0 bg-[linear-gradient(135deg,#082f49,#0284c7)] text-white">
-          {achievements.filter((achievement) => achievement.unlocked).length}/
-          {achievements.length} unlocked
+          {t("profile.achievements.unlockedCount", {
+            unlocked: String(
+              achievements.filter((achievement) => achievement.unlocked).length,
+            ),
+            total: String(achievements.length),
+          })}
         </Badge>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
@@ -77,7 +82,9 @@ export function AchievementsPanel() {
                   {achievement.suffix}
                 </p>
                 <p className="text-sm font-medium text-slate-500">
-                  target {achievement.target}
+                  {t("profile.achievements.target", {
+                    count: String(achievement.target),
+                  })}
                   {achievement.suffix}
                 </p>
               </div>
