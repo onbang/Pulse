@@ -34,6 +34,9 @@ export function Header() {
               {t("header.communityLayer")}
             </p>
             <p className="text-sm font-semibold text-slate-900">STON Pulse</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {t("header.productHint")}
+            </p>
           </div>
           <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0180FF,#7354F2)] text-white shadow-lg">
             pulse

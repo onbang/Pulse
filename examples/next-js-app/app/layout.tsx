@@ -11,16 +11,10 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 const navBarLinks = [
+  { href: ROUTES.overview, labelKey: "nav.overview" },
   { href: ROUTES.swap, labelKey: "nav.swap" },
   { href: ROUTES.pools, labelKey: "nav.pools" },
-  { href: ROUTES.liquidityProvide, labelKey: "nav.liquidityProvide" },
-  { href: ROUTES.liquidityRefund, labelKey: "nav.liquidityRefund" },
-  { href: ROUTES.vault, labelKey: "nav.vault" },
-  { href: ROUTES.stake, labelKey: "nav.stake" },
   { href: ROUTES.profile, labelKey: "nav.profile" },
-  { href: ROUTES.checkIn, labelKey: "nav.checkIn" },
-  { href: ROUTES.leaderboard, labelKey: "nav.leaderboard" },
-  { href: ROUTES.community, labelKey: "nav.community" },
 ];
 
 export const metadata: Metadata = {

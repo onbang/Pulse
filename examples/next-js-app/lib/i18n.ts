@@ -12,6 +12,8 @@ export const messages = {
     "language.ru": "RU",
     "header.communityLayer": "Community Layer",
     "header.language": "Language",
+    "header.productHint": "Swap, pools, streaks, and community signal in one app.",
+    "nav.overview": "Overview",
     "nav.swap": "Swap",
     "nav.pools": "Pools",
     "nav.liquidityProvide": "Liquidity provide",
@@ -179,6 +181,46 @@ export const messages = {
       "Connect your wallet to post through your profile.",
     "comments.commentFor": "Comment for {label}",
     "comments.selectPoolFirst": "Select a pool first to unlock comments",
+    "landing.hero.eyebrow": "Guided entry",
+    "landing.hero.title": "Start with a clear path, not a wall of DeFi tools.",
+    "landing.hero.subtitle":
+      "STON Pulse helps you swap tokens, discover live pools, follow your streak, and use community signal without getting lost on the first screen.",
+    "landing.hero.primaryCta": "Start with Swap",
+    "landing.hero.secondaryCta": "Explore pools first",
+    "landing.hero.card1.eyebrow": "What it is",
+    "landing.hero.card1.title": "A cleaner entry into STON activity",
+    "landing.hero.card1.body":
+      "Use one interface for swaps, pool discovery, streak progress, and community-driven market context.",
+    "landing.hero.card2.eyebrow": "How to begin",
+    "landing.hero.card2.title": "Pick one simple path first",
+    "landing.hero.card2.body":
+      "Most users should start with Swap or Pools, then unlock profile, check-ins, and predictions after the wallet is connected.",
+    "landing.path.eyebrow": "Main path",
+    "landing.path.swap.title": "Swap with live quote context",
+    "landing.path.swap.body":
+      "Choose tokens, see the live quote, track the token chart, and swap with more confidence.",
+    "landing.path.swap.cta": "Open Swap",
+    "landing.path.pools.title": "Browse the pools that matter now",
+    "landing.path.pools.body":
+      "Scan live pools, compare liquidity depth, and move into LP actions once a pair looks interesting.",
+    "landing.path.pools.cta": "Open Pools",
+    "landing.path.profile.title": "Track your points and streak",
+    "landing.path.profile.body":
+      "Keep your daily momentum alive, collect achievements, and see how your profile grows over time.",
+    "landing.path.profile.cta": "Open Profile",
+    "landing.how.eyebrow": "How it works",
+    "landing.how.title": "Use Pulse in three simple steps",
+    "landing.how.step1.title": "Connect your wallet",
+    "landing.how.step1.body":
+      "Unlock profile actions, daily check-ins, social features, and live swap execution.",
+    "landing.how.step2.title": "Choose one clear goal",
+    "landing.how.step2.body":
+      "Either swap a token, inspect pools, or build your streak. You do not need every screen at once.",
+    "landing.how.step3.title": "Go deeper only when ready",
+    "landing.how.step3.body":
+      "Predictions, community comments, leaderboard, farming, and staking stay available as second-step tools.",
+    "landing.explore.eyebrow": "More inside",
+    "landing.explore.title": "Other sections you can open after the basics",
     "misc.neutralFlow": "Neutral flow",
   },
   ru: {
@@ -186,6 +228,8 @@ export const messages = {
     "language.ru": "RU",
     "header.communityLayer": "Комьюнити слой",
     "header.language": "Язык",
+    "header.productHint": "Обмен, пулы, серия чек-инов и сигнал комьюнити в одном приложении.",
+    "nav.overview": "Обзор",
     "nav.swap": "Обмен",
     "nav.pools": "Пулы",
     "nav.liquidityProvide": "Добавить ликвидность",
@@ -353,6 +397,46 @@ export const messages = {
       "Подключи кошелек, чтобы публиковать комментарии от своего профиля.",
     "comments.commentFor": "Комментарий для {label}",
     "comments.selectPoolFirst": "Сначала выбери пул, чтобы открыть комментарии",
+    "landing.hero.eyebrow": "Понятный старт",
+    "landing.hero.title": "Начни с понятного сценария, а не с перегруженного DeFi-экрана.",
+    "landing.hero.subtitle":
+      "STON Pulse помогает обменивать токены, изучать пулы, держать серию чек-инов и использовать сигнал комьюнити без ощущения, что тебя сразу бросили в сложный интерфейс.",
+    "landing.hero.primaryCta": "Начать с обмена",
+    "landing.hero.secondaryCta": "Сначала посмотреть пулы",
+    "landing.hero.card1.eyebrow": "Что это",
+    "landing.hero.card1.title": "Более понятный вход в экосистему STON",
+    "landing.hero.card1.body":
+      "Одно приложение для обмена, поиска пулов, прогресса профиля и рыночного контекста от комьюнити.",
+    "landing.hero.card2.eyebrow": "С чего начать",
+    "landing.hero.card2.title": "Сначала выбери один простой путь",
+    "landing.hero.card2.body":
+      "Большинству пользователей лучше начать с Обмена или Пулов, а уже потом подключать профиль, чек-ины и прогнозы.",
+    "landing.path.eyebrow": "Основной сценарий",
+    "landing.path.swap.title": "Обменивай с живой котировкой и контекстом",
+    "landing.path.swap.body":
+      "Выбери токены, посмотри live quote, оцени график токена и соверши обмен спокойнее и понятнее.",
+    "landing.path.swap.cta": "Открыть обмен",
+    "landing.path.pools.title": "Смотри пулы, которые важны прямо сейчас",
+    "landing.path.pools.body":
+      "Проверяй актуальные пулы, глубину ликвидности и переходи к LP-действиям только когда пара действительно интересна.",
+    "landing.path.pools.cta": "Открыть пулы",
+    "landing.path.profile.title": "Следи за points и своей серией",
+    "landing.path.profile.body":
+      "Сохраняй ежедневный ритм, открывай достижения и смотри, как растет твой профиль.",
+    "landing.path.profile.cta": "Открыть профиль",
+    "landing.how.eyebrow": "Как пользоваться",
+    "landing.how.title": "Используй Pulse в три простых шага",
+    "landing.how.step1.title": "Подключи кошелек",
+    "landing.how.step1.body":
+      "После этого откроются действия профиля, ежедневный чек-ин, социальные функции и живой обмен.",
+    "landing.how.step2.title": "Выбери одну цель",
+    "landing.how.step2.body":
+      "Либо обменять токен, либо посмотреть пулы, либо прокачать серию. Не нужно осваивать все экраны сразу.",
+    "landing.how.step3.title": "Углубляйся потом",
+    "landing.how.step3.body":
+      "Прогнозы, комментарии, рейтинг, фарминг и стейкинг остаются вторым уровнем, когда базовый путь уже понятен.",
+    "landing.explore.eyebrow": "Еще внутри",
+    "landing.explore.title": "Другие разделы, которые можно открыть после базы",
     "misc.neutralFlow": "Нейтральный импульс",
   },
 } satisfies Record<AppLanguage, Record<string, string>>;
