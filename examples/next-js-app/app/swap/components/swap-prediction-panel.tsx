@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { AssetSelect } from "@/components/asset-select";
 import { useSwapForm } from "../providers/swap-form";
 
@@ -13,6 +14,7 @@ function normalizeLabel(label?: string | null) {
 }
 
 export function SwapPredictionPanel() {
+  const { t } = useI18n();
   const { offerAsset, askAsset } = useSwapForm();
   const assetsQuery = useAssetsQuery();
   const [selectedPredictionAsset, setSelectedPredictionAsset] =
@@ -47,14 +49,13 @@ export function SwapPredictionPanel() {
       {!offerAsset || !askAsset ? (
         <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.14)]">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-            Prediction pair
+            {t("swap.prediction.selectorEyebrow")}
           </p>
           <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-            Choose a token for the forecast round
+            {t("swap.prediction.selectorTitle")}
           </h3>
           <p className="mt-2 text-sm text-slate-600">
-            If you have not selected a swap pair yet, you can still open a prediction
-            round by choosing a token directly here.
+            {t("swap.prediction.selectorBody")}
           </p>
           <div className="mt-4">
             <AssetSelect

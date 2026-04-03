@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,7 @@ export function PricePredictionCard(props: {
   label: string;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const [stakeAmount, setStakeAmount] = useState("10");
   const {
     getPrediction,
@@ -126,16 +128,16 @@ export function PricePredictionCard(props: {
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-slate-950">Community price outlook</CardTitle>
+            <CardTitle className="text-slate-950">{t("prediction.title")}</CardTitle>
             <CardDescription className="text-slate-600">
-              Vote where the market moves next for {props.label}.
+              {t("prediction.subtitle", { label: props.label })}
             </CardDescription>
           </div>
           <Badge className="border-sky-100 bg-white text-slate-700">
             {round?.status === "settled"
-              ? "Settled"
+              ? t("prediction.settled")
               : round?.status === "closed"
-                ? "Awaiting settlement"
+                ? t("prediction.awaitingSettlement")
                 : `${totalVotes} votes`}
           </Badge>
         </div>
@@ -174,13 +176,13 @@ export function PricePredictionCard(props: {
         <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Total pool
+              {t("prediction.totalPool")}
             </p>
             <p className="text-2xl font-semibold text-slate-900">{totalPool.toFixed(2)} pts</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Up odds
+              {t("prediction.upOdds")}
             </p>
             <p className="text-2xl font-semibold text-slate-900">
               {upOdds > 0 ? `${upOdds.toFixed(2)}x` : "-"}
@@ -188,7 +190,7 @@ export function PricePredictionCard(props: {
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Down odds
+              {t("prediction.downOdds")}
             </p>
             <p className="text-2xl font-semibold text-slate-900">
               {downOdds > 0 ? `${downOdds.toFixed(2)}x` : "-"}
@@ -235,7 +237,7 @@ export function PricePredictionCard(props: {
             className="text-sm font-medium text-slate-700"
             htmlFor={`${props.pairId}-stake`}
           >
-            Stake amount
+            {t("prediction.stakeAmount")}
           </label>
           <Input
             className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
@@ -252,11 +254,10 @@ export function PricePredictionCard(props: {
 
               setStakeAmount(event.target.value);
             }}
-            placeholder="Enter stake in points"
+            placeholder={t("prediction.stakePlaceholder")}
           />
           <p className="text-xs text-slate-500">
-            Payout coefficient is calculated from the current stake pool on each
-            side.
+            {t("prediction.payoutHint")}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -268,7 +269,7 @@ export function PricePredictionCard(props: {
           >
             <span className="inline-flex items-center gap-2">
               <TrendingUp className="text-emerald-600" />
-              Bullish
+              {t("prediction.bullish")}
             </span>
             <strong>
               {upShare}% · {upOdds > 0 ? `${upOdds.toFixed(2)}x` : "-"}
@@ -282,7 +283,7 @@ export function PricePredictionCard(props: {
           >
             <span className="inline-flex items-center gap-2">
               <TrendingDown className="text-rose-600" />
-              Bearish
+              {t("prediction.bearish")}
             </span>
             <strong>
               {downShare}% · {downOdds > 0 ? `${downOdds.toFixed(2)}x` : "-"}
@@ -293,11 +294,11 @@ export function PricePredictionCard(props: {
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-semibold text-slate-900">
-                  Settle closed round
+              <h4 className="text-sm font-semibold text-slate-900">
+                  {t("prediction.settleTitle")}
                 </h4>
                 <p className="text-sm text-slate-600">
-                  Lock in the winning side to publish payout previews.
+                  {t("prediction.settleBody")}
                 </p>
               </div>
             </div>
@@ -312,7 +313,7 @@ export function PricePredictionCard(props: {
                   })
                 }
               >
-                Settle Up
+                {t("prediction.settleUp")}
               </Button>
               <Button
                 variant="outline"
@@ -324,7 +325,7 @@ export function PricePredictionCard(props: {
                   })
                 }
               >
-                Settle Down
+                {t("prediction.settleDown")}
               </Button>
             </div>
           </div>
@@ -332,14 +333,14 @@ export function PricePredictionCard(props: {
         <div className="rounded-2xl border border-sky-100 bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h4 className="text-sm font-semibold text-slate-900">
-              Highest stakes history
+              {t("prediction.history")}
             </h4>
             <Badge className="border-sky-100 bg-sky-50 text-slate-700">{bets.length} bets</Badge>
           </div>
           <div className="space-y-2">
             {topBets.length === 0 ? (
               <p className="text-sm text-slate-500">
-                No bets yet for this pair.
+                {t("prediction.noBets")}
               </p>
             ) : (
               topBets.map((bet, index) => (

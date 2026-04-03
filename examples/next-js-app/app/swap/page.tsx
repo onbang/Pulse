@@ -1,3 +1,7 @@
+"use client";
+
+import { useI18n } from "@/components/i18n/i18n-provider";
+
 import { ReferralForm } from "./components/referral-form";
 import { SwapButton } from "./components/swap-button";
 import { SwapForm } from "./components/swap-form";
@@ -8,6 +12,8 @@ import { SwapSimulationPreview } from "./components/swap-simulation";
 import { SwapPredictionPanel } from "./components/swap-prediction-panel";
 
 export default function Home() {
+  const { t } = useI18n();
+
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-4 md:py-10">
       <SwapFormHeader />
@@ -18,18 +24,18 @@ export default function Home() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/60">
-                    Trade ticket
+                    {t("swap.ticket.eyebrow")}
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                    Execute with confidence
+                    {t("swap.ticket.title")}
                   </h2>
                 </div>
                 <div className="stat-pill px-3 py-2 text-right">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Mode
+                    {t("swap.ticket.mode")}
                   </p>
                   <p className="text-sm font-semibold text-slate-900">
-                    Wallet-grade flow
+                    {t("swap.ticket.modeValue")}
                   </p>
                 </div>
               </div>

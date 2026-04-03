@@ -3,12 +3,16 @@
 import { TonConnectButton } from "@tonconnect/ui-react";
 import Image from "next/image";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { TelegramBadge } from "@/components/telegram/telegram-badge";
 import { Badge } from "@/components/ui/badge";
 import GitBookIcon from "@/public/icons/gitbook.svg";
 import GitHubIcon from "@/public/icons/github.svg";
 
 export function Header() {
+  const { t } = useI18n();
+
   return (
     <header className="sticky top-0 z-30 border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(244,248,255,0.84))] backdrop-blur-2xl">
       <section className="container flex min-h-24 items-center gap-4 py-4">
@@ -27,7 +31,7 @@ export function Header() {
           />
           <div className="hidden sm:block">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-500">
-              Community Layer
+              {t("header.communityLayer")}
             </p>
             <p className="text-sm font-semibold text-slate-900">STON Pulse</p>
           </div>
@@ -36,6 +40,7 @@ export function Header() {
           </Badge>
         </a>
 
+        <LanguageSwitcher />
         <div className="glass-strip flex items-center gap-2 px-2 py-2">
           <TonConnectButton />
           <TelegramBadge />

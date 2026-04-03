@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dot, TrendingDown, TrendingUp } from "lucide-react";
 
 import { AssetSelect } from "@/components/asset-select";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -21,12 +22,12 @@ import { useSwapSimulation } from "../hooks/swap-simulation-query";
 import { useSwapForm } from "../providers/swap-form";
 
 const TIMEFRAMES = [
-  { key: "1M", candles: 24, label: "Scalp mode", liveStepMs: 1600 },
-  { key: "5M", candles: 28, label: "Live session", liveStepMs: 2200 },
-  { key: "15M", candles: 24, label: "Momentum", liveStepMs: 2800 },
-  { key: "1H", candles: 22, label: "Structure", liveStepMs: 3600 },
-  { key: "4H", candles: 20, label: "Trend", liveStepMs: 4200 },
-  { key: "1D", candles: 18, label: "Swing", liveStepMs: 5200 },
+  { key: "1M", candles: 24, labelKey: "swap.chart.timeframe.1M", liveStepMs: 1600 },
+  { key: "5M", candles: 28, labelKey: "swap.chart.timeframe.5M", liveStepMs: 2200 },
+  { key: "15M", candles: 24, labelKey: "swap.chart.timeframe.15M", liveStepMs: 2800 },
+  { key: "1H", candles: 22, labelKey: "swap.chart.timeframe.1H", liveStepMs: 3600 },
+  { key: "4H", candles: 20, labelKey: "swap.chart.timeframe.4H", liveStepMs: 4200 },
+  { key: "1D", candles: 18, labelKey: "swap.chart.timeframe.1D", liveStepMs: 5200 },
 ] as const;
 
 type Candle = {
@@ -143,6 +144,7 @@ function getAssetTone(symbol: string) {
 }
 
 export function SwapPriceChart() {
+  const { t } = useI18n();
   const [timeframe, setTimeframe] =
     useState<(typeof TIMEFRAMES)[number]["key"]>("5M");
   const [liveTick, setLiveTick] = useState(0);
@@ -230,9 +232,9 @@ export function SwapPriceChart() {
     bullishBias === 0 ? null : bullishBias > 0 ? "up" : "down";
   const forecastLabel =
     forecastDirection === "up"
-      ? "Bullish flow"
+      ? t("prediction.bullish")
       : forecastDirection === "down"
-        ? "Bearish flow"
+        ? t("prediction.bearish")
         : "Neutral flow";
   const liveColor = priceDirection === "up" ? "#5ad66f" : "#ff6d5a";
   const gridLevels = [high, high - range * 0.33, high - range * 0.66, low];
@@ -257,19 +259,19 @@ export function SwapPriceChart() {
                     ? normalizeLabel(
                         trackedAsset.meta?.displayName ?? trackedLabel,
                       )
-                    : "Pulse market"}
+                    : t("swap.chart.previewTitle")}
                 </CardTitle>
                 <Badge className="border border-sky-100 bg-white text-slate-700">
                   {chartLabel}
                 </Badge>
                 <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
-                  {trackedAsset ? "Live" : "Preview"}
+                  {trackedAsset ? t("swap.chart.live") : t("swap.chart.preview")}
                 </Badge>
               </div>
               <CardDescription className="mt-1 max-w-xl text-slate-600">
                 {trackedAsset
-                  ? "Real-time styled market chart for the token you selected."
-                  : "Choose any token to switch this preview into a token-specific live market chart."}
+                  ? t("swap.chart.liveDescription")
+                  : t("swap.chart.previewDescription")}
               </CardDescription>
             </div>
           </div>
@@ -340,7 +342,7 @@ export function SwapPriceChart() {
                 </span>
                 {!trackedAsset ? (
                   <span className="rounded-full border border-sky-100 bg-white px-3 py-1 text-sm font-medium text-slate-600">
-                    Waiting for token selection
+                    {t("swap.chart.waiting")}
                   </span>
                 ) : null}
               </div>
@@ -348,14 +350,14 @@ export function SwapPriceChart() {
 
             <div className="min-w-[190px] rounded-[22px] border border-sky-100 bg-white px-4 py-3 text-right">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Forecast pulse
+                {t("swap.chart.forecastPulse")}
               </p>
               <p className="mt-2 text-lg font-semibold text-slate-900">
                 {forecastLabel}
               </p>
               <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                 <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                {trackedAsset ? "Live mode" : "Preview mode"}
+                {trackedAsset ? t("swap.chart.liveMode") : t("swap.chart.previewMode")}
               </div>
             </div>
           </div>
@@ -433,9 +435,9 @@ export function SwapPriceChart() {
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
                 <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
-                  Candles
+                  {t("swap.chart.candles")}
                 </span>
-                <span>{currentFrame.label}</span>
+                <span>{t(currentFrame.labelKey)}</span>
                 <span
                   className={cn(
                     "rounded-full px-3 py-1",
@@ -472,46 +474,46 @@ export function SwapPriceChart() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Structure high
+              {t("swap.chart.structureHigh")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(high)}
             </p>
-            <p className="mt-1 text-sm text-slate-500">Upper intraday band</p>
+            <p className="mt-1 text-sm text-slate-500">{t("swap.chart.upperBand")}</p>
           </div>
           <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Structure low
+              {t("swap.chart.structureLow")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(low)}
             </p>
-            <p className="mt-1 text-sm text-slate-500">Lower support zone</p>
+            <p className="mt-1 text-sm text-slate-500">{t("swap.chart.lowerBand")}</p>
           </div>
           <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Route impact
+              {t("swap.chart.routeImpact")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
             <p className="mt-1 text-sm text-slate-500">
               {trackedAsset
-                ? "Friction in the current quote path"
-                : "Indicative impact until the token is selected"}
+                ? t("swap.chart.impactLive")
+                : t("swap.chart.impactPreview")}
             </p>
           </div>
           <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Trade lens
+              {t("swap.chart.tradeLens")}
             </p>
             <p className="mt-2 text-lg font-semibold text-slate-900">
-              Read momentum before you place the next prediction
+              {t("swap.chart.tradeLensTitle")}
             </p>
             <p className="mt-2 text-sm text-slate-600">
               {trackedAsset
-                ? "Candles, live token price pulse, and community bias now sit in one market panel."
-                : "The market panel is always visible now, and it upgrades into a live token chart as soon as you choose one."}
+                ? t("swap.chart.tradeLensBodyLive")
+                : t("swap.chart.tradeLensBodyPreview")}
             </p>
           </div>
         </div>

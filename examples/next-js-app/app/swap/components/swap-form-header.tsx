@@ -2,6 +2,7 @@
 
 import { RefreshCw, Settings } from "lucide-react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 import { useSwapSimulation } from "../hooks/swap-simulation-query";
@@ -10,18 +11,20 @@ import { SwapSettings } from "./swap-settings";
 
 export const SwapFormHeader = () => {
   const swapSimulationQuery = useSwapSimulation();
+  const { t } = useI18n();
 
   return (
     <div className="hero-shell">
       <div className="relative z-10 flex flex-col gap-6">
         <div className="flex items-start gap-4">
           <div className="mr-auto space-y-3">
-            <p className="eyebrow">Live Trade Studio</p>
+            <p className="eyebrow">{t("swap.hero.eyebrow")}</p>
             <div className="space-y-2">
-              <h1 className="page-heading text-4xl md:text-5xl">Swap</h1>
+              <h1 className="page-heading text-4xl md:text-5xl">
+                {t("swap.hero.title")}
+              </h1>
               <p className="max-w-xl text-sm leading-6 text-white/78 md:text-base">
-                Execute swaps, read live routing context, and layer community
-                conviction on top of every token pair.
+                {t("swap.hero.subtitle")}
               </p>
             </div>
           </div>
@@ -55,35 +58,37 @@ export const SwapFormHeader = () => {
         <div className="grid gap-3 md:grid-cols-3">
           <div className="stat-pill border-white/20 bg-white/10 text-white">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Execution
+              {t("swap.hero.execution")}
             </p>
             <p className="mt-2 text-lg font-semibold">
-              STON route intelligence
+              {t("swap.hero.executionTitle")}
             </p>
             <p className="mt-1 text-sm text-white/72">
-              Simulation and market context flow into every trade.
+              {t("swap.hero.executionBody")}
             </p>
           </div>
           <div className="stat-pill border-white/20 bg-white/10 text-white">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Community
+              {t("swap.hero.community")}
             </p>
-            <p className="mt-2 text-lg font-semibold">Prediction layer</p>
+            <p className="mt-2 text-lg font-semibold">
+              {t("swap.hero.communityTitle")}
+            </p>
             <p className="mt-1 text-sm text-white/72">
-              Read conviction, place bets, and compare momentum live.
+              {t("swap.hero.communityBody")}
             </p>
           </div>
           <div className="stat-pill border-white/20 bg-white/10 text-white">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Precision
+              {t("swap.hero.precision")}
             </p>
             <p className="mt-2 text-lg font-semibold">
               {swapSimulationQuery.isFetching
-                ? "Refreshing route"
-                : "Ready to quote"}
+                ? t("swap.hero.precisionLoading")
+                : t("swap.hero.precisionTitle")}
             </p>
             <p className="mt-1 text-sm text-white/72">
-              Fine-tune slippage, routing, and timing before execution.
+              {t("swap.hero.precisionBody")}
             </p>
           </div>
         </div>

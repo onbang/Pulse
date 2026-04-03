@@ -3,6 +3,7 @@
 import type React from "react";
 import { useId, useState } from "react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useRouters } from "@/hooks/use-routers";
@@ -37,6 +38,7 @@ export const ReferralForm = () => {
 const ReferralAddressInput: React.FC<
   Omit<React.ComponentPropsWithoutRef<"div">, "children">
 > = (props) => {
+  const { t } = useI18n();
   const id = useId();
   const dispatch = useSwapFormDispatch();
   const [isValid, setIsValid] = useState(true);
@@ -57,8 +59,8 @@ const ReferralAddressInput: React.FC<
       {...props}
       className={cn("flex flex-col gap-1 w-full", props.className)}
     >
-      <label className="text-sm text-white/72" htmlFor={id}>
-        Referral address:
+      <label className="text-sm text-slate-600" htmlFor={id}>
+        {t("swap.referral.address")}
       </label>
       <Input
         className={cn(
@@ -92,6 +94,7 @@ const validateReferralValue = (value: string) => {
 const ReferralValueInput: React.FC<
   Omit<React.ComponentPropsWithoutRef<"div">, "children">
 > = (props) => {
+  const { t } = useI18n();
   const id = useId();
   const { referralAddress } = useSwapForm();
   const [referralValue, setReferralValue] = useState("");
@@ -119,7 +122,7 @@ const ReferralValueInput: React.FC<
       className={cn("flex flex-col gap-1 w-full", props.className)}
     >
       <label className="text-sm text-slate-600" htmlFor={id}>
-        Referral percentage:
+        {t("swap.referral.percent")}
       </label>
       <Input
         className={cn(

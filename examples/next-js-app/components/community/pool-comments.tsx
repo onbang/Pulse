@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +18,7 @@ import {
 } from "./community-provider";
 
 export function PoolComments(props: { poolId?: string; poolLabel: string }) {
+  const { t, language } = useI18n();
   const { addComment, getComments, toggleCommentReaction, walletAddress } =
     useCommunityProfile();
   const [text, setText] = useState("");
@@ -26,23 +28,23 @@ export function PoolComments(props: { poolId?: string; poolLabel: string }) {
   return (
     <Card className="overflow-hidden rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] shadow-[0_28px_80px_-48px_rgba(15,23,42,0.18)]">
       <CardHeader>
-        <CardTitle className="text-slate-900">Pool comments</CardTitle>
+        <CardTitle className="text-slate-900">{t("comments.title")}</CardTitle>
         <CardDescription className="text-slate-600">
-          Leave a short note for liquidity providers. Max 200 characters.
+          {t("comments.subtitle")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <label className="space-y-2 text-sm font-medium text-slate-800">
           {props.poolId
-            ? `Comment for ${props.poolLabel}`
-            : "Select a pool first to unlock comments"}
+            ? t("comments.commentFor", { label: props.poolLabel })
+            : t("comments.selectPoolFirst")}
           <Textarea
             className="min-h-34 rounded-2xl border-sky-100 bg-white text-slate-900 shadow-none placeholder:text-slate-400"
             value={text}
             maxLength={200}
             disabled={isDisabled}
             onChange={(event) => setText(event.target.value)}
-            placeholder="Share context about spread, volatility, rewards, or strategy."
+            placeholder={t("comments.placeholder")}
           />
         </label>
         <div className="flex items-center justify-between gap-3">
@@ -61,20 +63,16 @@ export function PoolComments(props: { poolId?: string; poolLabel: string }) {
               }
             }}
           >
-            Post comment
+            {t("comments.post")}
           </Button>
         </div>
         {!walletAddress ? (
-          <p className="text-sm text-slate-500">
-            Connect your wallet to post through your profile.
-          </p>
+          <p className="text-sm text-slate-500">{t("comments.connectHint")}</p>
         ) : null}
 
         <div className="space-y-3">
           {comments.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              No comments yet for this pool.
-            </p>
+            <p className="text-sm text-slate-500">{t("comments.empty")}</p>
           ) : (
             comments.map((comment) => (
               <article
@@ -83,7 +81,11 @@ export function PoolComments(props: { poolId?: string; poolLabel: string }) {
               >
                 <div className="mb-2 flex items-center justify-between gap-3 text-xs text-slate-500">
                   <strong className="text-slate-700">{comment.author}</strong>
-                  <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                  <span>
+                    {new Date(comment.createdAt).toLocaleString(
+                      language === "ru" ? "ru-RU" : "en-US",
+                    )}
+                  </span>
                 </div>
                 <p className="text-sm text-slate-700">{comment.text}</p>
                 <div className="mt-3 flex flex-wrap gap-2">

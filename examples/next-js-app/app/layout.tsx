@@ -11,16 +11,16 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 const navBarLinks = [
-  { href: ROUTES.swap, label: "Swap" },
-  { href: ROUTES.pools, label: "Pools" },
-  { href: ROUTES.liquidityProvide, label: "Liquidity provide" },
-  { href: ROUTES.liquidityRefund, label: "Liquidity refund" },
-  { href: ROUTES.vault, label: "Vault" },
-  { href: ROUTES.stake, label: "Stake" },
-  { href: ROUTES.profile, label: "Profile" },
-  { href: ROUTES.checkIn, label: "Check-in" },
-  { href: ROUTES.leaderboard, label: "Leaderboard" },
-  { href: ROUTES.community, label: "Community" },
+  { href: ROUTES.swap, labelKey: "nav.swap" },
+  { href: ROUTES.pools, labelKey: "nav.pools" },
+  { href: ROUTES.liquidityProvide, labelKey: "nav.liquidityProvide" },
+  { href: ROUTES.liquidityRefund, labelKey: "nav.liquidityRefund" },
+  { href: ROUTES.vault, labelKey: "nav.vault" },
+  { href: ROUTES.stake, labelKey: "nav.stake" },
+  { href: ROUTES.profile, labelKey: "nav.profile" },
+  { href: ROUTES.checkIn, labelKey: "nav.checkIn" },
+  { href: ROUTES.leaderboard, labelKey: "nav.leaderboard" },
+  { href: ROUTES.community, labelKey: "nav.community" },
 ];
 
 export const metadata: Metadata = {

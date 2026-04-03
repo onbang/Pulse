@@ -4,6 +4,7 @@ import { fromUnits } from "@ston-fi/sdk";
 import type { ChangeEvent } from "react";
 
 import { AssetSelect } from "@/components/asset-select";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
@@ -66,6 +67,8 @@ export const SwapForm = (props: { className?: string }) => {
 };
 
 const OfferAssetHeader = (props: { className?: string }) => {
+  const { t } = useI18n();
+
   return (
     <div
       {...props}
@@ -75,7 +78,7 @@ const OfferAssetHeader = (props: { className?: string }) => {
         props.className,
       )}
     >
-      You offer
+      {t("swap.form.offer")}
     </div>
   );
 };
@@ -124,6 +127,8 @@ const OfferAssetInput = (props: { className?: string }) => {
 };
 
 const AskAssetHeader = (props: { className?: string }) => {
+  const { t } = useI18n();
+
   return (
     <div
       {...props}
@@ -133,7 +138,7 @@ const AskAssetHeader = (props: { className?: string }) => {
         props.className,
       )}
     >
-      You ask
+      {t("swap.form.ask")}
     </div>
   );
 };
