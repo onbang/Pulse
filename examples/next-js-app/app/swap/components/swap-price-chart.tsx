@@ -591,8 +591,8 @@ export function SwapPriceChart() {
           </div>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
-          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureHigh")}
             </p>
@@ -603,7 +603,7 @@ export function SwapPriceChart() {
               {t("swap.chart.upperBand")}
             </p>
           </div>
-          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
+          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureLow")}
             </p>
@@ -614,7 +614,7 @@ export function SwapPriceChart() {
               {t("swap.chart.lowerBand")}
             </p>
           </div>
-          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
+          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.routeImpact")}
             </p>
@@ -627,19 +627,21 @@ export function SwapPriceChart() {
                 : t("swap.chart.impactPreview")}
             </p>
           </div>
-          <div className="flex min-h-[150px] flex-col rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)] sm:min-h-[180px]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.forecastPulse")}
-            </p>
-            <p className="mt-2 max-w-[15rem] text-lg font-semibold leading-7 text-slate-900 sm:mt-3 sm:text-xl sm:leading-8">
-              {t(chartSignal.titleKey)}
-            </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-600 sm:mt-3 sm:leading-6">
-              {t(chartSignal.bodyKey, { timeframe })}
-            </p>
+        </div>
+
+        <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                {t("swap.chart.forecastPulse")}
+              </p>
+              <p className="mt-2 text-lg font-semibold leading-7 text-slate-900 sm:text-xl sm:leading-8">
+                {t(chartSignal.titleKey)}
+              </p>
+            </div>
             <div
               className={cn(
-                "mt-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                "inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold",
                 chartSignal.tone === "bullish" &&
                   "bg-emerald-500/10 text-emerald-500",
                 chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
@@ -650,6 +652,11 @@ export function SwapPriceChart() {
               <Dot className="-mx-1 h-5 w-5 animate-pulse" />
               {t("swap.chart.basedOnChart")}
             </div>
+          </div>
+          <div className="mt-3 max-w-2xl">
+            <p className="text-sm leading-6 text-slate-600">
+              {t(chartSignal.bodyKey, { timeframe })}
+            </p>
           </div>
         </div>
         </>
