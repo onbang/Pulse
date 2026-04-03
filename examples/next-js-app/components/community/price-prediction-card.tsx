@@ -1,9 +1,9 @@
 "use client";
 
-import { beginCell, toNano } from "@ton/core";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { buildPredictionBetTransferMessage } from "@ston-pulse/prediction-sdk";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
-import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
 import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
@@ -167,33 +166,20 @@ export function PricePredictionCard(props: {
 
     try {
       setIsSubmittingTx(true);
-
-      const payload = beginCell()
-        .storeUint(0, 32)
-        .storeStringTail(
-          buildPredictionTransferComment({
-            pairId: props.pairId,
-            label: props.label,
-            direction,
-            amount: numericStake,
-          }),
-        )
-        .endCell()
-        .toBoc()
-        .toString("base64");
+      const message = buildPredictionBetTransferMessage({
+        treasuryAddress: predictionTreasuryAddress,
+        marketId: props.pairId,
+        label: props.label,
+        direction,
+        amountTon: numericStake,
+      });
 
       let messageHash: string | undefined;
 
       try {
         const txResult = await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-          messages: [
-            {
-              address: predictionTreasuryAddress,
-              amount: toNano(stakeAmount).toString(),
-              payload,
-            },
-          ],
+          messages: [message],
         });
 
         messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;

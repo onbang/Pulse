@@ -1,0 +1,39 @@
+{
+  "name": "@ston-pulse/prediction-sdk",
+  "version": "0.1.0",
+  "description": "Prediction market SDK and message builders for STON Pulse on TON",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onbang/Pulse.git",
+    "directory": "packages/prediction-sdk"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "contracts",
+    "package.json",
+    "README.md"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "tsc --noEmit --pretty"
+  },
+  "dependencies": {
+    "@ton/core": "^0.60.1"
+  },
+  "devDependencies": {
+    "tsup": "catalog:"
+  }
+}

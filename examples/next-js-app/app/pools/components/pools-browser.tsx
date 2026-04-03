@@ -1,7 +1,7 @@
 "use client";
 
-import { beginCell, toNano } from "@ton/core";
 import type { AssetInfoV2, PoolInfo } from "@ston-fi/api";
+import { buildPredictionBetTransferMessage } from "@ston-pulse/prediction-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, ArrowUpRight, Star, Waves } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +26,6 @@ import { useStonApi } from "@/hooks/use-ston-api";
 import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
-import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
 import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { cn, validateFloatValue } from "@/lib/utils";
@@ -198,30 +197,17 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
 
     try {
       setIsSubmitting(true);
-
-      const payload = beginCell()
-        .storeUint(0, 32)
-        .storeStringTail(
-          buildPredictionTransferComment({
-            pairId: props.pairId,
-            label: props.pairLabel,
-            direction,
-            amount: numericStake,
-          }),
-        )
-        .endCell()
-        .toBoc()
-        .toString("base64");
+      const message = buildPredictionBetTransferMessage({
+        treasuryAddress: predictionTreasuryAddress,
+        marketId: props.pairId,
+        label: props.pairLabel,
+        direction,
+        amountTon: numericStake,
+      });
 
       const txResult = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-        messages: [
-          {
-            address: predictionTreasuryAddress,
-            amount: toNano(stakeAmount).toString(),
-            payload,
-          },
-        ],
+        messages: [message],
       });
 
       const messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
