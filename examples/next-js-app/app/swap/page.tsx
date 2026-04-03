@@ -8,14 +8,43 @@ import { SwapPredictionPanel } from "./components/swap-prediction-panel";
 
 export default function Home() {
   return (
-    <section className="mx-auto w-full max-w-[500px] pt-4 md:pt-12 flex flex-col gap-4">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-4 md:py-10">
       <SwapFormHeader />
-      <SwapForm />
-      <ReferralForm />
-      <SwapSimulationPreview />
-      <SwapMarketIntelligence />
-      <SwapButton />
-      <SwapPredictionPanel />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
+        <div className="space-y-6">
+          <div className="mesh-card p-5 md:p-6">
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-700/70">
+                    Trade ticket
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                    Execute with context
+                  </h2>
+                </div>
+                <div className="stat-pill px-3 py-2 text-right">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                    Mode
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Community assisted
+                  </p>
+                </div>
+              </div>
+              <SwapForm />
+              <ReferralForm />
+              <SwapButton />
+            </div>
+          </div>
+          <SwapSimulationPreview />
+        </div>
+
+        <div className="space-y-6">
+          <SwapMarketIntelligence />
+          <SwapPredictionPanel />
+        </div>
+      </div>
     </section>
   );
 }
