@@ -6,13 +6,13 @@ export default function PoolsPage() {
       <div className="hero-shell">
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="eyebrow">Liquidity arena</p>
+            <p className="eyebrow">Liquidity terminal</p>
             <h1 className="page-heading mt-3">
               Discover the pools that matter right now.
             </h1>
             <p className="page-subheading mt-4">
               Scan the deepest routes, compare pair pricing, and save standout
-              pools to your watchlist before you provide liquidity.
+              pools to your watchlist in a cleaner dark wallet-style flow.
             </p>
           </div>
 

@@ -86,8 +86,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 221 39% 11%;
+    --background: 222 37% 8%;
+    --foreground: 210 40% 96%;
 
     --card: var(--background);
     --card-foreground: var(--foreground);
@@ -95,23 +95,23 @@
     --popover: var(--background);
     --popover-foreground: var(--foreground);
 
-    --primary: 213 94% 42%;
+    --primary: 212 92% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 33% 96%;
-    --secondary-foreground: var(--foreground);
+    --secondary: 221 27% 15%;
+    --secondary-foreground: 210 35% 96%;
 
-    --muted: 213 39% 96%;
-    --muted-foreground: 215 16% 35%;
+    --muted: 221 24% 14%;
+    --muted-foreground: 217 17% 70%;
 
-    --accent: 200 60% 96%;
-    --accent-foreground: var(--foreground);
+    --accent: 220 23% 18%;
+    --accent-foreground: 210 35% 96%;
 
     --destructive: 353 80% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 88%;
-    --input: 214 32% 88%;
+    --border: 219 23% 22%;
+    --input: 219 23% 22%;
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
@@ -124,8 +124,8 @@
   }
   html {
     background:
-      radial-gradient(circle at top, rgba(103, 232, 249, 0.24), transparent 22%),
-      linear-gradient(180deg, #f2f8ff 0%, #ffffff 34%, #eef7ff 100%);
+      radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 24%),
+      linear-gradient(180deg, #09111f 0%, #0b1323 38%, #0c1424 100%);
   }
   html {
     scroll-behavior: smooth;
@@ -135,19 +135,20 @@
     background-image:
       radial-gradient(
         circle at 0% 0%,
-        rgba(14, 165, 233, 0.16),
+        rgba(59, 130, 246, 0.18),
         transparent 24%
       ),
       radial-gradient(
         circle at 100% 0%,
-        rgba(16, 185, 129, 0.16),
+        rgba(56, 189, 248, 0.12),
         transparent 22%
       ),
       radial-gradient(
         circle at 50% 120%,
-        rgba(59, 130, 246, 0.12),
+        rgba(15, 23, 42, 0.42),
         transparent 28%
-      ), linear-gradient(180deg, #f6fbff 0%, #ffffff 36%, #f3f8ff 100%);
+      ),
+      linear-gradient(180deg, #09111f 0%, #0b1323 36%, #0e1728 100%);
     min-height: 100vh;
   }
 
@@ -157,21 +158,21 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+      linear-gradient(rgba(148, 163, 184, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.028) 1px, transparent 1px);
     background-size: 72px 72px;
-    mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.7), transparent);
+    mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent);
     z-index: -1;
   }
 }
 
 @layer components {
   .surface-panel {
-    @apply rounded-[30px] border border-white/80 bg-white/78 shadow-[0_30px_100px_-46px_rgba(15,23,42,0.36)] backdrop-blur-xl;
+    @apply rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,23,42,0.86),rgba(15,23,42,0.72))] text-white shadow-[0_30px_100px_-46px_rgba(2,6,23,0.9)] backdrop-blur-xl;
   }
 
   .glass-strip {
-    @apply rounded-full border border-white/75 bg-white/72 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-2xl;
+    @apply rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.76),rgba(15,23,42,0.58))] text-white shadow-[0_18px_60px_-35px_rgba(2,6,23,0.95)] backdrop-blur-2xl;
   }
 
   .surface-panel-dark {
@@ -179,7 +180,7 @@
   }
 
   .hero-shell {
-    @apply relative overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(135deg,rgba(8,47,73,0.96),rgba(14,116,144,0.9)_42%,rgba(16,185,129,0.72))] px-6 py-8 text-white shadow-[0_35px_120px_-45px_rgba(8,47,73,0.9)];
+    @apply relative overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96)_40%,rgba(30,41,59,0.94)_72%,rgba(37,99,235,0.72))] px-6 py-8 text-white shadow-[0_35px_120px_-45px_rgba(2,6,23,0.95)];
   }
 
   .hero-shell::before {
@@ -213,7 +214,7 @@
   }
 
   .eyebrow {
-    @apply text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-sky-100/85;
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-sky-200/70;
   }
 
   .page-heading {
@@ -221,11 +222,11 @@
   }
 
   .page-subheading {
-    @apply max-w-2xl text-sm leading-6 text-white/78 md:text-base;
+    @apply max-w-2xl text-sm leading-6 text-slate-300/86 md:text-base;
   }
 
   .mesh-card {
-    @apply relative overflow-hidden rounded-[30px] border border-white/75 bg-[linear-gradient(160deg,rgba(255,255,255,0.92),rgba(240,249,255,0.82))] shadow-[0_28px_90px_-48px_rgba(15,23,42,0.36)] backdrop-blur-xl;
+    @apply relative overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(160deg,rgba(15,23,42,0.92),rgba(17,24,39,0.82))] text-white shadow-[0_28px_90px_-48px_rgba(2,6,23,0.95)] backdrop-blur-xl;
   }
 
   .mesh-card::before {
@@ -237,7 +238,7 @@
     border-radius: 9999px;
     background: radial-gradient(
       circle,
-      rgba(56, 189, 248, 0.14),
+      rgba(59, 130, 246, 0.18),
       transparent 70%
     );
     pointer-events: none;
@@ -252,21 +253,21 @@
     border-radius: 9999px;
     background: radial-gradient(
       circle,
-      rgba(16, 185, 129, 0.14),
+      rgba(14, 165, 233, 0.14),
       transparent 68%
     );
     pointer-events: none;
   }
 
   .stat-pill {
-    @apply rounded-[22px] border border-white/70 bg-white/75 px-4 py-3 shadow-[0_12px_34px_-28px_rgba(15,23,42,0.45)] backdrop-blur-xl;
+    @apply rounded-[22px] border border-white/8 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(15,23,42,0.62))] px-4 py-3 text-white shadow-[0_12px_34px_-28px_rgba(2,6,23,0.95)] backdrop-blur-xl;
   }
 }
 
 button[data-tc-connect-button] {
-  @apply rounded-full border border-white/50 bg-[linear-gradient(135deg,#082f49,#0284c7)] px-4 shadow-[0_16px_40px_-22px_rgba(2,132,199,0.85)] transform-none!;
+  @apply rounded-full border border-white/10 bg-[linear-gradient(135deg,#0f172a,#1d4ed8)] px-4 text-white shadow-[0_16px_40px_-22px_rgba(29,78,216,0.75)] transform-none!;
 }
 
 button[data-tc-dropdown-button] {
-  @apply rounded-full border border-white/50 shadow-[0_16px_40px_-22px_rgba(2,132,199,0.85)] transform-none!;
+  @apply rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.76))] text-white shadow-[0_16px_40px_-22px_rgba(29,78,216,0.45)] transform-none!;
 }

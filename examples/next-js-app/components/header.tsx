@@ -10,7 +10,7 @@ import GitHubIcon from "@/public/icons/github.svg";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,255,255,0.58))] backdrop-blur-2xl">
+    <header className="sticky top-0 z-30 border-b border-white/8 bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.58))] backdrop-blur-2xl">
       <section className="container flex min-h-24 items-center gap-4 py-4">
         <a
           href="https://ston.fi/"
@@ -22,16 +22,17 @@ export function Header() {
             width={120}
             height={40}
             alt="logo"
+            className="rounded-full bg-white px-3 py-2"
           />
           <div className="hidden sm:block">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-500">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
               Community Layer
             </p>
-            <p className="text-sm font-semibold text-slate-950">
-              STON Pulse Control Center
+            <p className="text-sm font-semibold text-white">
+              STON Pulse
             </p>
           </div>
-          <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border-0 bg-[linear-gradient(135deg,#0f172a,#0284c7)] text-white shadow-lg">
+          <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0f172a,#2563eb)] text-white shadow-lg">
             pulse
           </Badge>
         </a>
