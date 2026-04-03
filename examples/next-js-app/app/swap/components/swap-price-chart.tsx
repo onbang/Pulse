@@ -5,6 +5,7 @@ import { Dot, TrendingDown, TrendingUp } from "lucide-react";
 
 import { AssetSelect } from "@/components/asset-select";
 import { useI18n } from "@/components/i18n/i18n-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -198,24 +199,6 @@ function formatChartValue(value: number) {
   }).format(value);
 }
 
-function getAssetTone(symbol: string) {
-  const upper = symbol.toUpperCase();
-
-  if (upper === "BTC" || upper === "WBTC") {
-    return "from-amber-400 to-orange-500";
-  }
-
-  if (upper === "TON") {
-    return "from-sky-400 to-blue-500";
-  }
-
-  if (upper === "USDT" || upper === "USDC") {
-    return "from-emerald-400 to-teal-500";
-  }
-
-  return "from-fuchsia-500 to-sky-500";
-}
-
 function analyzeChartSignal(candles: Candle[]): ChartSignal {
   if (candles.length < 4) {
     return {
@@ -360,14 +343,22 @@ export function SwapPriceChart() {
       <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,248,255,0.6))] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div
-              className={cn(
-                "flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-lg font-semibold text-white shadow-[0_16px_34px_-18px_rgba(59,130,246,0.75)]",
-                getAssetTone(trackedLabel),
-              )}
-            >
-              {trackedLabel.slice(0, 1)}
-            </div>
+            <Avatar className="h-14 w-14 rounded-full border border-sky-100 bg-white shadow-[0_16px_34px_-18px_rgba(59,130,246,0.28)]">
+              <AvatarImage
+                src={trackedAsset?.meta?.imageUrl}
+                alt={
+                  trackedAsset
+                    ? normalizeLabel(
+                        trackedAsset.meta?.displayName ?? trackedLabel,
+                      )
+                    : t("swap.chart.selectTokenTitle")
+                }
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-[linear-gradient(135deg,#7354F2,#3DB1FF)] text-lg font-semibold text-white">
+                {(trackedLabel || "T").slice(0, 1)}
+              </AvatarFallback>
+            </Avatar>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-3xl font-semibold tracking-tight text-slate-950">
