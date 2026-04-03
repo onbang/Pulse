@@ -75,8 +75,8 @@ export default function ProfilePage() {
             {t("profile.hero.subtitle")}
           </p>
         </div>
-        <ProfileSummary />
         <DailyCheckInCard />
+        <ProfileSummary />
         <ProfileCheckInHistory />
         <LevelProgressCard />
         <TelegramLaunchCard />
