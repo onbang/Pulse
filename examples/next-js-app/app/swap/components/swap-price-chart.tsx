@@ -139,6 +139,7 @@ export function SwapPriceChart() {
   const min = Math.min(...series);
   const max = Math.max(...series);
   const range = Math.max(max - min, currentPrice * 0.02);
+  const gridRows = [12, 36, 60, 84];
 
   const chartPath = series
     .map((value, index) => {
@@ -150,6 +151,7 @@ export function SwapPriceChart() {
     .join(" ");
 
   const areaPath = `${chartPath} L 100 100 L 0 100 Z`;
+  const endPointY = 100 - ((currentPrice - min) / range) * 100;
   const firstValue = series[0] ?? currentPrice;
   const priceDirection = currentPrice >= firstValue ? "up" : "down";
   const deltaPercent = ((currentPrice - firstValue) / firstValue) * 100;
@@ -243,10 +245,12 @@ export function SwapPriceChart() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(8,47,73,0.06),rgba(255,255,255,0.72))] p-4">
-              <div className="pointer-events-none absolute inset-x-0 top-4 h-px border-t border-dashed border-slate-200" />
-              <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px border-t border-dashed border-slate-200" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-4 h-px border-t border-dashed border-slate-200" />
+            <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_36%),linear-gradient(180deg,rgba(8,47,73,0.06),rgba(255,255,255,0.74))] p-4">
+              <div className="pointer-events-none absolute inset-y-4 right-4 z-0 hidden w-16 flex-col justify-between text-right text-[0.68rem] font-medium text-slate-400 sm:flex">
+                <span>{formatChartValue(max)}</span>
+                <span>{formatChartValue((max + min) / 2)}</span>
+                <span>{formatChartValue(min)}</span>
+              </div>
 
               <svg
                 viewBox="0 0 100 100"
@@ -277,6 +281,17 @@ export function SwapPriceChart() {
                     <stop offset="100%" stopColor="#10b981" />
                   </linearGradient>
                 </defs>
+                {gridRows.map((row) => (
+                  <line
+                    key={row}
+                    x1="0"
+                    x2="100"
+                    y1={row}
+                    y2={row}
+                    stroke="rgba(148,163,184,0.16)"
+                    strokeDasharray="2.5 3.5"
+                  />
+                ))}
 
                 <path d={areaPath} fill="url(#pulse-area)" />
                 <path
@@ -289,11 +304,21 @@ export function SwapPriceChart() {
                 />
                 <circle
                   cx="100"
-                  cy={100 - ((currentPrice - min) / range) * 100}
+                  cy={endPointY}
                   r="2.8"
                   fill="#ffffff"
                   stroke="#0284c7"
                   strokeWidth="2"
+                />
+                <circle
+                  cx="100"
+                  cy={endPointY}
+                  r="5.2"
+                  fill={
+                    priceDirection === "up"
+                      ? "rgba(16,185,129,0.16)"
+                      : "rgba(244,63,94,0.16)"
+                  }
                 />
               </svg>
 
@@ -301,6 +326,33 @@ export function SwapPriceChart() {
                 <span>{TIMEFRAMES[0].key}</span>
                 <span>{timeframe}</span>
                 <span>Now</span>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-[20px] border border-white/75 bg-white/76 px-4 py-3">
+                  <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    Structure high
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {formatChartValue(max)}
+                  </p>
+                </div>
+                <div className="rounded-[20px] border border-white/75 bg-white/76 px-4 py-3">
+                  <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    Structure low
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {formatChartValue(min)}
+                  </p>
+                </div>
+                <div className="rounded-[20px] border border-white/75 bg-white/76 px-4 py-3">
+                  <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    Range
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {Formatter.percent(range / Math.max(min, 0.000001))}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

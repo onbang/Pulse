@@ -12,6 +12,7 @@ import "./globals.css";
 
 const navBarLinks = [
   { href: ROUTES.swap, label: "Swap" },
+  { href: ROUTES.pools, label: "Pools" },
   { href: ROUTES.liquidityProvide, label: "Liquidity provide" },
   { href: ROUTES.liquidityRefund, label: "Liquidity refund" },
   { href: ROUTES.vault, label: "Vault" },
