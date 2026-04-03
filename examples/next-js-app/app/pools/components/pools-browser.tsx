@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { useCommunityProfile } from "@/components/community/community-provider";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -165,6 +166,7 @@ function toPoolCardEntry({
 export function PoolsBrowser() {
   const client = useStonApi();
   const { walletAddress, profile, toggleWatchlist } = useCommunityProfile();
+  const { t } = useI18n();
   const assetsQuery = useAssetsQuery();
 
   const curatedAssets = useMemo(
@@ -243,13 +245,13 @@ export function PoolsBrowser() {
           <Card className="surface-panel">
             <CardContent className="p-5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-                Live shortlist
+                {t("pools.stats.shortlist")}
               </p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {pools.length}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Current high-signal pools surfaced from STON pair data.
+                {t("pools.stats.shortlistBody")}
               </p>
             </CardContent>
           </Card>
@@ -257,13 +259,13 @@ export function PoolsBrowser() {
           <Card className="surface-panel">
             <CardContent className="p-5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-                Total depth
+                {t("pools.stats.depth")}
               </p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {Formatter.fiatAmount(totalLiquidity || 0)}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Combined liquidity represented by the visible pool set.
+                {t("pools.stats.depthBody")}
               </p>
             </CardContent>
           </Card>
@@ -271,13 +273,13 @@ export function PoolsBrowser() {
           <Card className="surface-panel">
             <CardContent className="p-5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-                Watchlist
+                {t("pools.stats.watchlist")}
               </p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {watchedCount}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Pools already saved for quick return from your profile.
+                {t("pools.stats.watchlistBody")}
               </p>
             </CardContent>
           </Card>
@@ -288,13 +290,13 @@ export function PoolsBrowser() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-                  Pool board
+                  {t("pools.board.eyebrow")}
                 </p>
                 <CardTitle className="mt-2 text-2xl text-slate-950">
-                  Curated pool lineup
+                  {t("pools.board.title")}
                 </CardTitle>
                 <CardDescription className="mt-1 max-w-2xl text-slate-600">
-                  A cleaner way to browse where liquidity is concentrated right now.
+                  {t("pools.board.subtitle")}
                 </CardDescription>
               </div>
 
@@ -303,7 +305,7 @@ export function PoolsBrowser() {
                 className="rounded-full border border-sky-100 bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] px-5 text-white shadow-[0_16px_36px_-18px_rgba(1,128,255,0.45)]"
               >
                 <Link href={ROUTES.liquidityProvide}>
-                  Provide liquidity
+                  {t("pools.board.provide")}
                   <ArrowUpRight />
                 </Link>
               </Button>
@@ -326,11 +328,10 @@ export function PoolsBrowser() {
               <div className="mesh-card p-8 text-center">
                 <div className="relative z-10">
                   <p className="text-lg font-semibold text-slate-950">
-                    No pools surfaced yet.
+                    {t("pools.board.emptyTitle")}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    Refresh in a moment or open the liquidity tab to explore a
-                    specific asset pair.
+                    {t("pools.board.emptyBody")}
                   </p>
                 </div>
               </div>
@@ -363,13 +364,20 @@ export function PoolsBrowser() {
                                 {entry.pairLabel}
                               </h3>
                               <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
-                                {intensity}
+                                {t(
+                                  entry.liquidityUsd > 10_000_000
+                                    ? "pools.intensity.institutional"
+                                    : entry.liquidityUsd > 1_000_000
+                                      ? "pools.intensity.high"
+                                      : "pools.intensity.emerging",
+                                )}
                               </Badge>
                             </div>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                              {getDisplayName(entry.assetA)} paired with{" "}
-                              {getDisplayName(entry.assetB)}. Built for users who
-                              want to spot depth before committing LP capital.
+                              {t("pools.card.pairBody", {
+                                assetA: getDisplayName(entry.assetA),
+                                assetB: getDisplayName(entry.assetB),
+                              })}
                             </p>
                           </div>
                         </div>
@@ -394,10 +402,10 @@ export function PoolsBrowser() {
                           >
                             <Star className={cn(isWatched && "fill-current")} />
                             {isWatched
-                              ? "Watching"
+                              ? t("pools.card.watching")
                               : walletAddress
-                                ? "Watch pool"
-                                : "Connect to watch"}
+                                ? t("pools.card.watch")
+                                : t("pools.card.connectToWatch")}
                           </Button>
 
                           <Button
@@ -405,7 +413,7 @@ export function PoolsBrowser() {
                             className="rounded-full border border-sky-100 bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_16px_36px_-18px_rgba(1,128,255,0.45)]"
                           >
                             <Link href={ROUTES.liquidityProvide}>
-                              Open LP flow
+                              {t("pools.card.openLp")}
                               <ArrowUpRight />
                             </Link>
                           </Button>
@@ -415,7 +423,7 @@ export function PoolsBrowser() {
                       <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            Liquidity
+                            {t("pools.card.liquidity")}
                           </p>
                           <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {Formatter.fiatAmount(entry.liquidityUsd || 0)}
@@ -424,19 +432,22 @@ export function PoolsBrowser() {
 
                         <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            Pair ratio
+                            {t("pools.card.ratio")}
                           </p>
                           <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {formatRatio(entry.priceRatio)}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
-                            {getSymbol(entry.assetB)} per {getSymbol(entry.assetA)}
+                            {t("pools.card.ratioHint", {
+                              base: getSymbol(entry.assetA),
+                              quote: getSymbol(entry.assetB),
+                            })}
                           </p>
                         </div>
 
                         <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            LP supply
+                            {t("pools.card.lpSupply")}
                           </p>
                           <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {entry.lpSupplyLabel}
@@ -445,13 +456,13 @@ export function PoolsBrowser() {
 
                         <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            Router
+                            {t("pools.card.router")}
                           </p>
                           <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
                             {entry.routerLabel}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
-                            Pool {entry.poolLabel}
+                            {t("pools.card.poolAddress", { address: entry.poolLabel })}
                           </p>
                         </div>
                       </div>
@@ -461,17 +472,23 @@ export function PoolsBrowser() {
                           <div className="flex items-center gap-2">
                             <Waves className="h-4 w-4 text-sky-600" />
                             <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                              Pulse read
+                              {t("pools.card.pulseRead")}
                             </p>
                           </div>
                           <p className="mt-3 text-xl font-semibold tracking-tight">
-                            {entry.pairLabel} is showing{" "}
-                            {intensity.toLowerCase()}.
+                            {t("pools.card.pulseTitle", {
+                              pair: entry.pairLabel,
+                              intensity: t(
+                                entry.liquidityUsd > 10_000_000
+                                  ? "pools.intensity.institutionalLower"
+                                  : entry.liquidityUsd > 1_000_000
+                                    ? "pools.intensity.highLower"
+                                    : "pools.intensity.emergingLower",
+                              ),
+                            })}
                           </p>
                           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                            Use this route when you want visible depth and a
-                            cleaner starting point before joining liquidity
-                            positions.
+                            {t("pools.card.pulseBody")}
                           </p>
                         </div>
 
@@ -479,7 +496,7 @@ export function PoolsBrowser() {
                           <div className="flex items-center gap-2">
                             <Activity className="h-4 w-4 text-sky-600" />
                             <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                              Quick actions
+                              {t("pools.card.quickActions")}
                             </p>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -488,14 +505,14 @@ export function PoolsBrowser() {
                               variant="outline"
                               className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
-                              <Link href={ROUTES.swap}>Forecast this pair</Link>
+                              <Link href={ROUTES.swap}>{t("pools.card.forecast")}</Link>
                             </Button>
                             <Button
                               asChild
                               variant="outline"
                               className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
-                              <Link href={ROUTES.community}>Open community</Link>
+                              <Link href={ROUTES.community}>{t("pools.card.community")}</Link>
                             </Button>
                           </div>
                         </div>
@@ -512,27 +529,27 @@ export function PoolsBrowser() {
         <Card className="surface-panel overflow-hidden">
           <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.6))]">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-              Discovery flow
+              {t("pools.discovery.eyebrow")}
             </p>
             <CardTitle className="mt-2 text-2xl text-slate-950">
-              How to use this view
+              {t("pools.discovery.title")}
             </CardTitle>
             <CardDescription className="mt-1 text-slate-600">
-              A simpler path from scanning pools to opening a position.
+              {t("pools.discovery.body")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 p-5">
             {[
-              "Check which pairs have the strongest visible liquidity.",
-              "Save interesting pools to your watchlist for quick return.",
-              "Jump into the LP flow once the route feels strong enough.",
+              t("pools.discovery.step1"),
+              t("pools.discovery.step2"),
+              t("pools.discovery.step3"),
             ].map((step, index) => (
               <div
                 key={step}
                 className="rounded-[22px] border border-sky-100 bg-white px-4 py-4"
               >
                 <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-sky-300/55">
-                  Step {index + 1}
+                  {t("pools.discovery.stepLabel", { step: String(index + 1) })}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{step}</p>
               </div>
@@ -543,14 +560,13 @@ export function PoolsBrowser() {
         <Card className="surface-panel overflow-hidden bg-[linear-gradient(145deg,#eef6ff,#f8fbff)]">
           <CardContent className="p-6">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
-              Why this matters
+              {t("pools.why.eyebrow")}
             </p>
             <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-              Pools should feel explorable, not hidden behind forms.
+              {t("pools.why.title")}
             </h3>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              This board turns raw pair lookup into a visual shortlist so users
-              can discover where to act before they commit liquidity.
+              {t("pools.why.body")}
             </p>
           </CardContent>
         </Card>

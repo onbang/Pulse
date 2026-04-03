@@ -191,6 +191,63 @@ export const messages = {
       "Watchlist-ready with community-driven pool context.",
     "pools.hero.goalBody":
       "Move from discovery to providing liquidity in one flow.",
+    "pools.stats.shortlist": "Live shortlist",
+    "pools.stats.shortlistBody":
+      "Current high-signal pools surfaced from STON pair data.",
+    "pools.stats.depth": "Total depth",
+    "pools.stats.depthBody":
+      "Combined liquidity represented by the visible pool set.",
+    "pools.stats.watchlist": "Watchlist",
+    "pools.stats.watchlistBody":
+      "Pools already saved for quick return from your profile.",
+    "pools.board.eyebrow": "Pool board",
+    "pools.board.title": "Curated pool lineup",
+    "pools.board.subtitle":
+      "A cleaner way to browse where liquidity is concentrated right now.",
+    "pools.board.provide": "Provide liquidity",
+    "pools.board.emptyTitle": "No pools surfaced yet.",
+    "pools.board.emptyBody":
+      "Refresh in a moment or open the liquidity tab to explore a specific asset pair.",
+    "pools.intensity.institutional": "Institutional depth",
+    "pools.intensity.high": "High signal",
+    "pools.intensity.emerging": "Emerging route",
+    "pools.intensity.institutionalLower": "institutional depth",
+    "pools.intensity.highLower": "high signal",
+    "pools.intensity.emergingLower": "emerging route",
+    "pools.card.pairBody":
+      "{assetA} paired with {assetB}. Built for users who want to spot depth before committing LP capital.",
+    "pools.card.watching": "Watching",
+    "pools.card.watch": "Watch pool",
+    "pools.card.connectToWatch": "Connect to watch",
+    "pools.card.openLp": "Open LP flow",
+    "pools.card.liquidity": "Liquidity",
+    "pools.card.ratio": "Pair ratio",
+    "pools.card.ratioHint": "{quote} per {base}",
+    "pools.card.lpSupply": "LP supply",
+    "pools.card.router": "Router",
+    "pools.card.poolAddress": "Pool {address}",
+    "pools.card.pulseRead": "Pulse read",
+    "pools.card.pulseTitle": "{pair} is showing {intensity}.",
+    "pools.card.pulseBody":
+      "Use this route when you want visible depth and a cleaner starting point before joining liquidity positions.",
+    "pools.card.quickActions": "Quick actions",
+    "pools.card.forecast": "Forecast this pair",
+    "pools.card.community": "Open community",
+    "pools.discovery.eyebrow": "Discovery flow",
+    "pools.discovery.title": "How to use this view",
+    "pools.discovery.body":
+      "A simpler path from scanning pools to opening a position.",
+    "pools.discovery.step1":
+      "Check which pairs have the strongest visible liquidity.",
+    "pools.discovery.step2":
+      "Save interesting pools to your watchlist for quick return.",
+    "pools.discovery.step3":
+      "Jump into the LP flow once the route feels strong enough.",
+    "pools.discovery.stepLabel": "Step {step}",
+    "pools.why.eyebrow": "Why this matters",
+    "pools.why.title": "Pools should feel explorable, not hidden behind forms.",
+    "pools.why.body":
+      "This board turns raw pair lookup into a visual shortlist so users can discover where to act before they commit liquidity.",
     "comments.title": "Pool comments",
     "comments.subtitle":
       "Leave a short note for liquidity providers. Max 200 characters.",
@@ -428,6 +485,63 @@ export const messages = {
       "Готово для watchlist и community-driven анализа.",
     "pools.hero.goalBody":
       "Переходи от discovery к добавлению ликвидности в один поток.",
+    "pools.stats.shortlist": "Живой shortlist",
+    "pools.stats.shortlistBody":
+      "Актуальные strong-signal пулы, собранные из данных STON по парам.",
+    "pools.stats.depth": "Общая глубина",
+    "pools.stats.depthBody":
+      "Суммарная ликвидность, представленная в текущем наборе пулов.",
+    "pools.stats.watchlist": "Вотчлист",
+    "pools.stats.watchlistBody":
+      "Пулы, которые уже сохранены для быстрого возврата из профиля.",
+    "pools.board.eyebrow": "Доска пулов",
+    "pools.board.title": "Подборка ключевых пулов",
+    "pools.board.subtitle":
+      "Более понятный способ посмотреть, где сейчас сосредоточена ликвидность.",
+    "pools.board.provide": "Добавить ликвидность",
+    "pools.board.emptyTitle": "Пулы пока не найдены.",
+    "pools.board.emptyBody":
+      "Обнови экран чуть позже или открой вкладку ликвидности для конкретной пары активов.",
+    "pools.intensity.institutional": "Институциональная глубина",
+    "pools.intensity.high": "Сильный сигнал",
+    "pools.intensity.emerging": "Растущий маршрут",
+    "pools.intensity.institutionalLower": "институциональную глубину",
+    "pools.intensity.highLower": "сильный сигнал",
+    "pools.intensity.emergingLower": "растущий маршрут",
+    "pools.card.pairBody":
+      "{assetA} в паре с {assetB}. Подходит тем, кто хочет сначала увидеть глубину, а уже потом заходить в LP.",
+    "pools.card.watching": "В вотчлисте",
+    "pools.card.watch": "В watchlist",
+    "pools.card.connectToWatch": "Подключи кошелек",
+    "pools.card.openLp": "Открыть LP flow",
+    "pools.card.liquidity": "Ликвидность",
+    "pools.card.ratio": "Соотношение пары",
+    "pools.card.ratioHint": "{quote} за {base}",
+    "pools.card.lpSupply": "LP supply",
+    "pools.card.router": "Роутер",
+    "pools.card.poolAddress": "Пул {address}",
+    "pools.card.pulseRead": "Пульс пары",
+    "pools.card.pulseTitle": "Для {pair} сейчас виден {intensity}.",
+    "pools.card.pulseBody":
+      "Используй этот маршрут, если тебе нужна видимая глубина и более понятная точка входа перед добавлением ликвидности.",
+    "pools.card.quickActions": "Быстрые действия",
+    "pools.card.forecast": "Прогноз по паре",
+    "pools.card.community": "Открыть комьюнити",
+    "pools.discovery.eyebrow": "Сценарий открытия",
+    "pools.discovery.title": "Как пользоваться этим экраном",
+    "pools.discovery.body":
+      "Более простой путь от просмотра пулов к открытию позиции.",
+    "pools.discovery.step1":
+      "Сначала посмотри, в каких парах сейчас самая заметная ликвидность.",
+    "pools.discovery.step2":
+      "Сохрани интересные пулы в watchlist, чтобы быстро вернуться к ним позже.",
+    "pools.discovery.step3":
+      "Переходи в LP flow, когда маршрут и глубина выглядят достаточно сильными.",
+    "pools.discovery.stepLabel": "Шаг {step}",
+    "pools.why.eyebrow": "Почему это важно",
+    "pools.why.title": "Пулы должны исследоваться легко, а не прятаться за формами.",
+    "pools.why.body":
+      "Этот экран превращает сырой поиск пар в наглядный shortlist, чтобы пользователь понимал, куда идти еще до добавления ликвидности.",
     "comments.title": "Комментарии к пулу",
     "comments.subtitle":
       "Оставь короткую заметку для поставщиков ликвидности. До 200 символов.",
