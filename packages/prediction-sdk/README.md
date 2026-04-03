@@ -9,6 +9,7 @@ What is in the package:
 - A contract wrapper for the market treasury/contract address
 - A stable machine-readable comment format for bet reconciliation
 - A contract specification draft in `contracts/`
+- deployment notes in `contracts/DEPLOYMENT.md`
 
 Current status:
 

@@ -2,6 +2,7 @@ import { mkdir, readFile, stat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
 import { Address } from "@ton/core";
+import { parsePredictionContractPayloadBase64 } from "@ston-pulse/prediction-sdk";
 
 import {
   COMMENT_POINTS,
@@ -25,7 +26,11 @@ import {
   defaultCommunityStore,
   normalizeNotificationPreferences,
 } from "@/lib/community";
-import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import {
+  getPredictionEntryAddress,
+  getPredictionMarketAddress,
+  isPredictionContractModeEnabled,
+} from "@/lib/prediction-config";
 import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
 
 const databaseFile =
@@ -1119,16 +1124,18 @@ async function syncOnchainPredictionTransactions(
   db: DatabaseSync,
   walletAddress: string | null,
 ) {
-  const treasuryAddress = getPredictionTreasuryAddress();
+  const entryAddress = getPredictionEntryAddress();
+  const contractAddress = getPredictionMarketAddress();
+  const isContractMode = isPredictionContractModeEnabled();
 
-  if (!treasuryAddress) {
+  if (!entryAddress) {
     return;
   }
 
   try {
     const response = await fetch(
       `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
-        treasuryAddress,
+        entryAddress,
       )}/transactions?limit=50`,
       {
         headers: process.env.TON_CONSOLE_API_KEY
@@ -1173,14 +1180,19 @@ async function syncOnchainPredictionTransactions(
       }
 
       const comment = extractMessageComment(incomingMessage);
-      const parsed = parsePredictionTransferComment(comment);
+      const parsedComment = parsePredictionTransferComment(comment);
+      const parsedContractPayload =
+        isContractMode && normalizeTonAddress(entryAddress) === normalizeTonAddress(contractAddress)
+          ? extractPredictionContractPayload(incomingMessage)
+          : null;
 
-      if (!txHash || !normalizedSourceAddress || !parsed) {
+      if (!txHash || !normalizedSourceAddress || (!parsedComment && !parsedContractPayload)) {
         continue;
       }
 
-      const pairId =
-        parsed.pairId ?? resolvePredictionPairIdByLabel(db, parsed.label);
+      const pairId = parsedContractPayload?.marketId
+        ? parsedContractPayload.marketId
+        : parsedComment?.pairId ?? resolvePredictionPairIdByLabel(db, parsedComment?.label ?? "");
 
       if (!pairId) {
         continue;
@@ -1201,9 +1213,23 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
-      const round = ensureRoundState(db, pairId, parsed.label);
+      const round = ensureRoundState(
+        db,
+        pairId,
+        parsedContractPayload?.label ?? parsedComment?.label ?? pairId,
+      );
 
       if (round.status !== "open") {
+        continue;
+      }
+
+      const amount = parsedContractPayload
+        ? extractMessageTonValue(incomingMessage)
+        : parsedComment?.amount ?? 0;
+      const direction = parsedContractPayload?.direction ?? parsedComment?.direction;
+      const label = parsedContractPayload?.label ?? parsedComment?.label ?? pairId;
+
+      if (!direction || !Number.isFinite(amount) || amount <= 0) {
         continue;
       }
 
@@ -1212,7 +1238,7 @@ async function syncOnchainPredictionTransactions(
         db.prepare(`
           INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
           VALUES (?, ?, ?)
-        `).run(pairId, normalizedSourceAddress, parsed.direction);
+        `).run(pairId, normalizedSourceAddress, direction);
 
         db.prepare(`
           INSERT INTO prediction_bets (
@@ -1230,11 +1256,11 @@ async function syncOnchainPredictionTransactions(
         `).run(
           `onchain-${txHash}`,
           pairId,
-          parsed.label,
+          label,
           normalizedSourceAddress,
           current.display_name,
-          Math.round(parsed.amount * 100) / 100,
-          parsed.direction,
+          Math.round(amount * 100) / 100,
+          direction,
           new Date().toISOString(),
           txHash,
           "onchain_sync",
@@ -1252,7 +1278,7 @@ async function syncOnchainPredictionTransactions(
           author: current.display_name,
           createdAt: new Date().toISOString(),
           title: "Synced onchain prediction bet",
-          detail: `${parsed.direction === "up" ? "Bullish" : "Bearish"} on ${parsed.label} for ${parsed.amount.toFixed(2)} TON.`,
+          detail: `${direction === "up" ? "Bullish" : "Bearish"} on ${label} for ${amount.toFixed(2)} TON.`,
         });
 
         db.exec("COMMIT");
@@ -1263,6 +1289,68 @@ async function syncOnchainPredictionTransactions(
   } catch {
     return;
   }
+}
+
+function extractPredictionContractPayload(
+  message: Record<string, unknown> | null,
+) {
+  if (!message) {
+    return null;
+  }
+
+  const candidates = [
+    message.body,
+    message.raw_body,
+    message.boc,
+    message.payload,
+    (message.message_content as Record<string, unknown> | undefined)?.body,
+    (message.messageContent as Record<string, unknown> | undefined)?.body,
+    (message.message_content as Record<string, unknown> | undefined)?.payload,
+    (message.messageContent as Record<string, unknown> | undefined)?.payload,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string" || candidate.trim().length === 0) {
+      continue;
+    }
+
+    const parsed = parsePredictionContractPayloadBase64(candidate);
+
+    if (parsed?.type === "place_bet") {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function extractMessageTonValue(message: Record<string, unknown> | null) {
+  if (!message) {
+    return 0;
+  }
+
+  const candidates = [
+    message.value,
+    message.amount,
+    (message.value as Record<string, unknown> | undefined)?.coins,
+    (message.amount as Record<string, unknown> | undefined)?.value,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return candidate / 1_000_000_000;
+    }
+
+    if (typeof candidate === "string") {
+      const numeric = Number(candidate);
+
+      if (Number.isFinite(numeric)) {
+        return numeric / 1_000_000_000;
+      }
+    }
+  }
+
+  return 0;
 }
 
 export async function getCommunityState(walletAddress: string | null) {

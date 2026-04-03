@@ -12,6 +12,7 @@ export {
   buildPredictionPlaceBetPayloadBase64,
   buildPredictionPlaceBetTransferMessage,
   buildPredictionSettleRoundPayloadBase64,
+  parsePredictionContractPayloadBase64,
   parsePredictionBetComment,
   resolvePredictionTreasuryAddress,
 } from "./messages";
@@ -23,6 +24,7 @@ export {
 } from "./opcodes";
 export type {
   ParsedPredictionBetTransfer,
+  ParsedPredictionContractPayload,
   PredictionClaimInput,
   PredictionBetTransferInput,
   PredictionCloseRoundInput,

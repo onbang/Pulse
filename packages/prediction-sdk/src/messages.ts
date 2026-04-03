@@ -1,4 +1,4 @@
-import { beginCell, toNano } from "@ton/core";
+import { beginCell, Cell, toNano } from "@ton/core";
 
 import {
   DEFAULT_PREDICTION_TREASURY_ADDRESS,
@@ -11,6 +11,7 @@ import {
   PREDICTION_OP_SETTLE_ROUND,
 } from "./opcodes";
 import type {
+  ParsedPredictionContractPayload,
   PredictionClaimInput,
   PredictionCloseRoundInput,
   ParsedPredictionBetTransfer,
@@ -199,6 +200,75 @@ export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
     .endCell()
     .toBoc()
     .toString("base64");
+}
+
+export function parsePredictionContractPayloadBase64(
+  value?: string | null,
+): ParsedPredictionContractPayload | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const slice = Cell.fromBase64(value).beginParse();
+    const opcode = slice.loadUint(32);
+
+    if (opcode === PREDICTION_OP_PLACE_BET) {
+      const marketId = slice.loadStringTail();
+      const label = slice.loadRef().beginParse().loadStringTail();
+      const direction = slice.loadUint(8) === 1 ? "up" : "down";
+
+      if (!marketId || !label) {
+        return null;
+      }
+
+      return {
+        type: "place_bet",
+        marketId,
+        label,
+        direction,
+      };
+    }
+
+    if (opcode === PREDICTION_OP_CLOSE_ROUND) {
+      const marketId = slice.loadStringTail();
+
+      return marketId
+        ? {
+            type: "close_round",
+            marketId,
+          }
+        : null;
+    }
+
+    if (opcode === PREDICTION_OP_SETTLE_ROUND) {
+      const marketId = slice.loadStringTail();
+      const result = slice.loadUint(8) === 1 ? "up" : "down";
+
+      return marketId
+        ? {
+            type: "settle_round",
+            marketId,
+            result,
+          }
+        : null;
+    }
+
+    if (opcode === PREDICTION_OP_CLAIM) {
+      const marketId = slice.loadStringTail();
+
+      return marketId
+        ? {
+            type: "claim",
+            marketId,
+          }
+        : null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function isPredictionDirection(

@@ -31,3 +31,24 @@ export type PredictionSettleRoundInput = {
   marketId: string;
   result: PredictionDirection;
 };
+
+export type ParsedPredictionContractPayload =
+  | {
+      type: "place_bet";
+      marketId: string;
+      label: string;
+      direction: PredictionDirection;
+    }
+  | {
+      type: "close_round";
+      marketId: string;
+    }
+  | {
+      type: "settle_round";
+      marketId: string;
+      result: PredictionDirection;
+    }
+  | {
+      type: "claim";
+      marketId: string;
+    };
