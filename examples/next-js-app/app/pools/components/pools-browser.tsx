@@ -1,10 +1,12 @@
 "use client";
 
+import { beginCell, toNano } from "@ton/core";
 import type { AssetInfoV2, PoolInfo } from "@ston-fi/api";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, ArrowUpRight, Star, Waves } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 
 import { useCommunityProfile } from "@/components/community/community-provider";
 import { useI18n } from "@/components/i18n/i18n-provider";
@@ -17,11 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/constants";
 import { useAssetsQuery } from "@/hooks/use-assets-query";
 import { useStonApi } from "@/hooks/use-ston-api";
+import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
+import { cn, validateFloatValue } from "@/lib/utils";
 
 type PoolCardEntry = {
   id: string;
@@ -161,6 +165,133 @@ function toPoolCardEntry({
     poolLabel: safeAddressLabel(pool.address),
     lpSupplyLabel: safeLpSupplyLabel(pool.lpTotalSupply),
   };
+}
+
+function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
+  const { t } = useI18n();
+  const { walletAddress, submitPrediction } = useCommunityProfile();
+  const { toast } = useToast();
+  const [tonConnectUI] = useTonConnectUI();
+  const [stakeAmount, setStakeAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const predictionTreasuryAddress =
+    process.env.NEXT_PUBLIC_PREDICTION_TREASURY_ADDRESS?.trim() ?? "";
+  const numericStake = Number(stakeAmount);
+  const isStakeValid =
+    stakeAmount.trim().length > 0 &&
+    validateFloatValue(stakeAmount, 2) &&
+    Number.isFinite(numericStake) &&
+    numericStake > 0;
+
+  const placePrediction = async (direction: "up" | "down") => {
+    if (
+      !walletAddress ||
+      !predictionTreasuryAddress ||
+      !isStakeValid ||
+      isSubmitting
+    ) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const payload = beginCell()
+        .storeUint(0, 32)
+        .storeStringTail(
+          `Pulse pool prediction | ${props.pairLabel} | ${direction.toUpperCase()} | ${numericStake} TON`,
+        )
+        .endCell()
+        .toBoc()
+        .toString("base64");
+
+      await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+        messages: [
+          {
+            address: predictionTreasuryAddress,
+            amount: toNano(stakeAmount).toString(),
+            payload,
+          },
+        ],
+      });
+
+      const submitted = await submitPrediction({
+        pairId: props.pairId,
+        label: props.pairLabel,
+        direction,
+        amount: numericStake,
+      });
+
+      if (submitted) {
+        toast({
+          title: t("prediction.txSent"),
+          description: t("prediction.txSentBody", {
+            amount: numericStake.toFixed(2),
+          }),
+        });
+        setStakeAmount("");
+      }
+    } catch {
+      toast({
+        title: t("prediction.txFailed"),
+        description: t("prediction.txFailedBody"),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 space-y-3">
+      <Input
+        className="h-11 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
+        inputMode="decimal"
+        value={stakeAmount}
+        disabled={!walletAddress}
+        onChange={(event) => {
+          if (event.target.value && !validateFloatValue(event.target.value, 2)) {
+            return;
+          }
+
+          setStakeAmount(event.target.value);
+        }}
+        placeholder={
+          walletAddress
+            ? t("prediction.stakePlaceholder")
+            : t("prediction.connectToVote")
+        }
+      />
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Button
+          variant="outline"
+          disabled={
+            !walletAddress ||
+            !predictionTreasuryAddress ||
+            !isStakeValid ||
+            isSubmitting
+          }
+          className="rounded-2xl border-emerald-200 bg-emerald-50 text-slate-900 hover:bg-emerald-100"
+          onClick={() => void placePrediction("up")}
+        >
+          {t("prediction.bullish")}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={
+            !walletAddress ||
+            !predictionTreasuryAddress ||
+            !isStakeValid ||
+            isSubmitting
+          }
+          className="rounded-2xl border-rose-200 bg-rose-50 text-slate-900 hover:bg-rose-100"
+          onClick={() => void placePrediction("down")}
+        >
+          {t("prediction.bearish")}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function PoolsBrowser() {
@@ -505,16 +636,13 @@ export function PoolsBrowser() {
                               variant="outline"
                               className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
-                              <Link href={ROUTES.swap}>{t("pools.card.forecast")}</Link>
-                            </Button>
-                            <Button
-                              asChild
-                              variant="outline"
-                              className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
-                            >
                               <Link href={ROUTES.community}>{t("pools.card.community")}</Link>
                             </Button>
                           </div>
+                          <PoolQuickPrediction
+                            pairId={`pool:${entry.pool.address}`}
+                            pairLabel={entry.pairLabel}
+                          />
                         </div>
                       </div>
                     </div>
