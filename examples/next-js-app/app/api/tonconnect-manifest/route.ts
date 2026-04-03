@@ -7,6 +7,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     url: origin,
     name: "STON Pulse",
-    iconUrl: "https://static.ston.fi/logo/external-logo.jpg",
+    iconUrl: `${origin}/pulse-logo.png`,
   });
 }

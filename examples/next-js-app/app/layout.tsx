@@ -25,6 +25,10 @@ const navBarLinks = [
 
 export const metadata: Metadata = {
   title: "STON Pulse",
+  icons: {
+    icon: "/pulse-logo.png",
+    apple: "/pulse-logo.png",
+  },
 };
 
 export default function RootLayout({
