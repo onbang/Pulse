@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPredictionEntryAddress } from "@/lib/prediction-config";
+import { parsePredictionTokenMarketId } from "@/lib/prediction-timeframes";
 import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
 import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
@@ -143,15 +144,31 @@ export function PricePredictionCard(props: {
   const previewDownPool = downPool + (isStakeValid ? numericStake : 0);
   const previewTotalPool = totalPool + (isStakeValid ? numericStake : 0);
   const displayedUpShare =
-    previewTotalPool > 0 ? Math.round((previewUpPool / previewTotalPool) * 100) : upShare;
+    previewTotalPool > 0
+      ? Math.round((previewUpPool / previewTotalPool) * 100)
+      : upShare;
   const displayedDownShare =
     previewTotalPool > 0
       ? Math.round((previewDownPool / previewTotalPool) * 100)
       : downShare;
   const displayedUpOdds =
-    isStakeValid && previewUpPool > 0 ? previewTotalPool / previewUpPool : upOdds;
+    isStakeValid && previewUpPool > 0
+      ? previewTotalPool / previewUpPool
+      : upOdds;
   const displayedDownOdds =
-    isStakeValid && previewDownPool > 0 ? previewTotalPool / previewDownPool : downOdds;
+    isStakeValid && previewDownPool > 0
+      ? previewTotalPool / previewDownPool
+      : downOdds;
+  const upSplitWidth = totalPool > 0 ? upShare : 50;
+  const downSplitWidth = totalPool > 0 ? downShare : 50;
+  const parsedMarket = parsePredictionTokenMarketId(props.pairId);
+  const [tokenLabelPart, timeframeLabelPart] = props.label
+    .split("•")
+    .map((part) => part.trim());
+  const marketTokenLabel = tokenLabelPart || props.label;
+  const marketTimeframeLabel =
+    parsedMarket?.timeframe ?? timeframeLabelPart ?? t("prediction.pending");
+  const currentMarketSplit = `${upSplitWidth}% / ${downSplitWidth}%`;
 
   const placePrediction = async (direction: "up" | "down") => {
     if (!canPlacePrediction) {
@@ -243,7 +260,9 @@ export function PricePredictionCard(props: {
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-slate-950">{t("prediction.title")}</CardTitle>
+            <CardTitle className="text-slate-950">
+              {t("prediction.title")}
+            </CardTitle>
             <CardDescription className="text-slate-600">
               {t("prediction.subtitle", { label: props.label })}
             </CardDescription>
@@ -258,26 +277,64 @@ export function PricePredictionCard(props: {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid gap-3 rounded-[26px] border border-sky-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.95))] p-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              {t("prediction.marketContract")}
+            </p>
+            <p className="mt-2 text-lg font-semibold text-slate-950">
+              {marketTokenLabel}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {marketTimeframeLabel}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              {t("prediction.roundStatus")}
+            </p>
+            <p className="mt-2 text-lg font-semibold capitalize text-slate-950">
+              {round
+                ? t(
+                    `prediction.roundStatus${round.status.charAt(0).toUpperCase()}${round.status.slice(1)}`,
+                  )
+                : t("prediction.pending")}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {round?.status === "settled"
+                ? t("prediction.awaitingSettlement")
+                : t("prediction.marketLiquidityBody")}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              {t("prediction.timeLeft")}
+            </p>
+            <p className="mt-2 text-lg font-semibold text-slate-950">
+              {round && isRoundOpen
+                ? `${hoursLeft}h ${minutesLeft}m`
+                : round
+                  ? t("prediction.closed")
+                  : t("prediction.pending")}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {t("prediction.marketClockBody")}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              {t("prediction.totalPool")}
+            </p>
+            <p className="mt-2 text-lg font-semibold text-slate-950">
+              {totalPool.toFixed(2)} TON
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {t("prediction.marketLiquidityBody")}
+            </p>
+          </div>
+        </div>
         {round ? (
           <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                {t("prediction.roundStatus")}
-              </p>
-              <p className="text-lg font-semibold capitalize text-slate-900">
-                {t(
-                  `prediction.roundStatus${round.status.charAt(0).toUpperCase()}${round.status.slice(1)}`,
-                )}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                {t("prediction.timeLeft")}
-              </p>
-              <p className="text-lg font-semibold text-slate-900">
-                {isRoundOpen ? `${hoursLeft}h ${minutesLeft}m` : t("prediction.closed")}
-              </p>
-            </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 {t("prediction.winner")}
@@ -292,28 +349,130 @@ export function PricePredictionCard(props: {
             </div>
           </div>
         ) : null}
-        <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              {t("prediction.totalPool")}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900">{totalPool.toFixed(2)} TON</p>
+        <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,249,255,0.94))] p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                {t("prediction.crowdSplit")}
+              </p>
+              <div className="mt-3 flex items-baseline gap-3">
+                <span className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {currentMarketSplit}
+                </span>
+                <span className="text-sm text-slate-500">
+                  {t("prediction.marketSplitBody")}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
+              {t("prediction.chooseDirection")}
+            </div>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              {t("prediction.upOdds")}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900">
-              {upOdds > 0 ? `${upOdds.toFixed(2)}x` : "-"}
-            </p>
+
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="flex h-full w-full">
+              <div
+                className="h-full bg-[linear-gradient(90deg,#34d399,#22c55e)]"
+                style={{ width: `${upSplitWidth}%` }}
+              />
+              <div
+                className="h-full bg-[linear-gradient(90deg,#fb7185,#f43f5e)]"
+                style={{ width: `${downSplitWidth}%` }}
+              />
+            </div>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              {t("prediction.downOdds")}
-            </p>
-            <p className="text-2xl font-semibold text-slate-900">
-              {downOdds > 0 ? `${downOdds.toFixed(2)}x` : "-"}
-            </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Button
+              variant="outline"
+              disabled={!canPlacePrediction}
+              className="h-auto min-h-[168px] flex-col items-start rounded-[28px] border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.95),rgba(220,252,231,0.86))] p-5 text-left text-slate-900 hover:bg-emerald-100"
+              onClick={() => void placePrediction("up")}
+            >
+              <div className="flex w-full items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-base font-semibold">
+                  <TrendingUp className="text-emerald-600" />
+                  {t("prediction.bullish")}
+                </span>
+                <Badge className="border-emerald-200 bg-white/80 text-emerald-700">
+                  {displayedUpOdds > 0 ? `${displayedUpOdds.toFixed(2)}x` : "-"}
+                </Badge>
+              </div>
+              <div className="mt-5 flex items-end gap-3">
+                <span className="text-4xl font-semibold tracking-tight text-slate-950">
+                  {displayedUpShare}%
+                </span>
+                <span className="pb-1 text-sm font-medium text-slate-500">
+                  {t("prediction.upsideBody")}
+                </span>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {isStakeValid
+                  ? t("prediction.previewReturn", {
+                      amount: previewUpPayout.toFixed(2),
+                    })
+                  : t("prediction.enterStakeHint")}
+              </p>
+              <div className="mt-5 flex w-full items-center justify-between text-xs font-medium text-slate-500">
+                <span>
+                  {isStakeValid
+                    ? t("prediction.stakeLine", {
+                        amount: numericStake.toFixed(2),
+                      })
+                    : t("prediction.stakeAmount")}
+                </span>
+                <span>
+                  {displayedUpOdds > 0 ? `${displayedUpOdds.toFixed(2)}x` : "-"}
+                </span>
+              </div>
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!canPlacePrediction}
+              className="h-auto min-h-[168px] flex-col items-start rounded-[28px] border-rose-200 bg-[linear-gradient(180deg,rgba(255,241,242,0.96),rgba(255,228,230,0.88))] p-5 text-left text-slate-900 hover:bg-rose-100"
+              onClick={() => void placePrediction("down")}
+            >
+              <div className="flex w-full items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-base font-semibold">
+                  <TrendingDown className="text-rose-600" />
+                  {t("prediction.bearish")}
+                </span>
+                <Badge className="border-rose-200 bg-white/80 text-rose-700">
+                  {displayedDownOdds > 0
+                    ? `${displayedDownOdds.toFixed(2)}x`
+                    : "-"}
+                </Badge>
+              </div>
+              <div className="mt-5 flex items-end gap-3">
+                <span className="text-4xl font-semibold tracking-tight text-slate-950">
+                  {displayedDownShare}%
+                </span>
+                <span className="pb-1 text-sm font-medium text-slate-500">
+                  {t("prediction.downsideBody")}
+                </span>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {isStakeValid
+                  ? t("prediction.previewReturn", {
+                      amount: previewDownPayout.toFixed(2),
+                    })
+                  : t("prediction.enterStakeHint")}
+              </p>
+              <div className="mt-5 flex w-full items-center justify-between text-xs font-medium text-slate-500">
+                <span>
+                  {isStakeValid
+                    ? t("prediction.stakeLine", {
+                        amount: numericStake.toFixed(2),
+                      })
+                    : t("prediction.stakeAmount")}
+                </span>
+                <span>
+                  {displayedDownOdds > 0
+                    ? `${displayedDownOdds.toFixed(2)}x`
+                    : "-"}
+                </span>
+              </div>
+            </Button>
           </div>
         </div>
         {walletAddress ? (
@@ -349,7 +508,7 @@ export function PricePredictionCard(props: {
                         up: previewUpPayout.toFixed(2),
                         down: previewDownPayout.toFixed(2),
                       })
-                  : "-"}
+                    : "-"}
               </p>
               <p className="text-sm text-slate-600">
                 {myPotentialPayout > 0
@@ -391,45 +550,13 @@ export function PricePredictionCard(props: {
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-500">
-            {t("prediction.payoutHint")}
-          </p>
+          <p className="text-xs text-slate-500">{t("prediction.payoutHint")}</p>
         )}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Button
-            variant="outline"
-            disabled={!canPlacePrediction}
-            className="h-auto justify-between rounded-2xl border-emerald-200 bg-emerald-50 py-4 text-slate-900 hover:bg-emerald-100"
-            onClick={() => void placePrediction("up")}
-          >
-            <span className="inline-flex items-center gap-2">
-              <TrendingUp className="text-emerald-600" />
-              {t("prediction.bullish")}
-            </span>
-            <strong>
-              {displayedUpShare}% · {displayedUpOdds > 0 ? `${displayedUpOdds.toFixed(2)}x` : "-"}
-            </strong>
-          </Button>
-          <Button
-            variant="outline"
-            disabled={!canPlacePrediction}
-            className="h-auto justify-between rounded-2xl border-rose-200 bg-rose-50 py-4 text-slate-900 hover:bg-rose-100"
-            onClick={() => void placePrediction("down")}
-          >
-            <span className="inline-flex items-center gap-2">
-              <TrendingDown className="text-rose-600" />
-              {t("prediction.bearish")}
-            </span>
-            <strong>
-              {displayedDownShare}% · {displayedDownOdds > 0 ? `${displayedDownOdds.toFixed(2)}x` : "-"}
-            </strong>
-          </Button>
-        </div>
         {isRoundClosed && !canAutoReopenRound ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-              <h4 className="text-sm font-semibold text-slate-900">
+                <h4 className="text-sm font-semibold text-slate-900">
                   {t("prediction.settleTitle")}
                 </h4>
                 <p className="text-sm text-slate-600">
@@ -476,9 +603,7 @@ export function PricePredictionCard(props: {
           </div>
           <div className="space-y-2">
             {topBets.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                {t("prediction.noBets")}
-              </p>
+              <p className="text-sm text-slate-500">{t("prediction.noBets")}</p>
             ) : (
               topBets.map((bet, index) => (
                 <div
@@ -499,7 +624,7 @@ export function PricePredictionCard(props: {
                       : t("prediction.down")}
                   </Badge>
                   <span className="font-semibold">
-                    {bet.amount.toFixed(2)} pts
+                    {bet.amount.toFixed(2)} TON
                   </span>
                 </div>
               ))
@@ -541,7 +666,7 @@ export function PricePredictionCard(props: {
                       </p>
                     </div>
                     <span className="font-semibold text-emerald-700">
-                      {item.estimatedPayout.toFixed(2)} pts
+                      {item.estimatedPayout.toFixed(2)} TON
                     </span>
                   </div>
                 ))
@@ -580,34 +705,32 @@ export function PricePredictionCard(props: {
                   {t("prediction.totalRoundPool")}
                 </p>
                 <p className="text-sm font-medium text-slate-800">
-                  {latestSettlement.totalPool.toFixed(2)} pts
+                  {latestSettlement.totalPool.toFixed(2)} TON
                 </p>
               </div>
             </div>
           </div>
         ) : null}
-        <p className="text-sm text-slate-600">
-          {t("prediction.disclaimer")}
-        </p>
-          {!walletAddress ? (
-            <p className="text-sm text-slate-500">
-              {t("prediction.connectToVote")}
-            </p>
-          ) : !predictionEntryAddress ? (
-            <p className="text-sm text-amber-600">
-              {t("prediction.treasuryMissing")}
-            </p>
-          ) : !isRoundOpen ? (
-            <p className="text-sm text-slate-500">
-              {t("prediction.openRoundEnded")}
-            </p>
-          ) : isSubmittingTx ? (
-            <p className="text-sm text-slate-500">
-              {t("prediction.txInProgress")}
-            </p>
-          ) : !isStakeValid ? (
-            <p className="text-sm text-slate-500">
-              {t("prediction.validStakeHint")}
+        <p className="text-sm text-slate-600">{t("prediction.disclaimer")}</p>
+        {!walletAddress ? (
+          <p className="text-sm text-slate-500">
+            {t("prediction.connectToVote")}
+          </p>
+        ) : !predictionEntryAddress ? (
+          <p className="text-sm text-amber-600">
+            {t("prediction.treasuryMissing")}
+          </p>
+        ) : !isRoundOpen ? (
+          <p className="text-sm text-slate-500">
+            {t("prediction.openRoundEnded")}
+          </p>
+        ) : isSubmittingTx ? (
+          <p className="text-sm text-slate-500">
+            {t("prediction.txInProgress")}
+          </p>
+        ) : !isStakeValid ? (
+          <p className="text-sm text-slate-500">
+            {t("prediction.validStakeHint")}
           </p>
         ) : null}
       </CardContent>

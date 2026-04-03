@@ -14,12 +14,12 @@ export function Header() {
   const { t } = useI18n();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(244,248,255,0.84))] backdrop-blur-2xl">
-      <section className="container flex min-h-24 items-center gap-4 py-4">
+    <header className="sticky top-0 z-30 border-b border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,248,255,0.88))] backdrop-blur-2xl">
+      <section className="container flex min-h-22 items-center gap-3 py-4">
         <a
           href="https://ston.fi/"
           target="_blank noopener noreferrer"
-          className="mesh-card relative mr-auto flex items-center gap-4 rounded-full px-3 py-3 transition-transform duration-200 hover:-translate-y-0.5"
+          className="mesh-card relative mr-auto flex items-center gap-4 rounded-full px-3 py-3.5 transition-transform duration-200 hover:-translate-y-0.5"
         >
           <Image
             src="/pulse-logo.png"
@@ -29,7 +29,7 @@ export function Header() {
             className="h-11 w-auto rounded-full object-contain"
             priority
           />
-          <div className="hidden sm:block">
+          <div className="hidden min-w-0 sm:block">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-500">
               {t("header.communityLayer")}
             </p>
@@ -51,14 +51,14 @@ export function Header() {
         <a
           href="https://github.com/ston-fi/sdk"
           target="_blank noopener noreferrer"
-          className="glass-strip p-2 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
+          className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
         >
           <Image src={GitHubIcon} alt="GitHub" width={24} height={24} />
         </a>
         <a
           href="https://docs.ston.fi/docs/developer-section/sdk"
           target="_blank noopener noreferrer"
-          className="glass-strip p-2 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
+          className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
         >
           <Image src={GitBookIcon} alt="GitBook" width={24} height={24} />
         </a>

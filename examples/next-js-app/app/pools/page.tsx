@@ -14,13 +14,11 @@ export default function PoolsPage() {
           <div className="max-w-3xl">
             <p className="eyebrow">{t("pools.hero.eyebrow")}</p>
             <h1 className="page-heading mt-3">{t("pools.hero.title")}</h1>
-            <p className="page-subheading mt-4">
-              {t("pools.hero.subtitle")}
-            </p>
+            <p className="page-subheading mt-4">{t("pools.hero.subtitle")}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+            <div className="stat-pill px-4 py-4">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {t("pools.hero.coverage")}
               </p>
@@ -31,7 +29,7 @@ export default function PoolsPage() {
                 {t("pools.hero.coverageBody")}
               </p>
             </div>
-            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+            <div className="stat-pill px-4 py-4">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {t("pools.hero.signal")}
               </p>
@@ -42,7 +40,7 @@ export default function PoolsPage() {
                 {t("pools.hero.signalBody")}
               </p>
             </div>
-            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+            <div className="stat-pill px-4 py-4">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 {t("pools.hero.goal")}
               </p>

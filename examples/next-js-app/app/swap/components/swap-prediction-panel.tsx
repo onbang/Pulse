@@ -131,7 +131,7 @@ export function SwapPredictionPanel() {
   return (
     <div className="space-y-4">
       {showExternalControls ? (
-        <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.14)]">
+        <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.985),rgba(245,249,255,0.96))] p-5 shadow-[0_22px_64px_-42px_rgba(15,23,42,0.12)]">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
             {t("swap.prediction.selectorEyebrow")}
           </p>
@@ -141,7 +141,7 @@ export function SwapPredictionPanel() {
           <p className="mt-2 text-sm text-slate-600">
             {t("swap.prediction.selectorBody")}
           </p>
-          <div className="mt-4 grid items-end gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(220px,0.7fr)]">
+          <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 {t("prediction.tokenLabel")}
@@ -188,11 +188,11 @@ export function SwapPredictionPanel() {
               />
             </div>
           </div>
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 rounded-[26px] border border-sky-100 bg-[linear-gradient(180deg,rgba(248,251,255,0.95),rgba(244,248,255,0.92))] p-4">
             <label className="text-sm font-medium text-slate-700">
               {t("prediction.timeframeLabel")}
             </label>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
               {PREDICTION_TIMEFRAMES.map((timeframe) => {
                 const isSelected = selectedPredictionTimeframe === timeframe.id;
 
@@ -201,10 +201,10 @@ export function SwapPredictionPanel() {
                     key={timeframe.id}
                     type="button"
                     className={[
-                      "rounded-2xl border px-3 py-2 text-sm font-semibold transition",
+                      "rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                       isSelected
-                        ? "border-sky-500 bg-sky-500 text-white shadow-[0_16px_32px_-24px_rgba(59,130,246,0.7)]"
-                        : "border-sky-100 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50",
+                        ? "border-sky-500 bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_16px_32px_-24px_rgba(59,130,246,0.48)]"
+                        : "border-white bg-white text-slate-600 shadow-[0_12px_26px_-20px_rgba(15,23,42,0.08)] hover:border-sky-200 hover:bg-sky-50",
                     ].join(" ")}
                     onClick={() => setSelectedPredictionTimeframe(timeframe.id)}
                   >
@@ -213,7 +213,7 @@ export function SwapPredictionPanel() {
                 );
               })}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="mt-3 text-xs text-slate-500">
               {t("prediction.timeframeBody")}
             </p>
           </div>
