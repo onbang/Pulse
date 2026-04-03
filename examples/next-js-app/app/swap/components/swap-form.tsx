@@ -120,6 +120,8 @@ const OfferAssetInput = (props: { className?: string }) => {
     <Input
       {...props}
       disabled={!offerAsset}
+      inputMode="decimal"
+      placeholder="0"
       value={offerAmount}
       onChange={handleInputUpdate}
     />
@@ -183,6 +185,8 @@ const AskAssetInput = (props: { className?: string }) => {
     <Input
       {...props}
       disabled={!askAsset}
+      inputMode="decimal"
+      placeholder="0"
       value={askAmount}
       onChange={handleInputUpdate}
     />
