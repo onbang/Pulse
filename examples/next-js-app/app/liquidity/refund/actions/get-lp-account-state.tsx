@@ -19,8 +19,16 @@ export const getLpAccountData = async (
     const { LpAccount } = dexFactory(routerInfo);
 
     const lpAccount = tonApiClient.open(LpAccount.create(lpAccountAddress));
+    const typedLpAccount = lpAccount as {
+      getLpAccountData: () => Promise<{
+        userAddress: { toString(): string };
+        poolAddress: { toString(): string };
+        amount0: bigint;
+        amount1: bigint;
+      }>;
+    };
 
-    const lpAccountData = await lpAccount.getLpAccountData();
+    const lpAccountData = await typedLpAccount.getLpAccountData();
 
     return {
       routerAddress: routerAddress,

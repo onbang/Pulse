@@ -25,12 +25,18 @@ const getVault = async ({
   }
 
   const router = tonApiClient.open(routerFactory(routerInfo));
+  const typedRouter = router as {
+    getVault?: (params: {
+      tokenMinter: string;
+      user: string;
+    }) => Promise<object>;
+  };
 
-  if (!("getVault" in router)) {
+  if (!typedRouter.getVault) {
     throw new Error(`Vault contract does not exist in DEX ${DEX_VERSION.v1}`);
   }
 
-  return router.getVault({
+  return typedRouter.getVault({
     tokenMinter:
       tokenMinter === TON_ADDRESS ? routerInfo.ptonMasterAddress : tokenMinter,
     user: userWalletAddress,
@@ -40,8 +46,15 @@ const getVault = async ({
 export async function buildVaultWithdrawalFeeTx(
   params: GetVaultParams[],
 ): Promise<SendTransactionRequest["messages"]> {
-  const vaults = (await Promise.all(params.map(getVault))).map((vault) =>
-    tonApiClient.open(vault),
+  const vaults = (await Promise.all(params.map(getVault))).map(
+    (vault) =>
+      (tonApiClient as any).open(vault) as {
+        getWithdrawFeeTxParams: () => Promise<{
+          to: { toString(): string };
+          value: bigint;
+          body?: { toBoc(): Buffer };
+        }>;
+      },
   );
 
   const txParams = await Promise.all(

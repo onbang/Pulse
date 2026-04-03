@@ -22,8 +22,15 @@ export const buildLpRefundMessages = async ({
   const { LpAccount } = dexFactory(routerInfo);
 
   const lpAccount = tonApiClient.open(LpAccount.create(lpAccountAddress));
+  const refundLpAccount = lpAccount as {
+    getRefundTxParams: () => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
 
-  const txParams = await lpAccount.getRefundTxParams();
+  const txParams = await refundLpAccount.getRefundTxParams();
 
   const messages: SendTransactionRequest["messages"] = [
     {

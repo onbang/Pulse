@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["blueprint.config.ts", "scripts/**/*.ts", "wrappers/**/*.d.ts"],
+  "exclude": ["build"]
+}

@@ -69,12 +69,68 @@ const getLpTxParams = async (
   const routerContract = tonApiClient.open(
     dexContracts.Router.create(simulation.router.address),
   );
+  const routerLiquidityContract = routerContract as {
+    getProvideLiquidityTonTxParams: (txArgs: {
+      userWalletAddress: string;
+      minLpOut: string;
+      sendTokenAddress: string;
+      sendAmount: string;
+      otherTokenAddress: string;
+      proxyTon: typeof proxyTon;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+    getProvideLiquidityJettonTxParams: (txArgs: {
+      userWalletAddress: string;
+      minLpOut: string;
+      sendTokenAddress: string;
+      sendAmount: string;
+      otherTokenAddress: string;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+    getSingleSideProvideLiquidityTonTxParams?: (txArgs: {
+      userWalletAddress: string;
+      minLpOut: string;
+      sendTokenAddress: string;
+      sendAmount: string;
+      otherTokenAddress: string;
+      proxyTon: typeof proxyTon;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+    getSingleSideProvideLiquidityJettonTxParams?: (txArgs: {
+      userWalletAddress: string;
+      minLpOut: string;
+      sendTokenAddress: string;
+      sendAmount: string;
+      otherTokenAddress: string;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
   const proxyTon = dexContracts.pTON.create(
     simulation.router.ptonMasterAddress,
   );
 
   const isSingleSide =
     simulation.provisionType === "Arbitrary" && txsArgs.length === 1;
+
+  const getSingleSideProvideLiquidityTonTxParams = (
+    routerLiquidityContract
+  ).getSingleSideProvideLiquidityTonTxParams;
+
+  const getSingleSideProvideLiquidityJettonTxParams = (
+    routerLiquidityContract
+  ).getSingleSideProvideLiquidityJettonTxParams;
 
   const getProvideLiquidityTxParams = (txArgs: (typeof txsArgs)[number]) => {
     if (txArgs.sendTokenAddress === txArgs.otherTokenAddress) {
@@ -90,21 +146,16 @@ const getLpTxParams = async (
       };
 
       if (isSingleSide) {
-        if (
-          "getSingleSideProvideLiquidityTonTxParams" in routerContract ===
-          false
-        ) {
+        if (!getSingleSideProvideLiquidityTonTxParams) {
           throw new Error(
             `Router ${simulation.router.address} v${simulation.router.majorVersion}.${simulation.router.minorVersion} not supported TON single side liquidity provision`,
           );
         }
 
-        return routerContract.getSingleSideProvideLiquidityTonTxParams(
-          tonTxArgs,
-        );
+        return getSingleSideProvideLiquidityTonTxParams(tonTxArgs);
       }
 
-      return routerContract.getProvideLiquidityTonTxParams(tonTxArgs);
+      return routerLiquidityContract.getProvideLiquidityTonTxParams(tonTxArgs);
     }
 
     const jettonTxArgs = {
@@ -116,21 +167,18 @@ const getLpTxParams = async (
     };
 
     if (isSingleSide) {
-      if (
-        "getSingleSideProvideLiquidityJettonTxParams" in routerContract ===
-        false
-      ) {
+      if (!getSingleSideProvideLiquidityJettonTxParams) {
         throw new Error(
           `Router ${simulation.router.address} v${simulation.router.majorVersion}.${simulation.router.minorVersion} not supported Jetton single side liquidity provision`,
         );
       }
 
-      return routerContract.getSingleSideProvideLiquidityJettonTxParams(
-        jettonTxArgs,
-      );
+      return getSingleSideProvideLiquidityJettonTxParams(jettonTxArgs);
     }
 
-    return routerContract.getProvideLiquidityJettonTxParams(jettonTxArgs);
+    return routerLiquidityContract.getProvideLiquidityJettonTxParams(
+      jettonTxArgs,
+    );
   };
 
   /**

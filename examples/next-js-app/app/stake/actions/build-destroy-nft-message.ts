@@ -9,7 +9,14 @@ export async function buildDestroyNftMessage(
   nftAddress: string,
 ): Promise<SendTransactionRequest["messages"][number]> {
   const nftContract = tonApiClient.open(StakeNftItem.create(nftAddress));
-  const txParams = await nftContract.getDestroyTxParams();
+  const typedNftContract = nftContract as {
+    getDestroyTxParams: () => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
+  const txParams = await typedNftContract.getDestroyTxParams();
 
   return {
     address: txParams.to.toString(),

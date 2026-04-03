@@ -37,8 +37,20 @@ export async function buildStakeMessage(
   const nftContract = tonApiClient.open(
     StakeNftMinter.create(STAKE_MINTER_ADDRESS),
   );
+  const typedNftContract = nftContract as {
+    getStakeTxParams: (params: {
+      jettonAmount: bigint;
+      jettonAddress: string;
+      userWalletAddress: string;
+      durationSeconds: number;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
 
-  const txParams = await nftContract.getStakeTxParams({
+  const txParams = await typedNftContract.getStakeTxParams({
     jettonAmount: amount,
     jettonAddress: STAKE_TOKEN_ADDRESS,
     userWalletAddress: walletAddress,

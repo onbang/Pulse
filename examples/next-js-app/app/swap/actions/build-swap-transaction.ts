@@ -27,6 +27,58 @@ const getSwapTxParams = async (
   const router = tonApiClient.open(
     dexContracts.Router.create(simulation.router.address),
   );
+  const typedRouter = router as {
+    getSwapJettonToJettonTxParams: (params: {
+      userWalletAddress: string;
+      offerAmount: string;
+      minAskAmount: string;
+      offerJettonAddress: string;
+      askJettonAddress: string;
+      gasAmount?: string;
+      forwardGasAmount?: string;
+      queryId?: QueryIdType;
+      referralAddress?: AddressType;
+      referralValue?: AmountType;
+      useRecommendedSlippage?: boolean;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+    getSwapTonToJettonTxParams: (params: {
+      userWalletAddress: string;
+      offerAmount: string;
+      minAskAmount: string;
+      proxyTon: { address: { toString(): string } };
+      askJettonAddress: string;
+      forwardGasAmount?: string;
+      queryId?: QueryIdType;
+      referralAddress?: AddressType;
+      referralValue?: AmountType;
+      useRecommendedSlippage?: boolean;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+    getSwapJettonToTonTxParams: (params: {
+      userWalletAddress: string;
+      offerAmount: string;
+      minAskAmount: string;
+      proxyTon: { address: { toString(): string } };
+      offerJettonAddress: string;
+      gasAmount?: string;
+      forwardGasAmount?: string;
+      queryId?: QueryIdType;
+      referralAddress?: AddressType;
+      referralValue?: AmountType;
+      useRecommendedSlippage?: boolean;
+    }) => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
 
   const sharedTxParams = {
     ...params,
@@ -41,7 +93,7 @@ const getSwapTxParams = async (
     simulation.askAddress !== TON_ADDRESS &&
     simulation.offerAddress !== TON_ADDRESS
   ) {
-    return router.getSwapJettonToJettonTxParams({
+    return typedRouter.getSwapJettonToJettonTxParams({
       ...sharedTxParams,
       offerJettonAddress: simulation.offerAddress,
       askJettonAddress: simulation.askAddress,
@@ -55,7 +107,7 @@ const getSwapTxParams = async (
   );
 
   if (simulation.offerAddress === TON_ADDRESS) {
-    return router.getSwapTonToJettonTxParams({
+    return typedRouter.getSwapTonToJettonTxParams({
       ...sharedTxParams,
       proxyTon,
       askJettonAddress: simulation.askAddress,
@@ -63,7 +115,7 @@ const getSwapTxParams = async (
     });
   }
 
-  return router.getSwapJettonToTonTxParams({
+  return typedRouter.getSwapJettonToTonTxParams({
     ...sharedTxParams,
     proxyTon,
     offerJettonAddress: simulation.offerAddress,

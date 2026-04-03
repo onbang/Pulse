@@ -1,0 +1,37 @@
+{
+  "name": "@ston-pulse/prediction-market-contract",
+  "version": "0.1.0",
+  "description": "Deployment workflow for the STON Pulse prediction market smart contract",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onbang/Pulse.git",
+    "directory": "packages/prediction-market-contract"
+  },
+  "files": [
+    "contracts",
+    "wrappers",
+    "scripts",
+    "blueprint.config.ts",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "blueprint build",
+    "lint": "tsc --noEmit --pretty",
+    "deploy": "blueprint run deployPulsePredictionMarket",
+    "close-round": "blueprint run closePredictionRound",
+    "settle-round": "blueprint run settlePredictionRound",
+    "claim": "blueprint run claimPredictionRound"
+  },
+  "dependencies": {
+    "@ston-pulse/prediction-sdk": "workspace:*",
+    "@ton/core": "^0.60.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "@ton/blueprint": "^0.22.0",
+    "@ton/crypto": "^3.3.0",
+    "ts-node": "^10.9.2"
+  }
+}

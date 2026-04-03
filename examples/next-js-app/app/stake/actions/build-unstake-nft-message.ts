@@ -9,7 +9,14 @@ export async function buildUnstakeNftMessage(
   nftAddress: string,
 ): Promise<SendTransactionRequest["messages"][number]> {
   const nftContract = tonApiClient.open(StakeNftItem.create(nftAddress));
-  const txParams = await nftContract.getUnstakeTxParams();
+  const typedNftContract = nftContract as {
+    getUnstakeTxParams: () => Promise<{
+      to: { toString(): string };
+      value: bigint;
+      body?: { toBoc(): Buffer };
+    }>;
+  };
+  const txParams = await typedNftContract.getUnstakeTxParams();
 
   return {
     address: txParams.to.toString(),
