@@ -101,6 +101,8 @@ export const messages = {
     "prediction.yourSide": "Your active side",
     "prediction.noPosition": "No position yet",
     "prediction.potentialPayout": "Potential payout",
+    "prediction.potentialPreview":
+      "Live preview based on the current pool split and your existing exposure.",
     "prediction.stakeAmount": "Stake amount",
     "prediction.stakePlaceholder": "Enter stake in points",
     "prediction.payoutHint":
@@ -113,6 +115,7 @@ export const messages = {
     "prediction.settleUp": "Settle Up",
     "prediction.settleDown": "Settle Down",
     "prediction.history": "Highest stakes history",
+    "prediction.betsCount": "{count} bets",
     "prediction.noBets": "No bets yet for this pair.",
     "prediction.settled": "Settled",
     "prediction.awaitingSettlement": "Awaiting settlement",
@@ -121,11 +124,27 @@ export const messages = {
     "prediction.pointsCommitted": "{amount} pts committed in this round.",
     "prediction.reputationHint":
       "Join the round to start earning prediction reputation.",
-    "prediction.potentialPreview":
-      "Live preview based on the current pool split and your existing exposure.",
     "prediction.roundStatusOpen": "open",
     "prediction.roundStatusClosed": "closed",
     "prediction.roundStatusSettled": "settled",
+    "prediction.openRoundEnded":
+      "This round is no longer accepting new bets.",
+    "prediction.connectToVote":
+      "Connect your wallet to vote with your profile.",
+    "prediction.validStakeHint":
+      "Enter a valid stake amount above 0 to place a bet.",
+    "prediction.latestSettlement": "Latest settlement snapshot",
+    "prediction.lastResolvedView": "Last resolved view for {label}.",
+    "prediction.upWon": "Up won",
+    "prediction.downWon": "Down won",
+    "prediction.settledAt": "Settled at",
+    "prediction.totalRoundPool": "Total round pool",
+    "prediction.winnersPreview": "Winners payout preview",
+    "prediction.winnersCount": "{count} winners",
+    "prediction.noWinningBets": "No winning bets in this round.",
+    "prediction.stakeLine": "Stake {amount} pts",
+    "prediction.disclaimer":
+      "This is a sentiment widget, not financial advice. Open rounds accept bets, closed rounds await settlement, and settled rounds show payout previews.",
     "pools.hero.eyebrow": "Liquidity terminal",
     "pools.hero.title": "Discover the pools that matter right now.",
     "pools.hero.subtitle":
@@ -249,6 +268,8 @@ export const messages = {
     "prediction.yourSide": "Твоя активная сторона",
     "prediction.noPosition": "Позиции пока нет",
     "prediction.potentialPayout": "Потенциальная выплата",
+    "prediction.potentialPreview":
+      "Живой предпросмотр на основе текущего распределения пула и твоей позиции.",
     "prediction.stakeAmount": "Размер ставки",
     "prediction.stakePlaceholder": "Введи ставку в points",
     "prediction.payoutHint":
@@ -261,6 +282,7 @@ export const messages = {
     "prediction.settleUp": "Зафиксировать вверх",
     "prediction.settleDown": "Зафиксировать вниз",
     "prediction.history": "История крупнейших ставок",
+    "prediction.betsCount": "{count} ставок",
     "prediction.noBets": "Для этого сценария пока нет ставок.",
     "prediction.settled": "Завершен",
     "prediction.awaitingSettlement": "Ждет завершения",
@@ -269,11 +291,27 @@ export const messages = {
     "prediction.pointsCommitted": "{amount} pts в этом раунде.",
     "prediction.reputationHint":
       "Войди в раунд, чтобы начать накапливать prediction reputation.",
-    "prediction.potentialPreview":
-      "Живой предпросмотр на основе текущего распределения пула и твоей позиции.",
     "prediction.roundStatusOpen": "открыт",
     "prediction.roundStatusClosed": "закрыт",
     "prediction.roundStatusSettled": "завершен",
+    "prediction.openRoundEnded":
+      "Этот раунд больше не принимает новые ставки.",
+    "prediction.connectToVote":
+      "Подключи кошелек, чтобы голосовать от своего профиля.",
+    "prediction.validStakeHint":
+      "Введи корректную ставку больше 0, чтобы сделать прогноз.",
+    "prediction.latestSettlement": "Последний снимок завершения",
+    "prediction.lastResolvedView": "Последний завершенный раунд для {label}.",
+    "prediction.upWon": "Победило вверх",
+    "prediction.downWon": "Победило вниз",
+    "prediction.settledAt": "Завершено в",
+    "prediction.totalRoundPool": "Общий пул раунда",
+    "prediction.winnersPreview": "Предпросмотр выплат победителям",
+    "prediction.winnersCount": "{count} победителей",
+    "prediction.noWinningBets": "В этом раунде нет выигравших ставок.",
+    "prediction.stakeLine": "Ставка {amount} pts",
+    "prediction.disclaimer":
+      "Это виджет рыночного настроения, а не финансовый совет. Открытые раунды принимают ставки, закрытые ждут завершения, а завершенные показывают выплаты.",
     "pools.hero.eyebrow": "Терминал ликвидности",
     "pools.hero.title": "Открой важные пулы прямо сейчас.",
     "pools.hero.subtitle":

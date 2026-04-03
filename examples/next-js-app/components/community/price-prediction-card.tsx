@@ -147,28 +147,32 @@ export function PricePredictionCard(props: {
           <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Round status
+                {t("prediction.roundStatus")}
               </p>
-              <p className="text-lg font-semibold capitalize text-slate-900">{round.status}</p>
+              <p className="text-lg font-semibold capitalize text-slate-900">
+                {t(
+                  `prediction.roundStatus${round.status.charAt(0).toUpperCase()}${round.status.slice(1)}`,
+                )}
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Time left
+                {t("prediction.timeLeft")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
-                {isRoundOpen ? `${hoursLeft}h ${minutesLeft}m` : "Closed"}
+                {isRoundOpen ? `${hoursLeft}h ${minutesLeft}m` : t("prediction.closed")}
               </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Winner
+                {t("prediction.winner")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
                 {round.settlementDirection
                   ? round.settlementDirection === "up"
-                    ? "Up"
-                    : "Down"
-                  : "Pending"}
+                    ? t("prediction.up")
+                    : t("prediction.down")
+                  : t("prediction.pending")}
               </p>
             </div>
           </div>
@@ -201,34 +205,33 @@ export function PricePredictionCard(props: {
           <div className="grid gap-3 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eef6ff,#f6f2ff)] p-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Your active side
+                {t("prediction.yourSide")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
                 {myDirection
                   ? myDirection === "up"
-                    ? "Bullish"
-                    : "Bearish"
-                  : "No position yet"}
+                    ? t("prediction.bullish")
+                    : t("prediction.bearish")
+                  : t("prediction.noPosition")}
               </p>
               <p className="text-sm text-slate-600">
                 {myStake > 0
-                  ? `${myStake.toFixed(2)} pts committed in this round.`
-                  : "Join the round to start earning prediction reputation."}
+                  ? t("prediction.pointsCommitted", {
+                      amount: myStake.toFixed(2),
+                    })
+                  : t("prediction.reputationHint")}
               </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Potential payout
+                {t("prediction.potentialPayout")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
                 {myPotentialPayout > 0
                   ? `${myPotentialPayout.toFixed(2)} pts`
                   : "-"}
               </p>
-              <p className="text-sm text-slate-600">
-                Live preview based on the current pool split and your existing
-                exposure.
-              </p>
+              <p className="text-sm text-slate-600">{t("prediction.potentialPreview")}</p>
             </div>
           </div>
         ) : null}
@@ -335,7 +338,9 @@ export function PricePredictionCard(props: {
             <h4 className="text-sm font-semibold text-slate-900">
               {t("prediction.history")}
             </h4>
-            <Badge className="border-sky-100 bg-sky-50 text-slate-700">{bets.length} bets</Badge>
+            <Badge className="border-sky-100 bg-sky-50 text-slate-700">
+              {t("prediction.betsCount", { count: bets.length })}
+            </Badge>
           </div>
           <div className="space-y-2">
             {topBets.length === 0 ? (
@@ -357,7 +362,9 @@ export function PricePredictionCard(props: {
                   <Badge
                     variant={bet.direction === "up" ? "secondary" : "outline"}
                   >
-                    {bet.direction === "up" ? "Up" : "Down"}
+                    {bet.direction === "up"
+                      ? t("prediction.up")
+                      : t("prediction.down")}
                   </Badge>
                   <span className="font-semibold">
                     {bet.amount.toFixed(2)} pts
@@ -371,14 +378,16 @@ export function PricePredictionCard(props: {
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h4 className="text-sm font-semibold text-slate-800">
-                Winners payout preview
+                {t("prediction.winnersPreview")}
               </h4>
-              <Badge variant="outline">{topPayouts.length} winners</Badge>
+              <Badge variant="outline">
+                {t("prediction.winnersCount", { count: topPayouts.length })}
+              </Badge>
             </div>
             <div className="space-y-2">
               {topPayouts.length === 0 ? (
                 <p className="text-sm text-slate-600">
-                  No winning bets in this round.
+                  {t("prediction.noWinningBets")}
                 </p>
               ) : (
                 topPayouts.map((item, index) => (
@@ -394,7 +403,9 @@ export function PricePredictionCard(props: {
                         {item.author}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Stake {item.totalStake.toFixed(2)} pts
+                        {t("prediction.stakeLine", {
+                          amount: item.totalStake.toFixed(2),
+                        })}
                       </p>
                     </div>
                     <span className="font-semibold text-emerald-700">
@@ -411,22 +422,22 @@ export function PricePredictionCard(props: {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h4 className="text-sm font-semibold text-slate-800">
-                  Latest settlement snapshot
+                  {t("prediction.latestSettlement")}
                 </h4>
                 <p className="text-sm text-slate-600">
-                  Last resolved view for {props.label}.
+                  {t("prediction.lastResolvedView", { label: props.label })}
                 </p>
               </div>
               <Badge variant="outline">
                 {latestSettlement.settlementDirection === "up"
-                  ? "Up won"
-                  : "Down won"}
+                  ? t("prediction.upWon")
+                  : t("prediction.downWon")}
               </Badge>
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Settled at
+                  {t("prediction.settledAt")}
                 </p>
                 <p className="text-sm font-medium text-slate-800">
                   {new Date(latestSettlement.settledAt).toLocaleString()}
@@ -434,7 +445,7 @@ export function PricePredictionCard(props: {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Total round pool
+                  {t("prediction.totalRoundPool")}
                 </p>
                 <p className="text-sm font-medium text-slate-800">
                   {latestSettlement.totalPool.toFixed(2)} pts
@@ -444,21 +455,19 @@ export function PricePredictionCard(props: {
           </div>
         ) : null}
         <p className="text-sm text-slate-600">
-          This is a sentiment widget, not financial advice. Open rounds accept
-          bets, closed rounds await settlement, and settled rounds show payout
-          previews.
+          {t("prediction.disclaimer")}
         </p>
         {!walletAddress ? (
           <p className="text-sm text-slate-500">
-            Connect your wallet to vote with your profile.
+            {t("prediction.connectToVote")}
           </p>
         ) : !isRoundOpen ? (
           <p className="text-sm text-slate-500">
-            This round is no longer accepting new bets.
+            {t("prediction.openRoundEnded")}
           </p>
         ) : !isStakeValid ? (
           <p className="text-sm text-slate-500">
-            Enter a valid stake amount above 0 to place a bet.
+            {t("prediction.validStakeHint")}
           </p>
         ) : null}
       </CardContent>

@@ -386,6 +386,7 @@ function getYesterdayKey() {
 }
 
 function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
+  const isTokenPredictionRound = pairId.startsWith("prediction:");
   const existing = db
     .prepare("SELECT * FROM prediction_rounds WHERE pair_id = ?")
     .get(pairId) as
@@ -438,6 +439,39 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
       ...existing,
       status: "closed" as const,
     };
+  }
+
+  if (existing.status === "closed" && isTokenPredictionRound) {
+    const round = createRound(pairId, label);
+
+    db.exec("BEGIN");
+    try {
+      db.prepare("DELETE FROM prediction_positions WHERE pair_id = ?").run(
+        pairId,
+      );
+      db.prepare("DELETE FROM prediction_bets WHERE pair_id = ?").run(pairId);
+      db.prepare(`
+        UPDATE prediction_rounds
+        SET round_id = ?, pair_label = ?, status = ?, opened_at = ?, closes_at = ?, resolved_at = ?, duration_minutes = ?, settlement_direction = ?
+        WHERE pair_id = ?
+      `).run(
+        round.id,
+        label,
+        round.status,
+        round.openedAt,
+        round.closesAt,
+        null,
+        round.durationMinutes,
+        null,
+        pairId,
+      );
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+
+    return round;
   }
 
   if (existing.status === "settled") {
