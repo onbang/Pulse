@@ -122,16 +122,16 @@ export function PricePredictionCard(props: {
   };
 
   return (
-    <Card className="overflow-hidden rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(24,28,42,0.98),rgba(20,24,36,0.96))] text-white shadow-[0_32px_90px_-52px_rgba(0,0,0,0.95)]">
+    <Card className="overflow-hidden rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] text-slate-900 shadow-[0_32px_90px_-52px_rgba(15,23,42,0.14)]">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-white">Community price outlook</CardTitle>
-            <CardDescription className="text-white/60">
+            <CardTitle className="text-slate-950">Community price outlook</CardTitle>
+            <CardDescription className="text-slate-600">
               Vote where the market moves next for {props.label}.
             </CardDescription>
           </div>
-          <Badge className="border-white/8 bg-white/8 text-white">
+          <Badge className="border-sky-100 bg-white text-slate-700">
             {round?.status === "settled"
               ? "Settled"
               : round?.status === "closed"
@@ -142,26 +142,26 @@ export function PricePredictionCard(props: {
       </CardHeader>
       <CardContent className="space-y-4">
         {round ? (
-          <div className="grid gap-3 rounded-2xl border border-white/8 bg-white/4 p-4 sm:grid-cols-3">
+          <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Round status
               </p>
-              <p className="text-lg font-semibold capitalize text-white">{round.status}</p>
+              <p className="text-lg font-semibold capitalize text-slate-900">{round.status}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Time left
               </p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-semibold text-slate-900">
                 {isRoundOpen ? `${hoursLeft}h ${minutesLeft}m` : "Closed"}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Winner
               </p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-semibold text-slate-900">
                 {round.settlementDirection
                   ? round.settlementDirection === "up"
                     ? "Up"
@@ -171,59 +171,59 @@ export function PricePredictionCard(props: {
             </div>
           </div>
         ) : null}
-        <div className="grid gap-3 rounded-2xl border border-white/8 bg-white/4 p-4 sm:grid-cols-3">
+        <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               Total pool
             </p>
-            <p className="text-2xl font-semibold text-white">{totalPool.toFixed(2)} pts</p>
+            <p className="text-2xl font-semibold text-slate-900">{totalPool.toFixed(2)} pts</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               Up odds
             </p>
-            <p className="text-2xl font-semibold text-white">
+            <p className="text-2xl font-semibold text-slate-900">
               {upOdds > 0 ? `${upOdds.toFixed(2)}x` : "-"}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               Down odds
             </p>
-            <p className="text-2xl font-semibold text-white">
+            <p className="text-2xl font-semibold text-slate-900">
               {downOdds > 0 ? `${downOdds.toFixed(2)}x` : "-"}
             </p>
           </div>
         </div>
         {walletAddress ? (
-          <div className="grid gap-3 rounded-2xl border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.12),rgba(115,84,242,0.14))] p-4 sm:grid-cols-2">
+          <div className="grid gap-3 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eef6ff,#f6f2ff)] p-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Your active side
               </p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-semibold text-slate-900">
                 {myDirection
                   ? myDirection === "up"
                     ? "Bullish"
                     : "Bearish"
                   : "No position yet"}
               </p>
-              <p className="text-sm text-white/62">
+              <p className="text-sm text-slate-600">
                 {myStake > 0
                   ? `${myStake.toFixed(2)} pts committed in this round.`
                   : "Join the round to start earning prediction reputation."}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Potential payout
               </p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-semibold text-slate-900">
                 {myPotentialPayout > 0
                   ? `${myPotentialPayout.toFixed(2)} pts`
                   : "-"}
               </p>
-              <p className="text-sm text-white/62">
+              <p className="text-sm text-slate-600">
                 Live preview based on the current pool split and your existing
                 exposure.
               </p>
@@ -232,13 +232,13 @@ export function PricePredictionCard(props: {
         ) : null}
         <div className="space-y-2">
           <label
-            className="text-sm font-medium text-white/72"
+            className="text-sm font-medium text-slate-700"
             htmlFor={`${props.pairId}-stake`}
           >
             Stake amount
           </label>
           <Input
-            className="h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28"
+            className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
             id={`${props.pairId}-stake`}
             inputMode="decimal"
             value={stakeAmount}
@@ -254,7 +254,7 @@ export function PricePredictionCard(props: {
             }}
             placeholder="Enter stake in points"
           />
-          <p className="text-xs text-white/45">
+          <p className="text-xs text-slate-500">
             Payout coefficient is calculated from the current stake pool on each
             side.
           </p>
@@ -263,7 +263,7 @@ export function PricePredictionCard(props: {
           <Button
             variant="outline"
             disabled={isDisabled || !isStakeValid}
-            className="h-auto justify-between rounded-2xl border-emerald-500/30 bg-emerald-500/8 py-4 text-white hover:bg-emerald-500/14"
+            className="h-auto justify-between rounded-2xl border-emerald-200 bg-emerald-50 py-4 text-slate-900 hover:bg-emerald-100"
             onClick={() => void placePrediction("up")}
           >
             <span className="inline-flex items-center gap-2">
@@ -277,7 +277,7 @@ export function PricePredictionCard(props: {
           <Button
             variant="outline"
             disabled={isDisabled || !isStakeValid}
-            className="h-auto justify-between rounded-2xl border-rose-500/30 bg-rose-500/8 py-4 text-white hover:bg-rose-500/14"
+            className="h-auto justify-between rounded-2xl border-rose-200 bg-rose-50 py-4 text-slate-900 hover:bg-rose-100"
             onClick={() => void placePrediction("down")}
           >
             <span className="inline-flex items-center gap-2">
@@ -290,13 +290,13 @@ export function PricePredictionCard(props: {
           </Button>
         </div>
         {isRoundClosed ? (
-          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/8 p-4">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-semibold text-white">
+                <h4 className="text-sm font-semibold text-slate-900">
                   Settle closed round
                 </h4>
-                <p className="text-sm text-white/62">
+                <p className="text-sm text-slate-600">
                   Lock in the winning side to publish payout previews.
                 </p>
               </div>
@@ -304,7 +304,7 @@ export function PricePredictionCard(props: {
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
-                className="border-emerald-500/30 text-white hover:bg-emerald-500/14"
+                className="border-emerald-200 text-slate-900 hover:bg-emerald-100"
                 onClick={() =>
                   void settlePredictionRound({
                     pairId: props.pairId,
@@ -316,7 +316,7 @@ export function PricePredictionCard(props: {
               </Button>
               <Button
                 variant="outline"
-                className="border-rose-500/30 text-white hover:bg-rose-500/14"
+                className="border-rose-200 text-slate-900 hover:bg-rose-100"
                 onClick={() =>
                   void settlePredictionRound({
                     pairId: props.pairId,
@@ -329,16 +329,16 @@ export function PricePredictionCard(props: {
             </div>
           </div>
         ) : null}
-        <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
+        <div className="rounded-2xl border border-sky-100 bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold text-white">
+            <h4 className="text-sm font-semibold text-slate-900">
               Highest stakes history
             </h4>
-            <Badge className="border-white/8 bg-white/8 text-white">{bets.length} bets</Badge>
+            <Badge className="border-sky-100 bg-sky-50 text-slate-700">{bets.length} bets</Badge>
           </div>
           <div className="space-y-2">
             {topBets.length === 0 ? (
-              <p className="text-sm text-white/45">
+              <p className="text-sm text-slate-500">
                 No bets yet for this pair.
               </p>
             ) : (

@@ -62,7 +62,7 @@ const ReferralAddressInput: React.FC<
       </label>
       <Input
         className={cn(
-          "h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28",
+          "h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400",
           {
             "border-[red]": !isValid,
           },
@@ -118,12 +118,12 @@ const ReferralValueInput: React.FC<
       {...props}
       className={cn("flex flex-col gap-1 w-full", props.className)}
     >
-      <label className="text-sm text-white/72" htmlFor={id}>
+      <label className="text-sm text-slate-600" htmlFor={id}>
         Referral percentage:
       </label>
       <Input
         className={cn(
-          "h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28",
+          "h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400",
           {
             "border-[red]": !isValidReferralValue,
           },

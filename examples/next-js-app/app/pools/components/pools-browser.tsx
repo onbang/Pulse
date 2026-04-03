@@ -245,10 +245,10 @@ export function PoolsBrowser() {
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
                 Live shortlist
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {pools.length}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-sm leading-6 text-slate-600">
                 Current high-signal pools surfaced from STON pair data.
               </p>
             </CardContent>
@@ -259,10 +259,10 @@ export function PoolsBrowser() {
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
                 Total depth
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {Formatter.fiatAmount(totalLiquidity || 0)}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-sm leading-6 text-slate-600">
                 Combined liquidity represented by the visible pool set.
               </p>
             </CardContent>
@@ -273,10 +273,10 @@ export function PoolsBrowser() {
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
                 Watchlist
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                 {watchedCount}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-sm leading-6 text-slate-600">
                 Pools already saved for quick return from your profile.
               </p>
             </CardContent>
@@ -284,23 +284,23 @@ export function PoolsBrowser() {
         </div>
 
         <Card className="surface-panel overflow-hidden">
-          <CardHeader className="border-b border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
+          <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.6))]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
                   Pool board
                 </p>
-                <CardTitle className="mt-2 text-2xl text-white">
+                <CardTitle className="mt-2 text-2xl text-slate-950">
                   Curated pool lineup
                 </CardTitle>
-                <CardDescription className="mt-1 max-w-2xl text-slate-400">
+                <CardDescription className="mt-1 max-w-2xl text-slate-600">
                   A cleaner way to browse where liquidity is concentrated right now.
                 </CardDescription>
               </div>
 
               <Button
                 asChild
-                className="rounded-full border border-white/10 bg-[linear-gradient(135deg,#1d4ed8,#3b82f6)] px-5 text-white shadow-[0_16px_36px_-18px_rgba(59,130,246,0.65)]"
+                className="rounded-full border border-sky-100 bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] px-5 text-white shadow-[0_16px_36px_-18px_rgba(1,128,255,0.45)]"
               >
                 <Link href={ROUTES.liquidityProvide}>
                   Provide liquidity
@@ -325,10 +325,10 @@ export function PoolsBrowser() {
             {!isLoading && isFetched && pools.length === 0 ? (
               <div className="mesh-card p-8 text-center">
                 <div className="relative z-10">
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-lg font-semibold text-slate-950">
                     No pools surfaced yet.
                   </p>
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-600">
                     Refresh in a moment or open the liquidity tab to explore a
                     specific asset pair.
                   </p>
@@ -353,20 +353,20 @@ export function PoolsBrowser() {
                     <div className="relative z-10 flex flex-col gap-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-4">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#082f49,#0ea5e9)] text-lg font-semibold text-white shadow-[0_18px_40px_-20px_rgba(2,132,199,0.82)]">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-lg font-semibold text-white shadow-[0_18px_40px_-20px_rgba(1,128,255,0.42)]">
                             #{index + 1}
                           </div>
 
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-2xl font-semibold tracking-tight text-white">
+                              <h3 className="text-2xl font-semibold tracking-tight text-slate-950">
                                 {entry.pairLabel}
                               </h3>
-                              <Badge className="border border-white/8 bg-sky-500/12 text-sky-300">
+                              <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
                                 {intensity}
                               </Badge>
                             </div>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                               {getDisplayName(entry.assetA)} paired with{" "}
                               {getDisplayName(entry.assetB)}. Built for users who
                               want to spot depth before committing LP capital.
@@ -378,9 +378,9 @@ export function PoolsBrowser() {
                           <Button
                             variant="outline"
                             className={cn(
-                              "rounded-full border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white",
+                              "rounded-full border-sky-100 bg-white text-slate-700 hover:bg-sky-50 hover:text-slate-900",
                               isWatched &&
-                                "border-amber-400/20 bg-amber-400/12 text-amber-300",
+                                "border-amber-200 bg-amber-50 text-amber-700",
                             )}
                             onClick={() =>
                               walletAddress
@@ -402,7 +402,7 @@ export function PoolsBrowser() {
 
                           <Button
                             asChild
-                            className="rounded-full border border-white/10 bg-[linear-gradient(135deg,#1d4ed8,#3b82f6)] text-white shadow-[0_16px_36px_-18px_rgba(59,130,246,0.65)]"
+                            className="rounded-full border border-sky-100 bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_16px_36px_-18px_rgba(1,128,255,0.45)]"
                           >
                             <Link href={ROUTES.liquidityProvide}>
                               Open LP flow
@@ -413,54 +413,54 @@ export function PoolsBrowser() {
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-4">
-                        <div className="rounded-[22px] border border-white/8 bg-white/4 px-4 py-4">
+                        <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                             Liquidity
                           </p>
-                          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {Formatter.fiatAmount(entry.liquidityUsd || 0)}
                           </p>
                         </div>
 
-                        <div className="rounded-[22px] border border-white/8 bg-white/4 px-4 py-4">
+                        <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                             Pair ratio
                           </p>
-                          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {formatRatio(entry.priceRatio)}
                           </p>
-                          <p className="mt-1 text-xs text-slate-400">
+                          <p className="mt-1 text-xs text-slate-500">
                             {getSymbol(entry.assetB)} per {getSymbol(entry.assetA)}
                           </p>
                         </div>
 
-                        <div className="rounded-[22px] border border-white/8 bg-white/4 px-4 py-4">
+                        <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                             LP supply
                           </p>
-                          <p className="mt-3 text-2xl font-semibold tracking-tight text-white">
+                          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
                             {entry.lpSupplyLabel}
                           </p>
                         </div>
 
-                        <div className="rounded-[22px] border border-white/8 bg-white/4 px-4 py-4">
+                        <div className="rounded-[22px] border border-sky-100 bg-white px-4 py-4">
                           <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                             Router
                           </p>
-                          <p className="mt-3 text-lg font-semibold tracking-tight text-white">
+                          <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
                             {entry.routerLabel}
                           </p>
-                          <p className="mt-1 text-xs text-slate-400">
+                          <p className="mt-1 text-xs text-slate-500">
                             Pool {entry.poolLabel}
                           </p>
                         </div>
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(135deg,rgba(15,23,42,0.92),rgba(29,78,216,0.28))] px-5 py-5 text-white">
+                        <div className="rounded-[24px] border border-sky-100 bg-[linear-gradient(135deg,#eef6ff,#f5f8ff)] px-5 py-5 text-slate-900">
                           <div className="flex items-center gap-2">
-                            <Waves className="h-4 w-4 text-sky-300" />
-                            <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                            <Waves className="h-4 w-4 text-sky-600" />
+                            <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                               Pulse read
                             </p>
                           </div>
@@ -468,16 +468,16 @@ export function PoolsBrowser() {
                             {entry.pairLabel} is showing{" "}
                             {intensity.toLowerCase()}.
                           </p>
-                          <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">
+                          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
                             Use this route when you want visible depth and a
                             cleaner starting point before joining liquidity
                             positions.
                           </p>
                         </div>
 
-                        <div className="rounded-[24px] border border-white/8 bg-white/4 px-5 py-5">
+                        <div className="rounded-[24px] border border-sky-100 bg-white px-5 py-5">
                           <div className="flex items-center gap-2">
-                            <Activity className="h-4 w-4 text-sky-300" />
+                            <Activity className="h-4 w-4 text-sky-600" />
                             <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                               Quick actions
                             </p>
@@ -486,14 +486,14 @@ export function PoolsBrowser() {
                             <Button
                               asChild
                               variant="outline"
-                              className="rounded-full border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white"
+                              className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
                               <Link href={ROUTES.swap}>Forecast this pair</Link>
                             </Button>
                             <Button
                               asChild
                               variant="outline"
-                              className="rounded-full border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white"
+                              className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
                               <Link href={ROUTES.community}>Open community</Link>
                             </Button>
@@ -510,14 +510,14 @@ export function PoolsBrowser() {
 
       <div className="space-y-6">
         <Card className="surface-panel overflow-hidden">
-          <CardHeader className="border-b border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
+          <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.6))]">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
               Discovery flow
             </p>
-            <CardTitle className="mt-2 text-2xl text-white">
+            <CardTitle className="mt-2 text-2xl text-slate-950">
               How to use this view
             </CardTitle>
-            <CardDescription className="mt-1 text-slate-400">
+            <CardDescription className="mt-1 text-slate-600">
               A simpler path from scanning pools to opening a position.
             </CardDescription>
           </CardHeader>
@@ -529,26 +529,26 @@ export function PoolsBrowser() {
             ].map((step, index) => (
               <div
                 key={step}
-                className="rounded-[22px] border border-white/8 bg-white/4 px-4 py-4"
+                className="rounded-[22px] border border-sky-100 bg-white px-4 py-4"
               >
                 <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-sky-300/55">
                   Step {index + 1}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{step}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{step}</p>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="surface-panel overflow-hidden bg-[linear-gradient(145deg,rgba(15,23,42,0.95),rgba(30,41,59,0.88))]">
+        <Card className="surface-panel overflow-hidden bg-[linear-gradient(145deg,#eef6ff,#f8fbff)]">
           <CardContent className="p-6">
             <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/55">
               Why this matters
             </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-tight">
+            <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
               Pools should feel explorable, not hidden behind forms.
             </h3>
-            <p className="mt-4 text-sm leading-6 text-slate-400">
+            <p className="mt-4 text-sm leading-6 text-slate-600">
               This board turns raw pair lookup into a visual shortlist so users
               can discover where to act before they commit liquidity.
             </p>

@@ -240,8 +240,8 @@ export function SwapPriceChart() {
   const gridLevels = [high, high - range * 0.33, high - range * 0.66, low];
 
   return (
-    <Card className="overflow-hidden rounded-[34px] border border-white/8 bg-[linear-gradient(180deg,rgba(28,28,30,0.98),rgba(34,34,36,0.96))] text-white shadow-[0_40px_120px_-60px_rgba(0,0,0,0.95)]">
-      <CardHeader className="border-b border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-5 md:p-6">
+    <Card className="overflow-hidden rounded-[34px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] text-slate-900 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.16)]">
+      <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,248,255,0.6))] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div
@@ -254,19 +254,19 @@ export function SwapPriceChart() {
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-3xl font-semibold tracking-tight text-white">
+                <CardTitle className="text-3xl font-semibold tracking-tight text-slate-950">
                   {hasSelectedPair
                     ? normalizeLabel(offerAsset?.meta?.displayName ?? offerLabel)
                     : "Pulse market"}
                 </CardTitle>
-                <Badge className="border-0 bg-white/10 text-slate-200">
+                <Badge className="border border-sky-100 bg-white text-slate-700">
                   {pairLabel}
                 </Badge>
-                <Badge className="border-0 bg-white/10 text-slate-200">
+                <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
                   {hasSelectedPair ? "Live" : "Preview"}
                 </Badge>
               </div>
-              <CardDescription className="mt-1 max-w-xl text-slate-400">
+              <CardDescription className="mt-1 max-w-xl text-slate-600">
                 {hasSelectedPair
                   ? "Real-time styled execution chart for the pair you are forecasting."
                   : "Select a token pair to switch this preview into a live pair-specific market chart."}
@@ -274,7 +274,7 @@ export function SwapPriceChart() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 rounded-full border border-white/8 bg-white/4 p-1">
+          <div className="flex flex-wrap gap-2 rounded-full border border-sky-100 bg-white p-1">
             {TIMEFRAMES.map((frame) => (
               <button
                 key={frame.key}
@@ -283,8 +283,8 @@ export function SwapPriceChart() {
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-semibold transition-all",
                   frame.key === timeframe
-                    ? "bg-white/14 text-white shadow-[0_12px_24px_-18px_rgba(255,255,255,0.6)]"
-                    : "text-slate-400 hover:bg-white/8 hover:text-white",
+                    ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
+                    : "text-slate-500 hover:bg-sky-50 hover:text-slate-900",
                 )}
               >
                 {frame.key}
@@ -295,10 +295,10 @@ export function SwapPriceChart() {
       </CardHeader>
 
       <CardContent className="space-y-5 p-5 md:p-6">
-        <div className="rounded-[30px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-4 md:p-5">
+        <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-5xl font-semibold tracking-tight text-white">
+              <p className="text-5xl font-semibold tracking-tight text-slate-950">
                 {formatChartValue(livePrice)}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -306,8 +306,8 @@ export function SwapPriceChart() {
                   className={cn(
                     "border-0 text-base",
                     priceDirection === "up"
-                      ? "bg-emerald-500/12 text-emerald-400"
-                      : "bg-rose-500/12 text-rose-400",
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-rose-50 text-rose-600",
                   )}
                 >
                   {priceDirection === "up" ? (
@@ -321,28 +321,28 @@ export function SwapPriceChart() {
                 <span
                   className={cn(
                     "text-2xl font-semibold",
-                    priceDirection === "up" ? "text-emerald-400" : "text-rose-400",
+                    priceDirection === "up" ? "text-emerald-600" : "text-rose-600",
                   )}
                 >
                   {delta >= 0 ? "+" : ""}
                   {formatChartValue(Math.abs(delta))}
                 </span>
-                <span className="text-2xl font-semibold text-slate-300">
+                <span className="text-2xl font-semibold text-slate-500">
                   {timeframe}
                 </span>
                 {!hasSelectedPair ? (
-                  <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-sm font-medium text-slate-300">
+                  <span className="rounded-full border border-sky-100 bg-white px-3 py-1 text-sm font-medium text-slate-600">
                     Waiting for pair selection
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="min-w-[190px] rounded-[22px] border border-white/8 bg-white/5 px-4 py-3 text-right">
+            <div className="min-w-[190px] rounded-[22px] border border-sky-100 bg-white px-4 py-3 text-right">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Forecast pulse
               </p>
-              <p className="mt-2 text-lg font-semibold text-white">
+              <p className="mt-2 text-lg font-semibold text-slate-900">
                 {forecastLabel}
               </p>
               <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
@@ -353,7 +353,7 @@ export function SwapPriceChart() {
           </div>
 
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_90px]">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-4 md:p-5">
+            <div className="relative overflow-hidden rounded-[28px] border border-sky-100 bg-white p-4 md:p-5">
               <svg
                 viewBox="0 0 100 100"
                 className="h-[360px] w-full md:h-[420px]"
@@ -370,7 +370,7 @@ export function SwapPriceChart() {
                       x2="100"
                       y1={y}
                       y2={y}
-                      stroke="rgba(255,255,255,0.16)"
+                      stroke="rgba(148,163,184,0.35)"
                       strokeDasharray="2.8 3.4"
                     />
                   );
@@ -423,8 +423,8 @@ export function SwapPriceChart() {
                 />
               </svg>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-400">
-                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-slate-200">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
+                <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
                   Candles
                 </span>
                 <span>{currentFrame.label}</span>
@@ -432,8 +432,8 @@ export function SwapPriceChart() {
                   className={cn(
                     "rounded-full px-3 py-1",
                     priceDirection === "up"
-                      ? "bg-emerald-500/12 text-emerald-300"
-                      : "bg-rose-500/12 text-rose-300",
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-rose-50 text-rose-600",
                   )}
                 >
                   Live {formatChartValue(livePrice)}
@@ -441,9 +441,9 @@ export function SwapPriceChart() {
               </div>
             </div>
 
-            <div className="flex flex-row justify-between rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-3 text-right lg:flex-col lg:px-3 lg:py-4">
+            <div className="flex flex-row justify-between rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.82))] px-4 py-3 text-right lg:flex-col lg:px-3 lg:py-4">
               {gridLevels.map((level, index) => (
-                <span key={index} className="text-sm font-medium text-slate-300">
+                <span key={index} className="text-sm font-medium text-slate-500">
                   {formatChartValue(level)}
                 </span>
               ))}
@@ -451,8 +451,8 @@ export function SwapPriceChart() {
                 className={cn(
                   "rounded-full px-2.5 py-1 text-center text-lg font-semibold",
                   priceDirection === "up"
-                    ? "bg-emerald-500/12 text-emerald-400"
-                    : "bg-rose-500/12 text-rose-400",
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-rose-50 text-rose-600",
                 )}
               >
                 {formatChartValue(livePrice)}
@@ -462,45 +462,45 @@ export function SwapPriceChart() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[24px] border border-white/8 bg-white/4 p-4">
+          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Structure high
             </p>
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(high)}
             </p>
-            <p className="mt-1 text-sm text-slate-400">Upper intraday band</p>
+            <p className="mt-1 text-sm text-slate-500">Upper intraday band</p>
           </div>
-          <div className="rounded-[24px] border border-white/8 bg-white/4 p-4">
+          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Structure low
             </p>
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(low)}
             </p>
-            <p className="mt-1 text-sm text-slate-400">Lower support zone</p>
+            <p className="mt-1 text-sm text-slate-500">Lower support zone</p>
           </div>
-          <div className="rounded-[24px] border border-white/8 bg-white/4 p-4">
+          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Route impact
             </p>
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-slate-900">
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500">
               {hasSelectedPair
                 ? "Friction in the current quote path"
                 : "Indicative impact until the pair is selected"}
             </p>
           </div>
           <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-400">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Trade lens
             </p>
-            <p className="mt-2 text-lg font-semibold text-white">
+            <p className="mt-2 text-lg font-semibold text-slate-900">
               Read momentum before you place the next prediction
             </p>
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-2 text-sm text-slate-600">
               {hasSelectedPair
                 ? "Candles, live quote pulse, and community bias now sit in one market panel."
                 : "The market panel is always visible now, and it upgrades into a live pair chart as soon as you choose tokens."}

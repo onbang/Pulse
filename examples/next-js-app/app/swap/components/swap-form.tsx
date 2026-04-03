@@ -45,19 +45,19 @@ export const SwapForm = (props: { className?: string }) => {
       )}
     >
       <CardContent className="flex flex-col gap-4 p-4 md:p-5">
-        <section className="rounded-[22px] border border-white/8 bg-[#0f1527]/82 p-4">
+        <section className="rounded-[22px] border border-sky-100 bg-white p-4">
           <OfferAssetHeader className="mb-2" />
           <div className="flex gap-2">
             <OfferAssetSelect className="min-w-[160px] w-[36%] max-w-[180px]" />
-            <OfferAssetInput className="h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28" />
+            <OfferAssetInput className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400" />
           </div>
         </section>
 
-        <section className="rounded-[22px] border border-white/8 bg-[#0f1527]/82 p-4">
+        <section className="rounded-[22px] border border-sky-100 bg-white p-4">
           <AskAssetHeader />
           <div className="mt-2 flex gap-2">
             <AskAssetSelect className="min-w-[160px] w-[36%] max-w-[180px]" />
-            <AskAssetInput className="h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28" />
+            <AskAssetInput className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400" />
           </div>
         </section>
       </CardContent>
@@ -71,7 +71,7 @@ const OfferAssetHeader = (props: { className?: string }) => {
       {...props}
       className={cn(
         "flex items-center justify-between gap-2 text-sm text-muted-foreground",
-        "text-white/72",
+        "text-slate-600",
         props.className,
       )}
     >
@@ -129,7 +129,7 @@ const AskAssetHeader = (props: { className?: string }) => {
       {...props}
       className={cn(
         "flex items-center justify-between gap-2 text-sm text-muted-foreground",
-        "text-white/72",
+        "text-slate-600",
         props.className,
       )}
     >

@@ -68,7 +68,7 @@ export function AssetSelect({
           variant="outline"
           aria-expanded={open}
           className={cn(
-            "h-13 w-full rounded-2xl border-white/10 bg-white/5 px-3! text-sm font-semibold text-white hover:bg-white/10",
+            "h-13 w-full rounded-2xl border-sky-100 bg-white px-3! text-sm font-semibold text-slate-900 hover:bg-sky-50",
             className,
           )}
         >
@@ -92,7 +92,7 @@ export function AssetSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[320px] border-white/10 bg-[#101526] p-0 text-white shadow-[0_24px_70px_-34px_rgba(0,0,0,0.95)]"
+        className="w-[320px] border-sky-100 bg-white p-0 text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.18)]"
         avoidCollisions={false}
       >
         <Command filter={handleFilter}>

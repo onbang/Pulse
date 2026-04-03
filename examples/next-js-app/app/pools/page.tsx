@@ -12,39 +12,39 @@ export default function PoolsPage() {
             </h1>
             <p className="page-subheading mt-4">
               Scan the deepest routes, compare pair pricing, and save standout
-              pools to your watchlist in a cleaner dark wallet-style flow.
+              pools to your watchlist in a cleaner, readable discovery flow.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-xl">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">
+            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 Coverage
               </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">Live</p>
-              <p className="mt-2 text-sm text-white/74">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Live</p>
+              <p className="mt-2 text-sm text-slate-600">
                 Built from current STON asset and pair data.
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-xl">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">
+            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 Signal
               </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                 Social
               </p>
-              <p className="mt-2 text-sm text-white/74">
+              <p className="mt-2 text-sm text-slate-600">
                 Watchlist-ready with community-driven pool context.
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-xl">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/70">
+            <div className="rounded-[24px] border border-sky-100 bg-white/88 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                 Goal
               </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                 Actionable
               </p>
-              <p className="mt-2 text-sm text-white/74">
+              <p className="mt-2 text-sm text-slate-600">
                 Move from discovery to providing liquidity in one flow.
               </p>
             </div>

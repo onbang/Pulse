@@ -20,15 +20,15 @@ export default function Home() {
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-300/60">
                     Trade ticket
                   </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                     Execute with confidence
                   </h2>
                 </div>
                 <div className="stat-pill px-3 py-2 text-right">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                     Mode
                   </p>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-slate-900">
                     Wallet-grade flow
                   </p>
                 </div>
