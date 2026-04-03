@@ -180,7 +180,7 @@
   }
 
   .hero-shell {
-    @apply relative overflow-hidden rounded-[36px] border border-sky-100 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,250,255,0.96)_42%,rgba(61,177,255,0.22)_76%,rgba(115,84,242,0.16))] px-6 py-8 text-slate-900 shadow-[0_35px_120px_-45px_rgba(15,23,42,0.16)];
+    @apply relative overflow-hidden rounded-[36px] border border-sky-100 bg-[linear-gradient(135deg,rgba(255,255,255,0.995),rgba(248,251,255,0.985)_40%,rgba(61,177,255,0.18)_76%,rgba(115,84,242,0.14))] px-6 py-8 text-slate-900 shadow-[0_35px_120px_-45px_rgba(15,23,42,0.16)];
   }
 
   .hero-shell::before {
@@ -192,7 +192,7 @@
     border-radius: 9999px;
     background: radial-gradient(
       circle,
-      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.18),
       transparent 65%
     );
     pointer-events: none;
@@ -207,7 +207,7 @@
     border-radius: 9999px;
     background: radial-gradient(
       circle,
-      rgba(61, 177, 255, 0.24),
+      rgba(61, 177, 255, 0.16),
       transparent 70%
     );
     pointer-events: none;
@@ -260,7 +260,7 @@
   }
 
   .stat-pill {
-    @apply rounded-[22px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,248,255,0.92))] px-4 py-3 text-slate-900 shadow-[0_12px_34px_-28px_rgba(15,23,42,0.14)] backdrop-blur-xl;
+    @apply rounded-[22px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.985),rgba(247,250,255,0.97))] px-4 py-3 text-slate-900 shadow-[0_12px_34px_-28px_rgba(15,23,42,0.14)] backdrop-blur-xl;
   }
 }
 

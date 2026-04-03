@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ export function AssetSelect({
   loading,
   className,
 }: AssetSelectProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   const handleAssetSelect = (assetAddress: string) => {
@@ -86,7 +88,7 @@ export function AssetSelect({
               {selectedAsset.meta?.symbol}
             </>
           ) : (
-            "Select asset..."
+            t("assetSelect.placeholder")
           )}
           <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-60" />
         </Button>
@@ -96,9 +98,9 @@ export function AssetSelect({
         avoidCollisions={false}
       >
         <Command filter={handleFilter}>
-          <CommandInput placeholder="Search asset..." />
+          <CommandInput placeholder={t("assetSelect.search")} />
           <CommandList>
-            <CommandEmpty>No asset found.</CommandEmpty>
+            <CommandEmpty>{t("assetSelect.empty")}</CommandEmpty>
             <CommandGroup>
               {assets.map((asset) => (
                 <CommandItem

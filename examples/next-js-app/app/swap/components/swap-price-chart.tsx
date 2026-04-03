@@ -235,12 +235,12 @@ export function SwapPriceChart() {
       ? t("prediction.bullish")
       : forecastDirection === "down"
         ? t("prediction.bearish")
-        : "Neutral flow";
+        : t("misc.neutralFlow");
   const liveColor = priceDirection === "up" ? "#5ad66f" : "#ff6d5a";
   const gridLevels = [high, high - range * 0.33, high - range * 0.66, low];
 
   return (
-    <Card className="overflow-hidden rounded-[34px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] text-slate-900 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.16)]">
+    <Card className="overflow-hidden rounded-[34px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(246,250,255,0.97))] text-slate-900 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.16)]">
       <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,248,255,0.6))] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -446,7 +446,9 @@ export function SwapPriceChart() {
                       : "bg-rose-50 text-rose-600",
                   )}
                 >
-                  Live {formatChartValue(livePrice)}
+                  {t("swap.chart.liveValue", {
+                    value: formatChartValue(livePrice),
+                  })}
                 </span>
               </div>
             </div>

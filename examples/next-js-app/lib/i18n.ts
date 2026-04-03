@@ -43,6 +43,9 @@ export const messages = {
     "swap.ticket.title": "Execute with confidence",
     "swap.ticket.mode": "Mode",
     "swap.ticket.modeValue": "Wallet-grade flow",
+    "assetSelect.placeholder": "Select asset...",
+    "assetSelect.search": "Search asset...",
+    "assetSelect.empty": "No asset found.",
     "swap.form.offer": "You offer",
     "swap.form.ask": "You ask",
     "swap.referral.address": "Referral address:",
@@ -52,6 +55,7 @@ export const messages = {
       "Choose any token to switch this preview into a token-specific live market chart.",
     "swap.chart.liveDescription":
       "Real-time styled market chart for the token you selected.",
+    "swap.chart.liveValue": "Live {value}",
     "swap.chart.live": "Live",
     "swap.chart.preview": "Preview",
     "swap.chart.waiting": "Waiting for token selection",
@@ -149,6 +153,7 @@ export const messages = {
       "Connect your wallet to post through your profile.",
     "comments.commentFor": "Comment for {label}",
     "comments.selectPoolFirst": "Select a pool first to unlock comments",
+    "misc.neutralFlow": "Neutral flow",
   },
   ru: {
     "language.en": "EN",
@@ -166,13 +171,13 @@ export const messages = {
     "nav.leaderboard": "Рейтинг",
     "nav.community": "Комьюнити",
     "swap.hero.eyebrow": "Торговая студия",
-    "swap.hero.title": "Swap",
+    "swap.hero.title": "Обмен",
     "swap.hero.subtitle":
       "Совершай обмены, смотри рыночный контекст и оценивай настроение комьюнити по каждому токену.",
     "swap.hero.execution": "Исполнение",
     "swap.hero.executionTitle": "Маршруты STON",
     "swap.hero.executionBody":
-      "Симуляция и market context подставляются в каждую сделку.",
+      "Симуляция и рыночный контекст подставляются в каждую сделку.",
     "swap.hero.community": "Комьюнити",
     "swap.hero.communityTitle": "Слой прогнозов",
     "swap.hero.communityBody":
@@ -185,18 +190,22 @@ export const messages = {
     "swap.ticket.eyebrow": "Торговый тикет",
     "swap.ticket.title": "Обменивай уверенно",
     "swap.ticket.mode": "Режим",
-    "swap.ticket.modeValue": "Wallet-grade flow",
+    "swap.ticket.modeValue": "Режим кошелька",
+    "assetSelect.placeholder": "Выбери токен...",
+    "assetSelect.search": "Поиск токена...",
+    "assetSelect.empty": "Токен не найден.",
     "swap.form.offer": "Ты отдаешь",
     "swap.form.ask": "Ты получаешь",
     "swap.referral.address": "Реферальный адрес:",
     "swap.referral.percent": "Реферальный процент:",
-    "swap.chart.previewTitle": "Pulse market",
+    "swap.chart.previewTitle": "Рынок Pulse",
     "swap.chart.previewDescription":
       "Выбери любой токен, чтобы превратить превью в живой график именно этого токена.",
     "swap.chart.liveDescription":
-      "Живой market chart для выбранного тобой токена.",
+      "Живой график выбранного тобой токена.",
+    "swap.chart.liveValue": "Live {value}",
     "swap.chart.live": "Live",
-    "swap.chart.preview": "Preview",
+    "swap.chart.preview": "Превью",
     "swap.chart.waiting": "Ожидается выбор токена",
     "swap.chart.forecastPulse": "Импульс прогноза",
     "swap.chart.liveMode": "Живой режим",
@@ -211,14 +220,14 @@ export const messages = {
     "swap.chart.structureHigh": "Верхняя зона",
     "swap.chart.structureLow": "Нижняя зона",
     "swap.chart.routeImpact": "Влияние маршрута",
-    "swap.chart.tradeLens": "Trade lens",
+    "swap.chart.tradeLens": "Рыночный фокус",
     "swap.chart.tradeLensTitle":
       "Смотри импульс перед тем, как делать следующий прогноз",
     "swap.chart.tradeLensBodyLive":
-      "Свечи, live price pulse и настроение комьюнити теперь собраны в одной панели.",
+      "Свечи, живой ценовой импульс и настроение комьюнити теперь собраны в одной панели.",
     "swap.chart.tradeLensBodyPreview":
       "Панель рынка видна всегда и превращается в живой график сразу после выбора токена.",
-    "swap.chart.upperBand": "Верхний intraday диапазон",
+    "swap.chart.upperBand": "Верхний внутридневной диапазон",
     "swap.chart.lowerBand": "Нижняя зона поддержки",
     "swap.chart.impactLive": "Текущее влияние по выбранному сценарию",
     "swap.chart.impactPreview": "Предварительное влияние до выбора токена",
@@ -273,8 +282,8 @@ export const messages = {
     "pools.hero.signal": "Сигнал",
     "pools.hero.goal": "Цель",
     "pools.hero.coverageValue": "Live",
-    "pools.hero.signalValue": "Social",
-    "pools.hero.goalValue": "Actionable",
+    "pools.hero.signalValue": "Социальный",
+    "pools.hero.goalValue": "Практичный",
     "pools.hero.coverageBody":
       "Построено на актуальных STON asset и pair данных.",
     "pools.hero.signalBody":
@@ -292,6 +301,7 @@ export const messages = {
       "Подключи кошелек, чтобы публиковать комментарии от своего профиля.",
     "comments.commentFor": "Комментарий для {label}",
     "comments.selectPoolFirst": "Сначала выбери пул, чтобы открыть комментарии",
+    "misc.neutralFlow": "Нейтральный импульс",
   },
 } satisfies Record<AppLanguage, Record<string, string>>;
 
