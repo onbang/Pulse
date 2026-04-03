@@ -3,6 +3,7 @@ import { SwapButton } from "./components/swap-button";
 import { SwapForm } from "./components/swap-form";
 import { SwapFormHeader } from "./components/swap-form-header";
 import { SwapMarketIntelligence } from "./components/swap-market-intelligence";
+import { SwapPriceChart } from "./components/swap-price-chart";
 import { SwapSimulationPreview } from "./components/swap-simulation";
 import { SwapPredictionPanel } from "./components/swap-prediction-panel";
 
@@ -41,6 +42,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-6">
+          <SwapPriceChart />
           <SwapMarketIntelligence />
           <SwapPredictionPanel />
         </div>
