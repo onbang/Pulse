@@ -419,18 +419,18 @@ export function SwapPriceChart() {
         ) : (
         <>
         <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4">
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 {t("swap.chart.priceInUsd")}
               </p>
-              <p className="text-5xl font-semibold tracking-tight text-slate-950">
+              <p className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
                 ${formatChartValue(livePrice)}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
                 <Badge
                   className={cn(
-                    "border-0 text-base",
+                    "border-0 text-sm sm:text-base",
                     priceDirection === "up"
                       ? "bg-emerald-50 text-emerald-600"
                       : "bg-rose-50 text-rose-600",
@@ -446,20 +446,20 @@ export function SwapPriceChart() {
                 </Badge>
                 <span
                   className={cn(
-                    "text-2xl font-semibold",
+                    "text-xl font-semibold sm:text-2xl",
                     priceDirection === "up" ? "text-emerald-600" : "text-rose-600",
                   )}
                 >
                   {delta >= 0 ? "+" : ""}
                   {formatChartValue(Math.abs(delta))}
                 </span>
-                <span className="text-2xl font-semibold text-slate-500">
+                <span className="text-xl font-semibold text-slate-500 sm:text-2xl">
                   {timeframe}
                 </span>
               </div>
             </div>
 
-            <div className="min-w-[190px] rounded-[22px] border border-sky-100 bg-white px-4 py-3 text-right">
+            <div className="w-full rounded-[22px] border border-sky-100 bg-white px-4 py-3 text-left sm:w-auto sm:min-w-[190px] sm:text-right">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 {t("swap.chart.forecastPulse")}
               </p>
@@ -485,11 +485,11 @@ export function SwapPriceChart() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_90px]">
+          <div className="mt-4 grid gap-3 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_90px]">
             <div className="relative overflow-hidden rounded-[28px] border border-sky-100 bg-white p-4 md:p-5">
               <svg
                 viewBox="0 0 100 100"
-                className="h-[360px] w-full md:h-[420px]"
+                className="h-[240px] w-full sm:h-[280px] md:h-[360px] lg:h-[420px]"
                 preserveAspectRatio="none"
                 aria-label={`${chartLabel} live candlestick chart`}
               >
@@ -556,15 +556,15 @@ export function SwapPriceChart() {
                 />
               </svg>
 
-              <div className="mt-5 rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,255,0.96))] p-2">
-                <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+              <div className="mt-4 rounded-[24px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,255,0.96))] p-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 sm:gap-2">
                   {TIMEFRAMES.map((frame) => (
                     <button
                       key={frame.key}
                       type="button"
                       onClick={() => setTimeframe(frame.key)}
                       className={cn(
-                        "flex h-12 items-center justify-center rounded-full px-3 text-base font-semibold transition-all",
+                        "flex h-10 items-center justify-center rounded-full px-2 text-sm font-semibold transition-all sm:h-12 sm:px-3 sm:text-base",
                         frame.key === timeframe
                           ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
                           : "border border-transparent bg-slate-50/80 text-slate-600 hover:bg-sky-50 hover:text-slate-900",
@@ -576,11 +576,11 @@ export function SwapPriceChart() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
                 <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
                   {t("swap.chart.candles")}
                 </span>
-                <span>{t(currentFrame.labelKey)}</span>
+                <span className="text-xs sm:text-sm">{t(currentFrame.labelKey)}</span>
                 <span
                   className={cn(
                     "rounded-full px-3 py-1",
@@ -596,7 +596,7 @@ export function SwapPriceChart() {
               </div>
             </div>
 
-            <div className="flex flex-row justify-between rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.82))] px-4 py-3 text-right lg:flex-col lg:px-3 lg:py-4">
+            <div className="flex flex-row justify-between rounded-[24px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.82))] px-4 py-3 text-right lg:flex-col lg:rounded-[28px] lg:px-3 lg:py-4">
               {gridLevels.map((level, index) => (
                 <span key={index} className="text-sm font-medium text-slate-500">
                   {formatChartValue(level)}
@@ -604,7 +604,7 @@ export function SwapPriceChart() {
               ))}
               <span
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-center text-lg font-semibold",
+                  "rounded-full px-2.5 py-1 text-center text-base font-semibold sm:text-lg",
                   priceDirection === "up"
                     ? "bg-emerald-50 text-emerald-600"
                     : "bg-rose-50 text-rose-600",
@@ -616,50 +616,50 @@ export function SwapPriceChart() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
+        <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
+          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureHigh")}
             </p>
-            <p className="mt-3 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {formatChartValue(high)}
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
+            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
               {t("swap.chart.upperBand")}
             </p>
           </div>
-          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
+          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureLow")}
             </p>
-            <p className="mt-3 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {formatChartValue(low)}
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
+            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
               {t("swap.chart.lowerBand")}
             </p>
           </div>
-          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
+          <div className="flex min-h-[150px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[180px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.routeImpact")}
             </p>
-            <p className="mt-3 text-2xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
+            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
               {trackedAsset
                 ? t("swap.chart.impactLive")
                 : t("swap.chart.impactPreview")}
             </p>
           </div>
-          <div className="flex min-h-[180px] flex-col rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
+          <div className="flex min-h-[150px] flex-col rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)] sm:min-h-[180px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.tradeLens")}
             </p>
-            <p className="mt-3 max-w-[15rem] text-xl font-semibold leading-8 text-slate-900">
+            <p className="mt-2 max-w-[15rem] text-lg font-semibold leading-7 text-slate-900 sm:mt-3 sm:text-xl sm:leading-8">
               {t("swap.chart.tradeLensTitle")}
             </p>
-            <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-600">
+            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-600 sm:mt-3 sm:leading-6">
               {t("swap.chart.tradeLensBodyLive")}
             </p>
           </div>
