@@ -28,10 +28,6 @@ import {
   buildAchievements,
   defaultCommunityStore,
 } from "@/lib/community";
-import {
-  readPendingPredictionBets,
-  removePendingPredictionBet,
-} from "@/lib/pending-predictions";
 import type { TelegramMiniAppUser } from "@/lib/telegram-mini-app";
 
 type CommunityStatePayload = {
@@ -71,7 +67,14 @@ type CommunityContextValue = {
     direction: PredictionDirection;
     amount: number;
     txHash?: string;
-  }) => Promise<boolean>;
+  }) => Promise<{
+    ok: boolean;
+    syncStatus: "pending" | "confirmed" | "failed";
+  }>;
+  syncPredictionTransaction: (input: { txHash: string }) => Promise<{
+    ok: boolean;
+    syncStatus: "pending" | "confirmed" | "missing";
+  }>;
   optimisticRecordPrediction: (input: {
     pairId: string;
     label: string;
@@ -110,6 +113,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+    cache: "no-store",
   });
 
   if (!response.ok) {
@@ -136,12 +140,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const applyPayload = (payload: CommunityStatePayload) => {
-    const nextStore =
-      walletAddress && typeof window !== "undefined"
-        ? mergePendingPredictions(payload.store, walletAddress, profile?.displayName)
-        : payload.store;
-
-    setStore(nextStore);
+    setStore(payload.store);
     setProfile(payload.profile);
     setAchievements(payload.achievements);
     setLeaderboard(payload.leaderboard);
@@ -156,7 +155,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       const url = walletAddress
         ? `/api/community/state?wallet=${encodeURIComponent(walletAddress)}`
         : "/api/community/state";
-      const response = await fetch(url);
+      const response = await fetch(url, { cache: "no-store" });
 
       if (!response.ok) {
         throw new Error("Failed to load community state");
@@ -314,7 +313,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     input,
   ) => {
     if (!walletAddress) {
-      return false;
+      return { ok: false, syncStatus: "failed" };
     }
 
     setIsSyncing(true);
@@ -322,6 +321,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     try {
       const payload = await postJson<{
         result: boolean;
+        syncStatus?: "pending" | "confirmed";
         state: CommunityStatePayload;
       }>("/api/community/predictions", {
         walletAddress,
@@ -329,75 +329,56 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       });
 
       applyPayload(payload.state);
-      return payload.result;
+      return {
+        ok: payload.result,
+        syncStatus: payload.syncStatus ?? "confirmed",
+      };
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const optimisticRecordPrediction: CommunityContextValue["optimisticRecordPrediction"] =
-    ({ pairId, label, direction, amount }) => {
+  const syncPredictionTransaction: CommunityContextValue["syncPredictionTransaction"] =
+    async ({ txHash }) => {
       if (!walletAddress) {
-        return;
+        return { ok: false, syncStatus: "missing" };
       }
 
-      const createdAt = new Date().toISOString();
-      const optimisticBet: PredictionBet = {
-        id: `optimistic-${walletAddress}-${Date.now()}`,
-        walletAddress,
-        author: profile?.displayName || `STON ${walletAddress.slice(0, 4)}`,
-        amount: Math.round(amount * 100) / 100,
-        direction,
-        createdAt,
-      };
+      setIsSyncing(true);
 
-      setStore((currentStore) => {
-        const existingPrediction = currentStore.predictions[pairId] ?? {
-          label,
-          up: [],
-          down: [],
-          bets: [],
-          round: {
-            id: `optimistic-round-${pairId}`,
-            status: "open" as const,
-            openedAt: createdAt,
-            closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-            durationMinutes: 60,
-          },
-          payoutPreviews: [],
+      try {
+        const response = await fetch("/api/community/predictions", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            walletAddress,
+            txHash,
+          }),
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return { ok: false, syncStatus: "missing" };
+        }
+
+        const payload = (await response.json()) as {
+          result: boolean;
+          syncStatus: "pending" | "confirmed" | "missing";
+          state: CommunityStatePayload;
         };
 
-        const nextPrediction: PairPrediction = {
-          ...existingPrediction,
-          label,
-          up:
-            direction === "up"
-              ? Array.from(new Set([...existingPrediction.up, walletAddress]))
-              : existingPrediction.up.filter((item) => item !== walletAddress),
-          down:
-            direction === "down"
-              ? Array.from(new Set([...existingPrediction.down, walletAddress]))
-              : existingPrediction.down.filter((item) => item !== walletAddress),
-          bets: [optimisticBet, ...existingPrediction.bets],
-          round:
-            existingPrediction.round ?? {
-              id: `optimistic-round-${pairId}`,
-              status: "open",
-              openedAt: createdAt,
-              closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-              durationMinutes: 60,
-            },
-        };
-
+        applyPayload(payload.state);
         return {
-          ...currentStore,
-          predictions: {
-            ...currentStore.predictions,
-            [pairId]: nextPrediction,
-          },
+          ok: payload.result,
+          syncStatus: payload.syncStatus,
         };
-      });
+      } finally {
+        setIsSyncing(false);
+      }
     };
+
+  const optimisticRecordPrediction: CommunityContextValue["optimisticRecordPrediction"] =
+    () => {};
 
   const trackActivity: CommunityContextValue["trackActivity"] = async (
     track,
@@ -519,6 +500,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         getComments,
         toggleCommentReaction,
         submitPrediction,
+        syncPredictionTransaction,
         optimisticRecordPrediction,
         settlePredictionRound,
         getPrediction,
@@ -530,86 +512,6 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       {children}
     </CommunityContext.Provider>
   );
-}
-
-function mergePendingPredictions(
-  store: CommunityStore,
-  walletAddress: string,
-  displayName?: string,
-) {
-  const pendingBets = readPendingPredictionBets(walletAddress);
-
-  if (pendingBets.length === 0) {
-    return store;
-  }
-
-  const nextStore: CommunityStore = {
-    ...store,
-    predictions: { ...store.predictions },
-  };
-
-  for (const pending of pendingBets) {
-    const existingPrediction = nextStore.predictions[pending.pairId] ?? {
-      label: pending.label,
-      up: [],
-      down: [],
-      bets: [],
-      round: {
-        id: `pending-round-${pending.pairId}`,
-        status: "open" as const,
-        openedAt: pending.createdAt,
-        closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        durationMinutes: 60,
-      },
-      payoutPreviews: [],
-    };
-
-    const alreadySynced = existingPrediction.bets.some((bet) => {
-      const createdGap = Math.abs(
-        new Date(bet.createdAt).getTime() - new Date(pending.createdAt).getTime(),
-      );
-
-      return (
-        bet.walletAddress === pending.walletAddress &&
-        bet.direction === pending.direction &&
-        Math.abs(bet.amount - pending.amount) < 0.0001 &&
-        createdGap < 15 * 60 * 1000
-      );
-    });
-
-    if (alreadySynced) {
-      removePendingPredictionBet(pending.messageHash);
-      continue;
-    }
-
-    nextStore.predictions[pending.pairId] = {
-      ...existingPrediction,
-      label: pending.label,
-      up:
-        pending.direction === "up"
-          ? Array.from(new Set([...existingPrediction.up, pending.walletAddress]))
-          : existingPrediction.up,
-      down:
-        pending.direction === "down"
-          ? Array.from(new Set([...existingPrediction.down, pending.walletAddress]))
-          : existingPrediction.down,
-      bets: [
-        {
-          id: `pending-${pending.messageHash}`,
-          walletAddress: pending.walletAddress,
-          author: displayName || `STON ${pending.walletAddress.slice(0, 4)}`,
-          amount: pending.amount,
-          direction: pending.direction,
-          createdAt: pending.createdAt,
-          txHash: pending.messageHash,
-          sourceKind: "pending",
-        },
-        ...existingPrediction.bets,
-      ],
-    };
-  }
-
-  return nextStore;
 }
 
 export function useCommunityProfile() {

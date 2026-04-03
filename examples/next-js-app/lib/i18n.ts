@@ -222,6 +222,11 @@ export const messages = {
       "This is a sentiment widget, not financial advice. Open rounds accept bets, closed rounds await settlement, and settled rounds show payout previews.",
     "prediction.txInProgress":
       "Confirm the transaction in your wallet to place the bet.",
+    "prediction.txSending": "Opening the wallet confirmation flow.",
+    "prediction.txWaitingConfirmation":
+      "Transaction sent. Waiting for onchain confirmation.",
+    "prediction.txSyncing": "Transaction confirmed. Syncing round data.",
+    "prediction.txSynced": "Bet confirmed and synced with the market.",
     "prediction.txSent": "Prediction transaction sent",
     "prediction.txSentBody":
       "{amount} TON has been sent and your bet is now recorded in the round.",
@@ -231,6 +236,26 @@ export const messages = {
     "prediction.txFailed": "Prediction transaction failed",
     "prediction.txFailedBody":
       "The wallet transaction was cancelled or failed, so the bet was not recorded.",
+    "prediction.txHashMissing":
+      "The wallet did not return a transaction identifier, so the bet cannot be synced safely.",
+    "prediction.txPendingRegistrationFailed":
+      "The transaction was sent, but the app could not register it for confirmation tracking.",
+    "prediction.txSyncFailed":
+      "The transaction was confirmed, but syncing round data failed. Refresh the page to retry.",
+    "prediction.txUnexpectedFailure":
+      "The transaction flow was interrupted before the bet could be synced.",
+    "prediction.txSyncedTitle": "Bet confirmed",
+    "prediction.txSyncedBody":
+      "{amount} TON is confirmed onchain and now visible in the round.",
+    "prediction.txPendingTitle": "Bet sent, waiting for confirmation",
+    "prediction.txPendingBody":
+      "{amount} TON has been sent. The app will show the bet as soon as the transaction is confirmed onchain.",
+    "prediction.txPendingRefresh":
+      "Waiting for transaction confirmation. Reload-safe sync will update this round automatically.",
+    "prediction.pendingConfirmation": "Pending confirmation",
+    "prediction.pendingStakeLine":
+      "{amount} TON sent. Waiting for onchain confirmation.",
+    "prediction.pendingPayout": "Payout will appear after confirmation.",
     "prediction.treasuryMissing":
       "Prediction treasury address is not configured yet, so on-chain bet placement is unavailable.",
     "profile.walletGuard":
@@ -662,6 +687,12 @@ export const messages = {
       "Это виджет рыночного настроения, а не финансовый совет. Открытые раунды принимают ставки, закрытые ждут завершения, а завершенные показывают выплаты.",
     "prediction.txInProgress":
       "Подтверди транзакцию в кошельке, чтобы сделать ставку.",
+    "prediction.txSending": "Открываем подтверждение транзакции в кошельке.",
+    "prediction.txWaitingConfirmation":
+      "Транзакция отправлена. Ждем подтверждения в сети.",
+    "prediction.txSyncing":
+      "Транзакция подтверждена. Синхронизируем данные раунда.",
+    "prediction.txSynced": "Ставка подтверждена и синхронизирована с раундом.",
     "prediction.txSent": "Транзакция прогноза отправлена",
     "prediction.txSentBody":
       "{amount} TON отправлено, и ставка записана в текущий раунд.",
@@ -672,6 +703,27 @@ export const messages = {
     "prediction.txFailed": "Не удалось отправить транзакцию прогноза",
     "prediction.txFailedBody":
       "Транзакция в кошельке была отменена или завершилась ошибкой, поэтому ставка не записана.",
+    "prediction.txHashMissing":
+      "Кошелек не вернул идентификатор транзакции, поэтому безопасная синхронизация ставки невозможна.",
+    "prediction.txPendingRegistrationFailed":
+      "Транзакция отправлена, но приложению не удалось зарегистрировать ее для отслеживания подтверждения.",
+    "prediction.txSyncFailed":
+      "Транзакция уже подтверждена, но синхронизация данных раунда не удалась. Обнови страницу, чтобы повторить попытку.",
+    "prediction.txUnexpectedFailure":
+      "Поток транзакции прервался до завершения синхронизации ставки.",
+    "prediction.txSyncedTitle": "Ставка подтверждена",
+    "prediction.txSyncedBody":
+      "{amount} TON уже подтверждено в сети и отображается в раунде.",
+    "prediction.txPendingTitle": "Ставка отправлена, ждем подтверждения",
+    "prediction.txPendingBody":
+      "{amount} TON уже отправлено. Ставка появится в раунде сразу после onchain-подтверждения.",
+    "prediction.txPendingRefresh":
+      "Ждем подтверждения транзакции. После него этот раунд обновится автоматически.",
+    "prediction.pendingConfirmation": "Ожидается подтверждение",
+    "prediction.pendingStakeLine":
+      "{amount} TON отправлено. Ждем onchain-подтверждения.",
+    "prediction.pendingPayout":
+      "Выплата появится после подтверждения транзакции.",
     "prediction.treasuryMissing":
       "Адрес prediction treasury пока не настроен, поэтому on-chain ставка недоступна.",
     "profile.walletGuard":

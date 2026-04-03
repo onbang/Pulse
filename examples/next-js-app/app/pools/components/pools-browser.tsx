@@ -1,7 +1,6 @@
 "use client";
 
 import type { AssetInfoV2, PoolInfo } from "@ston-fi/api";
-import { buildPredictionBetTransferMessage } from "@ston-pulse/prediction-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, ArrowUpRight, Star, Waves } from "lucide-react";
 import Link from "next/link";
@@ -26,10 +25,23 @@ import { useStonApi } from "@/hooks/use-ston-api";
 import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
 import { getPredictionEntryAddress } from "@/lib/prediction-config";
-import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
 import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { cn, validateFloatValue } from "@/lib/utils";
+
+type InlinePredictionState =
+  | "idle"
+  | "sending"
+  | "waiting_confirmation"
+  | "syncing"
+  | "synced"
+  | "failed";
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 type PoolCardEntry = {
   id: string;
@@ -45,7 +57,14 @@ type PoolCardEntry = {
   lpSupplyLabel: string;
 };
 
-const PRIORITY_SYMBOLS = ["TON", "USDT", "USDC", "STON", "NOT", "DOGS"] as const;
+const PRIORITY_SYMBOLS = [
+  "TON",
+  "USDT",
+  "USDC",
+  "STON",
+  "NOT",
+  "DOGS",
+] as const;
 
 function getSymbol(asset: AssetInfoV2) {
   return asset.meta?.symbol?.trim() || "TOKEN";
@@ -114,7 +133,8 @@ function buildCuratedAssets(assets: AssetInfoV2[]) {
 
 function buildPairCandidates(assets: AssetInfoV2[]) {
   const tonAsset =
-    assets.find((asset) => getSymbol(asset).toUpperCase() === "TON") ?? assets[0];
+    assets.find((asset) => getSymbol(asset).toUpperCase() === "TON") ??
+    assets[0];
 
   if (!tonAsset) {
     return [];
@@ -164,7 +184,8 @@ function toPoolCardEntry({
     liquidityUsd,
     pairLabel: `${getSymbol(assetA)}/${getSymbol(assetB)}`,
     priceRatio,
-    popularityScore: (assetA.popularityIndex ?? 0) + (assetB.popularityIndex ?? 0),
+    popularityScore:
+      (assetA.popularityIndex ?? 0) + (assetB.popularityIndex ?? 0),
     routerLabel: safeAddressLabel(pool.routerAddress),
     poolLabel: safeAddressLabel(pool.address),
     lpSupplyLabel: safeLpSupplyLabel(pool.lpTotalSupply),
@@ -173,11 +194,13 @@ function toPoolCardEntry({
 
 function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
   const { t } = useI18n();
-  const { walletAddress, submitPrediction } = useCommunityProfile();
+  const { walletAddress, submitPrediction, syncPredictionTransaction } =
+    useCommunityProfile();
   const { toast } = useToast();
   const [tonConnectUI] = useTonConnectUI();
   const [stakeAmount, setStakeAmount] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionState, setSubmissionState] =
+    useState<InlinePredictionState>("idle");
   const predictionEntryAddress = getPredictionEntryAddress();
   const numericStake = Number(stakeAmount);
   const isStakeValid =
@@ -185,6 +208,10 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
     validateFloatValue(stakeAmount, 2) &&
     Number.isFinite(numericStake) &&
     numericStake > 0;
+  const isSubmitting =
+    submissionState === "sending" ||
+    submissionState === "waiting_confirmation" ||
+    submissionState === "syncing";
 
   const placePrediction = async (direction: "up" | "down") => {
     if (
@@ -197,7 +224,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
     }
 
     try {
-      setIsSubmitting(true);
+      setSubmissionState("sending");
       const message = buildPredictionTransferMessage({
         pairId: props.pairId,
         label: props.pairLabel,
@@ -210,19 +237,18 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         messages: [message],
       });
 
-      const messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
-
-      if (messageHash) {
-        upsertPendingPredictionBet({
-          messageHash,
-          walletAddress,
-          pairId: props.pairId,
-          label: props.pairLabel,
-          direction,
-          amount: numericStake,
-          createdAt: new Date().toISOString(),
+      const messageHash =
+        getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
+      if (!messageHash) {
+        setSubmissionState("failed");
+        toast({
+          title: t("prediction.txFailed"),
+          description: t("prediction.txHashMissing"),
         });
+        return;
       }
+
+      setSubmissionState("waiting_confirmation");
 
       const submitted = await submitPrediction({
         pairId: props.pairId,
@@ -232,22 +258,75 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         txHash: messageHash,
       });
 
-      if (submitted) {
+      if (!submitted.ok) {
+        setSubmissionState("failed");
         toast({
-          title: t("prediction.txSent"),
-          description: t("prediction.txSentBody", {
+          title: t("prediction.txFailed"),
+          description: t("prediction.txPendingRegistrationFailed"),
+        });
+        return;
+      }
+
+      let syncStatus: "pending" | "confirmed" | "failed" | "missing" =
+        submitted.syncStatus;
+
+      if (syncStatus !== "confirmed") {
+        for (let attempt = 0; attempt < 15; attempt += 1) {
+          await wait(2000);
+          try {
+            const syncResult = await syncPredictionTransaction({
+              txHash: messageHash,
+            });
+            syncStatus = syncResult.syncStatus;
+          } catch {
+            syncStatus = "pending";
+          }
+
+          if (syncStatus === "confirmed") {
+            break;
+          }
+        }
+      }
+
+      if (syncStatus === "confirmed") {
+        setSubmissionState("syncing");
+        try {
+          await syncPredictionTransaction({
+            txHash: messageHash,
+          });
+        } catch {
+          setSubmissionState("failed");
+          toast({
+            title: t("prediction.txFailed"),
+            description: t("prediction.txSyncFailed"),
+          });
+          return;
+        }
+        setSubmissionState("synced");
+        toast({
+          title: t("prediction.txSyncedTitle"),
+          description: t("prediction.txSyncedBody", {
             amount: numericStake.toFixed(2),
           }),
         });
         setStakeAmount("");
+        window.setTimeout(() => setSubmissionState("idle"), 1800);
+        return;
       }
+
+      setSubmissionState("waiting_confirmation");
+      toast({
+        title: t("prediction.txPendingTitle"),
+        description: t("prediction.txPendingBody", {
+          amount: numericStake.toFixed(2),
+        }),
+      });
     } catch {
+      setSubmissionState("failed");
       toast({
         title: t("prediction.txFailed"),
-        description: t("prediction.txFailedBody"),
+        description: t("prediction.txUnexpectedFailure"),
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -259,7 +338,10 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         value={stakeAmount}
         disabled={!walletAddress}
         onChange={(event) => {
-          if (event.target.value && !validateFloatValue(event.target.value, 2)) {
+          if (
+            event.target.value &&
+            !validateFloatValue(event.target.value, 2)
+          ) {
             return;
           }
 
@@ -299,6 +381,15 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
           {t("prediction.bearish")}
         </Button>
       </div>
+      {submissionState === "sending" ? (
+        <p className="text-xs text-sky-700">{t("prediction.txSending")}</p>
+      ) : submissionState === "waiting_confirmation" ? (
+        <p className="text-xs text-sky-700">
+          {t("prediction.txWaitingConfirmation")}
+        </p>
+      ) : submissionState === "syncing" ? (
+        <p className="text-xs text-sky-700">{t("prediction.txSyncing")}</p>
+      ) : null}
     </div>
   );
 }
@@ -322,7 +413,8 @@ export function PoolsBrowser() {
     queryKey: [
       "pools-browser",
       ...pairCandidates.map(
-        ({ assetA, assetB }) => `${assetA.contractAddress}:${assetB.contractAddress}`,
+        ({ assetA, assetB }) =>
+          `${assetA.contractAddress}:${assetB.contractAddress}`,
       ),
     ],
     enabled: assetsQuery.isFetched && pairCandidates.length > 0,
@@ -343,7 +435,10 @@ export function PoolsBrowser() {
 
       for (const result of results) {
         const bestPool = [...result.pools].sort((left, right) => {
-          return Number(right.lpTotalSupplyUsd ?? 0) - Number(left.lpTotalSupplyUsd ?? 0);
+          return (
+            Number(right.lpTotalSupplyUsd ?? 0) -
+            Number(left.lpTotalSupplyUsd ?? 0)
+          );
         })[0];
 
         if (!bestPool?.address) {
@@ -375,7 +470,10 @@ export function PoolsBrowser() {
   const pools = poolsQuery.data ?? [];
   const isLoading = assetsQuery.isLoading || poolsQuery.isLoading;
   const isFetched = assetsQuery.isFetched && poolsQuery.isFetched;
-  const totalLiquidity = pools.reduce((sum, pool) => sum + pool.liquidityUsd, 0);
+  const totalLiquidity = pools.reduce(
+    (sum, pool) => sum + pool.liquidityUsd,
+    0,
+  );
   const watchedCount = profile?.watchedPools.length ?? 0;
 
   return (
@@ -602,7 +700,9 @@ export function PoolsBrowser() {
                             {entry.routerLabel}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
-                            {t("pools.card.poolAddress", { address: entry.poolLabel })}
+                            {t("pools.card.poolAddress", {
+                              address: entry.poolLabel,
+                            })}
                           </p>
                         </div>
                       </div>
@@ -645,7 +745,9 @@ export function PoolsBrowser() {
                               variant="outline"
                               className="rounded-full border-sky-100 bg-sky-50 text-slate-700 hover:bg-sky-100 hover:text-slate-900"
                             >
-                              <Link href={ROUTES.community}>{t("pools.card.community")}</Link>
+                              <Link href={ROUTES.community}>
+                                {t("pools.card.community")}
+                              </Link>
                             </Button>
                           </div>
                           <PoolQuickPrediction

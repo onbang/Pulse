@@ -119,6 +119,8 @@ function setupSchema(db: DatabaseSync) {
       direction TEXT NOT NULL,
       created_at TEXT NOT NULL,
       source_message_hash TEXT,
+      chain_tx_hash TEXT,
+      confirmed_at TEXT,
       source_kind TEXT NOT NULL DEFAULT 'offchain'
     );
 
@@ -170,12 +172,24 @@ function setupSchema(db: DatabaseSync) {
     "TEXT NOT NULL DEFAULT '{}'",
   );
   ensureColumn(db, "prediction_bets", "source_message_hash", "TEXT");
+  ensureColumn(db, "prediction_bets", "chain_tx_hash", "TEXT");
+  ensureColumn(db, "prediction_bets", "confirmed_at", "TEXT");
   ensureColumn(
     db,
     "prediction_bets",
     "source_kind",
     "TEXT NOT NULL DEFAULT 'offchain'",
   );
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_prediction_bets_source_message_hash
+    ON prediction_bets(source_message_hash)
+    WHERE source_message_hash IS NOT NULL;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_prediction_bets_chain_tx_hash
+    ON prediction_bets(chain_tx_hash)
+    WHERE chain_tx_hash IS NOT NULL;
+  `);
 }
 
 function ensureColumn(
@@ -730,6 +744,8 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     direction: PredictionDirection;
     created_at: string;
     source_message_hash: string | null;
+    chain_tx_hash: string | null;
+    confirmed_at: string | null;
     source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
   }>;
   const positionRows = db
@@ -805,6 +821,7 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
       direction: row.direction,
       createdAt: row.created_at,
       txHash: row.source_message_hash ?? undefined,
+      chainTxHash: row.chain_tx_hash ?? undefined,
       sourceKind: row.source_kind,
     };
 
@@ -1074,6 +1091,105 @@ function extractTxHash(transaction: Record<string, unknown>) {
   );
 }
 
+function extractMessageHash(message: Record<string, unknown> | null) {
+  if (!message) {
+    return null;
+  }
+
+  const candidates = [
+    message.hash,
+    message.msg_hash,
+    message.message_hash,
+    (message.message_content as Record<string, unknown> | undefined)?.hash,
+    (message.messageContent as Record<string, unknown> | undefined)?.hash,
+  ];
+
+  return (
+    candidates.find((value): value is string => typeof value === "string") ??
+    null
+  );
+}
+
+function extractTransactionCreatedAt(transaction: Record<string, unknown>) {
+  const candidates = [
+    transaction.utime,
+    transaction.timestamp,
+    transaction.now,
+    transaction.created_at,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return new Date(candidate * 1000).toISOString();
+    }
+
+    if (typeof candidate === "string") {
+      const numeric = Number(candidate);
+
+      if (Number.isFinite(numeric)) {
+        return new Date(numeric * 1000).toISOString();
+      }
+
+      const parsedDate = new Date(candidate);
+
+      if (!Number.isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString();
+      }
+    }
+  }
+
+  return new Date().toISOString();
+}
+
+function getRoundSnapshot(db: DatabaseSync, pairId: string, label: string) {
+  const existing = db
+    .prepare("SELECT * FROM prediction_rounds WHERE pair_id = ?")
+    .get(pairId) as
+    | {
+        pair_id: string;
+        round_id: string;
+        pair_label: string;
+        status: PredictionRound["status"];
+        opened_at: string;
+        closes_at: string;
+        resolved_at: string | null;
+        duration_minutes: number;
+        settlement_direction: PredictionDirection | null;
+      }
+    | undefined;
+
+  if (existing) {
+    return createRound(existing.pair_id, existing.pair_label, {
+      id: existing.round_id,
+      status: existing.status,
+      openedAt: existing.opened_at,
+      closesAt: existing.closes_at,
+      resolvedAt: existing.resolved_at ?? undefined,
+      durationMinutes: existing.duration_minutes,
+      settlementDirection: existing.settlement_direction ?? undefined,
+    });
+  }
+
+  const round = createRound(pairId, label);
+  db.prepare(`
+    INSERT INTO prediction_rounds (
+      pair_id, round_id, pair_label, status, opened_at, closes_at, resolved_at, duration_minutes, settlement_direction
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    pairId,
+    round.id,
+    label,
+    round.status,
+    round.openedAt,
+    round.closesAt,
+    round.resolvedAt ?? null,
+    round.durationMinutes,
+    round.settlementDirection ?? null,
+  );
+
+  return round;
+}
+
 function extractMessageComment(message: Record<string, unknown> | null) {
   if (!message) {
     return null;
@@ -1123,6 +1239,9 @@ function extractMessageComment(message: Record<string, unknown> | null) {
 async function syncOnchainPredictionTransactions(
   db: DatabaseSync,
   walletAddress: string | null,
+  options?: {
+    targetMessageHash?: string | null;
+  },
 ) {
   const entryAddress = getPredictionEntryAddress();
   const contractAddress = getPredictionMarketAddress();
@@ -1136,7 +1255,7 @@ async function syncOnchainPredictionTransactions(
     const response = await fetch(
       `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
         entryAddress,
-      )}/transactions?limit=50`,
+      )}/transactions?limit=100`,
       {
         headers: process.env.TON_CONSOLE_API_KEY
           ? { Authorization: `Bearer ${process.env.TON_CONSOLE_API_KEY}` }
@@ -1154,11 +1273,14 @@ async function syncOnchainPredictionTransactions(
     };
     const transactions = payload.transactions ?? [];
     const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+    const normalizedTargetMessageHash =
+      options?.targetMessageHash?.trim() || null;
 
     for (const transaction of transactions) {
-      const txHash = extractTxHash(transaction);
+      const chainTxHash = extractTxHash(transaction);
       const incomingMessage = (transaction.in_msg ??
         transaction.inMessage) as Record<string, unknown> | null;
+      const incomingMessageHash = extractMessageHash(incomingMessage);
       const sourceValue =
         (incomingMessage?.source as
           | Record<string, unknown>
@@ -1195,8 +1317,16 @@ async function syncOnchainPredictionTransactions(
           : null;
 
       if (
-        !txHash ||
+        normalizedTargetMessageHash &&
+        incomingMessageHash !== normalizedTargetMessageHash
+      ) {
+        continue;
+      }
+
+      if (
+        !chainTxHash ||
         !normalizedSourceAddress ||
+        !incomingMessageHash ||
         (!parsedComment && !parsedContractPayload)
       ) {
         continue;
@@ -1211,11 +1341,11 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
-      const existingBet = db
-        .prepare("SELECT id FROM prediction_bets WHERE id = ?")
-        .get(`onchain-${txHash}`) as { id: string } | undefined;
+      const existingConfirmedByChainHash = db
+        .prepare("SELECT id FROM prediction_bets WHERE chain_tx_hash = ?")
+        .get(chainTxHash) as { id: string } | undefined;
 
-      if (existingBet) {
+      if (existingConfirmedByChainHash) {
         continue;
       }
 
@@ -1226,15 +1356,11 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
-      const round = ensureRoundState(
+      const round = getRoundSnapshot(
         db,
         pairId,
         parsedContractPayload?.label ?? parsedComment?.label ?? pairId,
       );
-
-      if (round.status !== "open") {
-        continue;
-      }
 
       const amount = parsedContractPayload
         ? extractMessageTonValue(incomingMessage)
@@ -1248,6 +1374,36 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
+      const confirmedAt = extractTransactionCreatedAt(transaction);
+      const existingByMessageHash = db
+        .prepare(
+          `
+          SELECT id, source_kind
+          FROM prediction_bets
+          WHERE source_message_hash = ?
+        `,
+        )
+        .get(incomingMessageHash) as
+        | {
+            id: string;
+            source_kind:
+              | "offchain"
+              | "wallet_signed"
+              | "pending"
+              | "onchain_sync";
+          }
+        | undefined;
+
+      if (existingByMessageHash?.source_kind === "onchain_sync") {
+        db.prepare(`
+          UPDATE prediction_bets
+          SET chain_tx_hash = COALESCE(chain_tx_hash, ?),
+              confirmed_at = COALESCE(confirmed_at, ?)
+          WHERE source_message_hash = ?
+        `).run(chainTxHash, confirmedAt, incomingMessageHash);
+        continue;
+      }
+
       db.exec("BEGIN");
       try {
         db.prepare(`
@@ -1255,43 +1411,76 @@ async function syncOnchainPredictionTransactions(
           VALUES (?, ?, ?)
         `).run(pairId, normalizedSourceAddress, direction);
 
-        db.prepare(`
-          INSERT INTO prediction_bets (
-            id,
-            pair_id,
-            pair_label,
-            wallet_address,
-            author,
-            amount,
+        if (existingByMessageHash) {
+          db.prepare(`
+            UPDATE prediction_bets
+            SET pair_id = ?,
+                pair_label = ?,
+                wallet_address = ?,
+                author = ?,
+                amount = ?,
+                direction = ?,
+                created_at = ?,
+                chain_tx_hash = ?,
+                confirmed_at = ?,
+                source_kind = 'onchain_sync'
+            WHERE source_message_hash = ?
+          `).run(
+            pairId,
+            label,
+            normalizedSourceAddress,
+            current.display_name,
+            Math.round(amount * 100) / 100,
             direction,
-            created_at,
-            source_message_hash,
-            source_kind
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          `onchain-${txHash}`,
-          pairId,
-          label,
-          normalizedSourceAddress,
-          current.display_name,
-          Math.round(amount * 100) / 100,
-          direction,
-          new Date().toISOString(),
-          txHash,
-          "onchain_sync",
-        );
+            confirmedAt,
+            chainTxHash,
+            confirmedAt,
+            incomingMessageHash,
+          );
+        } else {
+          db.prepare(`
+            INSERT INTO prediction_bets (
+              id,
+              pair_id,
+              pair_label,
+              wallet_address,
+              author,
+              amount,
+              direction,
+              created_at,
+              source_message_hash,
+              chain_tx_hash,
+              confirmed_at,
+              source_kind
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            `onchain-${chainTxHash}`,
+            pairId,
+            label,
+            normalizedSourceAddress,
+            current.display_name,
+            Math.round(amount * 100) / 100,
+            direction,
+            confirmedAt,
+            incomingMessageHash,
+            chainTxHash,
+            confirmedAt,
+            "onchain_sync",
+          );
+        }
 
         db.prepare(`
           UPDATE profiles
-          SET predictions_count = predictions_count + 1
+          SET predictions_count = predictions_count + 1,
+              total_points = total_points + ?
           WHERE wallet_address = ?
-        `).run(normalizedSourceAddress);
+        `).run(PREDICTION_POINTS, normalizedSourceAddress);
 
         pushActivity(db, {
           type: "prediction_added",
           walletAddress: normalizedSourceAddress,
           author: current.display_name,
-          createdAt: new Date().toISOString(),
+          createdAt: confirmedAt,
           title: "Synced onchain prediction bet",
           detail: `${direction === "up" ? "Bullish" : "Bearish"} on ${label} for ${amount.toFixed(2)} TON.`,
         });
@@ -1626,6 +1815,13 @@ export async function addPrediction(input: {
   amount: number;
   txHash?: string;
 }) {
+  if (input.txHash) {
+    return registerPendingPredictionTransaction({
+      ...input,
+      txHash: input.txHash,
+    });
+  }
+
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
   ensureProfile(db, input.walletAddress);
@@ -1724,6 +1920,158 @@ export async function addPrediction(input: {
 
   return {
     result: true,
+    state: buildCommunityState(hydrateStore(db), input.walletAddress),
+  };
+}
+
+export async function registerPendingPredictionTransaction(input: {
+  walletAddress: string;
+  pairId: string;
+  label: string;
+  direction: PredictionDirection;
+  amount: number;
+  txHash: string;
+}) {
+  const db = await ensureDatabase();
+  refreshPredictionRounds(db);
+  ensureProfile(db, input.walletAddress);
+  const current = getProfileRow(db, input.walletAddress);
+
+  if (
+    !current ||
+    !Number.isFinite(input.amount) ||
+    input.amount <= 0 ||
+    !input.txHash.trim()
+  ) {
+    return {
+      result: false,
+      syncStatus: "failed" as const,
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+    };
+  }
+
+  const round = ensureRoundState(db, input.pairId, input.label);
+
+  if (round.status !== "open") {
+    return {
+      result: false,
+      syncStatus: "failed" as const,
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+    };
+  }
+
+  const existingBet = db
+    .prepare(
+      `
+      SELECT id, source_kind
+      FROM prediction_bets
+      WHERE source_message_hash = ?
+         OR chain_tx_hash = ?
+    `,
+    )
+    .get(input.txHash, input.txHash) as
+    | {
+        id: string;
+        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
+      }
+    | undefined;
+
+  if (!existingBet) {
+    db.prepare(`
+      INSERT INTO prediction_bets (
+        id,
+        pair_id,
+        pair_label,
+        wallet_address,
+        author,
+        amount,
+        direction,
+        created_at,
+        source_message_hash,
+        chain_tx_hash,
+        confirmed_at,
+        source_kind
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      `pending-${input.txHash}`,
+      input.pairId,
+      input.label,
+      input.walletAddress,
+      current.display_name,
+      Math.round(input.amount * 100) / 100,
+      input.direction,
+      new Date().toISOString(),
+      input.txHash,
+      null,
+      null,
+      "pending",
+    );
+  }
+
+  await syncOnchainPredictionTransactions(db, input.walletAddress, {
+    targetMessageHash: input.txHash,
+  });
+
+  const syncedBet = db
+    .prepare(
+      `
+      SELECT source_kind
+      FROM prediction_bets
+      WHERE source_message_hash = ?
+         OR chain_tx_hash = ?
+    `,
+    )
+    .get(input.txHash, input.txHash) as
+    | {
+        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
+      }
+    | undefined;
+
+  return {
+    result: Boolean(syncedBet),
+    syncStatus:
+      syncedBet?.source_kind === "onchain_sync"
+        ? ("confirmed" as const)
+        : ("pending" as const),
+    state: buildCommunityState(hydrateStore(db), input.walletAddress),
+  };
+}
+
+export async function syncPredictionTransaction(input: {
+  walletAddress: string;
+  txHash: string;
+}) {
+  const db = await ensureDatabase();
+  refreshPredictionRounds(db);
+  ensureProfile(db, input.walletAddress);
+
+  await syncOnchainPredictionTransactions(db, input.walletAddress, {
+    targetMessageHash: input.txHash,
+  });
+
+  const bet = db
+    .prepare(
+      `
+      SELECT source_kind
+      FROM prediction_bets
+      WHERE source_message_hash = ?
+         OR chain_tx_hash = ?
+    `,
+    )
+    .get(input.txHash, input.txHash) as
+    | {
+        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
+      }
+    | undefined;
+
+  return {
+    result: Boolean(bet),
+    syncStatus:
+      bet?.source_kind === "onchain_sync"
+        ? ("confirmed" as const)
+        : bet?.source_kind === "pending"
+          ? ("pending" as const)
+          : ("missing" as const),
     state: buildCommunityState(hydrateStore(db), input.walletAddress),
   };
 }

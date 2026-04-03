@@ -10,6 +10,7 @@ export type PredictionBet = {
   direction: PredictionDirection;
   createdAt: string;
   txHash?: string;
+  chainTxHash?: string;
   sourceKind?: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
 };
 

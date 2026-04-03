@@ -3,7 +3,6 @@
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { buildPredictionBetTransferMessage } from "@ston-pulse/prediction-sdk";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -19,11 +18,24 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPredictionEntryAddress } from "@/lib/prediction-config";
 import { parsePredictionTokenMarketId } from "@/lib/prediction-timeframes";
-import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
 import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
+
+type PredictionSubmissionState =
+  | "idle"
+  | "sending"
+  | "waiting_confirmation"
+  | "syncing"
+  | "synced"
+  | "failed";
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 export function PricePredictionCard(props: {
   pairId: string;
@@ -35,13 +47,14 @@ export function PricePredictionCard(props: {
 }) {
   const { t } = useI18n();
   const [internalStakeAmount, setInternalStakeAmount] = useState("10");
-  const [isSubmittingTx, setIsSubmittingTx] = useState(false);
+  const [submissionState, setSubmissionState] =
+    useState<PredictionSubmissionState>("idle");
   const [tonConnectUI] = useTonConnectUI();
   const { toast } = useToast();
   const {
     getPrediction,
-    optimisticRecordPrediction,
     submitPrediction,
+    syncPredictionTransaction,
     settlePredictionRound,
     walletAddress,
   } = useCommunityProfile();
@@ -49,28 +62,62 @@ export function PricePredictionCard(props: {
   const setStakeAmount = props.onStakeAmountChange ?? setInternalStakeAmount;
   const prediction = getPrediction(props.pairId);
   const round = prediction?.round;
-  const upVotes = prediction?.up.length ?? 0;
-  const downVotes = prediction?.down.length ?? 0;
+  const bets = prediction?.bets ?? [];
+  const confirmedBets = useMemo(
+    () => bets.filter((bet) => bet.sourceKind !== "pending"),
+    [bets],
+  );
+  const pendingBets = useMemo(
+    () => bets.filter((bet) => bet.sourceKind === "pending"),
+    [bets],
+  );
+  const confirmedUpVoters = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          confirmedBets
+            .filter((bet) => bet.direction === "up")
+            .map((bet) => bet.walletAddress),
+        ),
+      ),
+    [confirmedBets],
+  );
+  const confirmedDownVoters = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          confirmedBets
+            .filter((bet) => bet.direction === "down")
+            .map((bet) => bet.walletAddress),
+        ),
+      ),
+    [confirmedBets],
+  );
+  const upVotes = confirmedUpVoters.length;
+  const downVotes = confirmedDownVoters.length;
   const totalVotes = upVotes + downVotes;
   const upShare =
     totalVotes === 0 ? 0 : Math.round((upVotes / totalVotes) * 100);
   const downShare = totalVotes === 0 ? 0 : 100 - upShare;
-  const bets = prediction?.bets ?? [];
-  const upPool = bets
+  const upPool = confirmedBets
     .filter((bet) => bet.direction === "up")
     .reduce((sum, bet) => sum + bet.amount, 0);
-  const downPool = bets
+  const downPool = confirmedBets
     .filter((bet) => bet.direction === "down")
     .reduce((sum, bet) => sum + bet.amount, 0);
   const totalPool = upPool + downPool;
   const topBets = useMemo(
-    () => [...bets].sort((a, b) => b.amount - a.amount).slice(0, 5),
-    [bets],
+    () => [...confirmedBets].sort((a, b) => b.amount - a.amount).slice(0, 5),
+    [confirmedBets],
   );
   const topPayouts = (prediction?.payoutPreviews ?? []).slice(0, 5);
   const myBets = useMemo(
-    () => bets.filter((bet) => bet.walletAddress === walletAddress),
-    [bets, walletAddress],
+    () => confirmedBets.filter((bet) => bet.walletAddress === walletAddress),
+    [confirmedBets, walletAddress],
+  );
+  const myPendingBets = useMemo(
+    () => pendingBets.filter((bet) => bet.walletAddress === walletAddress),
+    [pendingBets, walletAddress],
   );
   const myUpStake = myBets
     .filter((bet) => bet.direction === "up")
@@ -82,6 +129,8 @@ export function PricePredictionCard(props: {
     myUpStake === myDownStake ? null : myUpStake > myDownStake ? "up" : "down";
   const myStake =
     myDirection === "up" ? myUpStake : myDirection === "down" ? myDownStake : 0;
+  const latestPendingBet = myPendingBets[0] ?? null;
+  const hasPendingConfirmation = myPendingBets.length > 0;
   const numericStake = Number(stakeAmount);
   const isStakeValid =
     stakeAmount.trim().length > 0 &&
@@ -132,7 +181,10 @@ export function PricePredictionCard(props: {
   const canPlacePrediction =
     !isDisabled &&
     isStakeValid &&
-    !isSubmittingTx &&
+    submissionState !== "sending" &&
+    submissionState !== "waiting_confirmation" &&
+    submissionState !== "syncing" &&
+    !hasPendingConfirmation &&
     !!predictionEntryAddress &&
     (isRoundOpen || canAutoReopenRound);
   const timeLeftMs = round
@@ -169,6 +221,18 @@ export function PricePredictionCard(props: {
   const marketTimeframeLabel =
     parsedMarket?.timeframe ?? timeframeLabelPart ?? t("prediction.pending");
   const currentMarketSplit = `${upSplitWidth}% / ${downSplitWidth}%`;
+  const statusText =
+    submissionState === "sending"
+      ? t("prediction.txSending")
+      : submissionState === "waiting_confirmation"
+        ? t("prediction.txWaitingConfirmation")
+        : submissionState === "syncing"
+          ? t("prediction.txSyncing")
+          : submissionState === "synced"
+            ? t("prediction.txSynced")
+            : hasPendingConfirmation
+              ? t("prediction.txPendingRefresh")
+              : null;
 
   const placePrediction = async (direction: "up" | "down") => {
     if (!canPlacePrediction) {
@@ -183,7 +247,7 @@ export function PricePredictionCard(props: {
     } as const;
 
     try {
-      setIsSubmittingTx(true);
+      setSubmissionState("sending");
       const message = buildPredictionTransferMessage({
         pairId: props.pairId,
         label: props.label,
@@ -201,6 +265,7 @@ export function PricePredictionCard(props: {
 
         messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
       } catch {
+        setSubmissionState("failed");
         toast({
           title: t("prediction.txFailed"),
           description: t("prediction.txFailedBody"),
@@ -208,50 +273,91 @@ export function PricePredictionCard(props: {
         return;
       }
 
-      if (messageHash && walletAddress) {
-        upsertPendingPredictionBet({
-          messageHash,
-          walletAddress,
-          pairId: props.pairId,
-          label: props.label,
-          direction,
-          amount: numericStake,
-          createdAt: new Date().toISOString(),
-        });
-      }
-
-      let submitted = false;
-
-      try {
-        submitted = await submitPrediction({
-          ...predictionInput,
-          txHash: messageHash,
-        });
-      } catch {
-        submitted = false;
-      }
-
-      if (submitted) {
+      if (!messageHash) {
+        setSubmissionState("failed");
         toast({
-          title: t("prediction.txSent"),
-          description: t("prediction.txSentBody", {
+          title: t("prediction.txFailed"),
+          description: t("prediction.txHashMissing"),
+        });
+        return;
+      }
+
+      setSubmissionState("waiting_confirmation");
+
+      const submitted = await submitPrediction({
+        ...predictionInput,
+        txHash: messageHash,
+      });
+
+      if (!submitted.ok) {
+        setSubmissionState("failed");
+        toast({
+          title: t("prediction.txFailed"),
+          description: t("prediction.txPendingRegistrationFailed"),
+        });
+        return;
+      }
+
+      let syncStatus: "pending" | "confirmed" | "failed" | "missing" =
+        submitted.syncStatus;
+
+      if (syncStatus !== "confirmed") {
+        for (let attempt = 0; attempt < 15; attempt += 1) {
+          await wait(2000);
+          try {
+            const syncResult = await syncPredictionTransaction({
+              txHash: messageHash,
+            });
+            syncStatus = syncResult.syncStatus;
+          } catch {
+            syncStatus = "pending";
+          }
+
+          if (syncStatus === "confirmed") {
+            break;
+          }
+        }
+      }
+
+      if (syncStatus === "confirmed") {
+        setSubmissionState("syncing");
+        try {
+          await syncPredictionTransaction({
+            txHash: messageHash,
+          });
+        } catch {
+          setSubmissionState("failed");
+          toast({
+            title: t("prediction.txFailed"),
+            description: t("prediction.txSyncFailed"),
+          });
+          return;
+        }
+        setSubmissionState("synced");
+        toast({
+          title: t("prediction.txSyncedTitle"),
+          description: t("prediction.txSyncedBody", {
             amount: numericStake.toFixed(2),
           }),
         });
         setStakeAmount("10");
+        window.setTimeout(() => setSubmissionState("idle"), 1800);
         return;
       }
 
-      optimisticRecordPrediction(predictionInput);
+      setSubmissionState("waiting_confirmation");
       toast({
-        title: t("prediction.txSentPending"),
-        description: t("prediction.txSentPendingBody", {
+        title: t("prediction.txPendingTitle"),
+        description: t("prediction.txPendingBody", {
           amount: numericStake.toFixed(2),
         }),
       });
-      setStakeAmount("10");
-    } finally {
-      setIsSubmittingTx(false);
+    } catch {
+      setSubmissionState("failed");
+      toast({
+        title: t("prediction.txFailed"),
+        description: t("prediction.txUnexpectedFailure"),
+      });
     }
   };
 
@@ -482,18 +588,24 @@ export function PricePredictionCard(props: {
                 {t("prediction.yourSide")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
-                {myDirection
-                  ? myDirection === "up"
-                    ? t("prediction.bullish")
-                    : t("prediction.bearish")
-                  : t("prediction.noPosition")}
+                {hasPendingConfirmation
+                  ? t("prediction.pendingConfirmation")
+                  : myDirection
+                    ? myDirection === "up"
+                      ? t("prediction.bullish")
+                      : t("prediction.bearish")
+                    : t("prediction.noPosition")}
               </p>
               <p className="text-sm text-slate-600">
-                {myStake > 0
-                  ? t("prediction.pointsCommitted", {
-                      amount: myStake.toFixed(2),
+                {hasPendingConfirmation && latestPendingBet
+                  ? t("prediction.pendingStakeLine", {
+                      amount: latestPendingBet.amount.toFixed(2),
                     })
-                  : t("prediction.reputationHint")}
+                  : myStake > 0
+                    ? t("prediction.pointsCommitted", {
+                        amount: myStake.toFixed(2),
+                      })
+                    : t("prediction.reputationHint")}
               </p>
             </div>
             <div>
@@ -501,21 +613,25 @@ export function PricePredictionCard(props: {
                 {t("prediction.potentialPayout")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
-                {myPotentialPayout > 0
-                  ? `${myPotentialPayout.toFixed(2)} TON`
-                  : isStakeValid
-                    ? t("prediction.previewPayoutSplit", {
-                        up: previewUpPayout.toFixed(2),
-                        down: previewDownPayout.toFixed(2),
-                      })
-                    : "-"}
+                {hasPendingConfirmation && latestPendingBet
+                  ? t("prediction.pendingPayout")
+                  : myPotentialPayout > 0
+                    ? `${myPotentialPayout.toFixed(2)} TON`
+                    : isStakeValid
+                      ? t("prediction.previewPayoutSplit", {
+                          up: previewUpPayout.toFixed(2),
+                          down: previewDownPayout.toFixed(2),
+                        })
+                      : "-"}
               </p>
               <p className="text-sm text-slate-600">
-                {myPotentialPayout > 0
-                  ? t("prediction.potentialPreview")
-                  : isStakeValid
-                    ? t("prediction.potentialPreviewBeforeBet")
-                    : t("prediction.potentialPreview")}
+                {hasPendingConfirmation
+                  ? t("prediction.txWaitingConfirmation")
+                  : myPotentialPayout > 0
+                    ? t("prediction.potentialPreview")
+                    : isStakeValid
+                      ? t("prediction.potentialPreviewBeforeBet")
+                      : t("prediction.potentialPreview")}
               </p>
             </div>
           </div>
@@ -598,7 +714,7 @@ export function PricePredictionCard(props: {
               {t("prediction.history")}
             </h4>
             <Badge className="border-sky-100 bg-sky-50 text-slate-700">
-              {t("prediction.betsCount", { count: bets.length })}
+              {t("prediction.betsCount", { count: confirmedBets.length })}
             </Badge>
           </div>
           <div className="space-y-2">
@@ -720,13 +836,11 @@ export function PricePredictionCard(props: {
           <p className="text-sm text-amber-600">
             {t("prediction.treasuryMissing")}
           </p>
+        ) : hasPendingConfirmation || statusText ? (
+          <p className="text-sm text-sky-700">{statusText}</p>
         ) : !isRoundOpen ? (
           <p className="text-sm text-slate-500">
             {t("prediction.openRoundEnded")}
-          </p>
-        ) : isSubmittingTx ? (
-          <p className="text-sm text-slate-500">
-            {t("prediction.txInProgress")}
           </p>
         ) : !isStakeValid ? (
           <p className="text-sm text-slate-500">

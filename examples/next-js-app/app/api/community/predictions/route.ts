@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   addPrediction,
+  syncPredictionTransaction,
   settlePredictionRound,
 } from "@/lib/server/community-store";
 import type { PredictionDirection } from "@/lib/community";
@@ -60,6 +61,27 @@ export async function PATCH(request: Request) {
       walletAddress: body.walletAddress,
       pairId: body.pairId,
       direction: body.direction,
+    }),
+  );
+}
+
+export async function PUT(request: Request) {
+  const body = (await request.json()) as {
+    walletAddress?: string;
+    txHash?: string;
+  };
+
+  if (!body.walletAddress || !body.txHash) {
+    return NextResponse.json(
+      { error: "Missing prediction sync payload" },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(
+    await syncPredictionTransaction({
+      walletAddress: body.walletAddress,
+      txHash: body.txHash,
     }),
   );
 }
