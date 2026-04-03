@@ -33,11 +33,28 @@ export function SwapButton() {
   const swapStatusQuery = useSwapStatusQuery();
   const [isClicked, setIsClicked] = useState(false);
   const { toast } = useToast();
+  const primaryButtonClassName =
+    "h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_20px_44px_-24px_rgba(1,128,255,0.55)] hover:opacity-95 disabled:opacity-100";
+  const mutedPrimaryButtonClassName =
+    "h-12 w-full rounded-2xl bg-[linear-gradient(135deg,rgba(1,128,255,0.3),rgba(61,177,255,0.3))] text-white/95 shadow-[0_20px_44px_-24px_rgba(1,128,255,0.2)]";
 
   useSwapStatusNotifications();
 
   const handleSwap = async () => {
-    if (!swapSimulationQuery.data || !walletAddress) {
+    if (!walletAddress) {
+      return;
+    }
+
+    if (!offerAsset || !askAsset) {
+      return;
+    }
+
+    if (!offerAmount && !askAmount) {
+      toast({ title: t("swap.button.enterAmount") });
+      return;
+    }
+
+    if (!swapSimulationQuery.data) {
       return;
     }
 
@@ -87,11 +104,10 @@ export function SwapButton() {
   if (!offerAsset || !askAsset) {
     return (
       <Button
-        variant="outline"
         disabled
-        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+        className={mutedPrimaryButtonClassName}
       >
-        {t("swap.button.selectAsset")}
+        {t("swap.button.submit")}
       </Button>
     );
   }
@@ -99,11 +115,11 @@ export function SwapButton() {
   if (!offerAmount && !askAmount) {
     return (
       <Button
-        variant="outline"
-        disabled
-        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+        variant="default"
+        className={primaryButtonClassName}
+        onClick={handleSwap}
       >
-        {t("swap.button.enterAmount")}
+        {t("swap.button.submit")}
       </Button>
     );
   }
@@ -111,9 +127,8 @@ export function SwapButton() {
   if (swapSimulationQuery.isLoading) {
     return (
       <Button
-        variant="outline"
         disabled
-        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+        className={primaryButtonClassName}
       >
         {t("swap.button.loading")}
       </Button>
@@ -131,7 +146,7 @@ export function SwapButton() {
   return (
     <Button
       variant="default"
-      className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_20px_44px_-24px_rgba(1,128,255,0.55)] hover:opacity-95"
+      className={primaryButtonClassName}
       onClick={handleSwap}
       disabled={
         isClicked ||
