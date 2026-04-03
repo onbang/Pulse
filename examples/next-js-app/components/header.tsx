@@ -10,7 +10,7 @@ import GitHubIcon from "@/public/icons/github.svg";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/8 bg-[linear-gradient(180deg,rgba(2,6,23,0.84),rgba(15,23,42,0.58))] backdrop-blur-2xl">
+    <header className="sticky top-0 z-30 border-b border-white/8 bg-[linear-gradient(180deg,rgba(8,9,20,0.9),rgba(10,16,32,0.62))] backdrop-blur-2xl">
       <section className="container flex min-h-24 items-center gap-4 py-4">
         <a
           href="https://ston.fi/"
@@ -31,7 +31,7 @@ export function Header() {
             </p>
             <p className="text-sm font-semibold text-white">STON Pulse</p>
           </div>
-          <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0f172a,#2563eb)] text-white shadow-lg">
+          <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0180FF,#7354F2)] text-white shadow-lg">
             pulse
           </Badge>
         </a>
