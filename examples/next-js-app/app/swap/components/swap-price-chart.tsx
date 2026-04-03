@@ -404,26 +404,6 @@ export function SwapPriceChart() {
               onAssetSelect={setSelectedChartAsset}
               loading={assetsQuery.isLoading}
             />
-            <div className="grid grid-cols-3 gap-2 rounded-[28px] border border-sky-100 bg-white p-2 md:grid-cols-6">
-              {TIMEFRAMES.map((frame) => (
-                <button
-                  key={frame.key}
-                  type="button"
-                  onClick={() => setTimeframe(frame.key)}
-                  className={cn(
-                    "flex h-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-all",
-                    frame.key === timeframe
-                      ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
-                      : "border border-transparent bg-slate-50 text-slate-600 hover:bg-sky-50 hover:text-slate-900",
-                    !trackedAsset &&
-                      "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-slate-500",
-                  )}
-                  disabled={!trackedAsset}
-                >
-                  {frame.key}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </CardHeader>
@@ -581,6 +561,26 @@ export function SwapPriceChart() {
                   strokeWidth="0.55"
                 />
               </svg>
+
+              <div className="mt-5 rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,255,0.96))] p-2">
+                <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                  {TIMEFRAMES.map((frame) => (
+                    <button
+                      key={frame.key}
+                      type="button"
+                      onClick={() => setTimeframe(frame.key)}
+                      className={cn(
+                        "flex h-12 items-center justify-center rounded-full px-3 text-base font-semibold transition-all",
+                        frame.key === timeframe
+                          ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
+                          : "border border-transparent bg-slate-50/80 text-slate-600 hover:bg-sky-50 hover:text-slate-900",
+                      )}
+                    >
+                      {frame.key}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
                 <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
