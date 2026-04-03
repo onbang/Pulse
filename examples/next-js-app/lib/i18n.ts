@@ -144,9 +144,9 @@ export const messages = {
     "prediction.potentialPreview":
       "Live preview based on the current pool split and your existing exposure.",
     "prediction.stakeAmount": "Stake amount",
-    "prediction.stakePlaceholder": "Enter stake in points",
+    "prediction.stakePlaceholder": "Enter stake in TON",
     "prediction.payoutHint":
-      "Payout coefficient is calculated from the current stake pool on each side.",
+      "Your TON stake is sent through the wallet. Payout preview is calculated from the current pool split on each side.",
     "prediction.bullish": "Bullish",
     "prediction.bearish": "Bearish",
     "prediction.settleTitle": "Settle closed round",
@@ -161,7 +161,7 @@ export const messages = {
     "prediction.awaitingSettlement": "Awaiting settlement",
     "prediction.up": "Up",
     "prediction.down": "Down",
-    "prediction.pointsCommitted": "{amount} pts committed in this round.",
+    "prediction.pointsCommitted": "{amount} TON committed in this round.",
     "prediction.reputationHint":
       "Join the round to start earning prediction reputation.",
     "prediction.roundStatusOpen": "open",
@@ -182,9 +182,17 @@ export const messages = {
     "prediction.winnersPreview": "Winners payout preview",
     "prediction.winnersCount": "{count} winners",
     "prediction.noWinningBets": "No winning bets in this round.",
-    "prediction.stakeLine": "Stake {amount} pts",
+    "prediction.stakeLine": "Stake {amount} TON",
     "prediction.disclaimer":
       "This is a sentiment widget, not financial advice. Open rounds accept bets, closed rounds await settlement, and settled rounds show payout previews.",
+    "prediction.txInProgress": "Confirm the transaction in your wallet to place the bet.",
+    "prediction.txSent": "Prediction transaction sent",
+    "prediction.txSentBody": "{amount} TON has been sent and your bet is now recorded in the round.",
+    "prediction.txFailed": "Prediction transaction failed",
+    "prediction.txFailedBody":
+      "The wallet transaction was cancelled or failed, so the bet was not recorded.",
+    "prediction.treasuryMissing":
+      "Prediction treasury address is not configured yet, so on-chain bet placement is unavailable.",
     "pools.hero.eyebrow": "Liquidity terminal",
     "pools.hero.title": "Discover the pools that matter right now.",
     "pools.hero.subtitle":
@@ -448,9 +456,9 @@ export const messages = {
     "prediction.potentialPreview":
       "Живой предпросмотр на основе текущего распределения пула и твоей позиции.",
     "prediction.stakeAmount": "Размер ставки",
-    "prediction.stakePlaceholder": "Введи ставку в points",
+    "prediction.stakePlaceholder": "Введи ставку в TON",
     "prediction.payoutHint":
-      "Коэффициент выплаты считается от текущего пула ставок по каждой стороне.",
+      "Ставка в TON отправляется через кошелек. Предпросмотр выплаты считается по текущему распределению пула на каждой стороне.",
     "prediction.bullish": "Вверх",
     "prediction.bearish": "Вниз",
     "prediction.settleTitle": "Завершить закрытый раунд",
@@ -465,7 +473,7 @@ export const messages = {
     "prediction.awaitingSettlement": "Ждет завершения",
     "prediction.up": "Вверх",
     "prediction.down": "Вниз",
-    "prediction.pointsCommitted": "{amount} pts в этом раунде.",
+    "prediction.pointsCommitted": "{amount} TON в этом раунде.",
     "prediction.reputationHint":
       "Войди в раунд, чтобы начать накапливать prediction reputation.",
     "prediction.roundStatusOpen": "открыт",
@@ -486,9 +494,17 @@ export const messages = {
     "prediction.winnersPreview": "Предпросмотр выплат победителям",
     "prediction.winnersCount": "{count} победителей",
     "prediction.noWinningBets": "В этом раунде нет выигравших ставок.",
-    "prediction.stakeLine": "Ставка {amount} pts",
+    "prediction.stakeLine": "Ставка {amount} TON",
     "prediction.disclaimer":
       "Это виджет рыночного настроения, а не финансовый совет. Открытые раунды принимают ставки, закрытые ждут завершения, а завершенные показывают выплаты.",
+    "prediction.txInProgress": "Подтверди транзакцию в кошельке, чтобы сделать ставку.",
+    "prediction.txSent": "Транзакция прогноза отправлена",
+    "prediction.txSentBody": "{amount} TON отправлено, и ставка записана в текущий раунд.",
+    "prediction.txFailed": "Не удалось отправить транзакцию прогноза",
+    "prediction.txFailedBody":
+      "Транзакция в кошельке была отменена или завершилась ошибкой, поэтому ставка не записана.",
+    "prediction.treasuryMissing":
+      "Адрес prediction treasury пока не настроен, поэтому on-chain ставка недоступна.",
     "pools.hero.eyebrow": "Терминал ликвидности",
     "pools.hero.title": "Открой важные пулы прямо сейчас.",
     "pools.hero.subtitle":

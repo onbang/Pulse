@@ -1,5 +1,7 @@
 "use client";
 
+import { beginCell, toNano } from "@ton/core";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
@@ -14,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
 
@@ -24,6 +27,9 @@ export function PricePredictionCard(props: {
 }) {
   const { t } = useI18n();
   const [stakeAmount, setStakeAmount] = useState("10");
+  const [isSubmittingTx, setIsSubmittingTx] = useState(false);
+  const [tonConnectUI] = useTonConnectUI();
+  const { toast } = useToast();
   const {
     getPrediction,
     submitPrediction,
@@ -100,6 +106,8 @@ export function PricePredictionCard(props: {
   const isRoundOpen = round?.status === "open";
   const isRoundClosed = round?.status === "closed";
   const isRoundSettled = round?.status === "settled";
+  const predictionTreasuryAddress =
+    process.env.NEXT_PUBLIC_PREDICTION_TREASURY_ADDRESS?.trim() ?? "";
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
     : 0;
@@ -107,19 +115,62 @@ export function PricePredictionCard(props: {
   const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
 
   const placePrediction = async (direction: "up" | "down") => {
-    if (isDisabled || !isStakeValid || !isRoundOpen) {
+    if (
+      isDisabled ||
+      !isStakeValid ||
+      !isRoundOpen ||
+      !predictionTreasuryAddress ||
+      isSubmittingTx
+    ) {
       return;
     }
 
-    const submitted = await submitPrediction({
-      pairId: props.pairId,
-      label: props.label,
-      direction,
-      amount: numericStake,
-    });
+    try {
+      setIsSubmittingTx(true);
 
-    if (submitted) {
-      setStakeAmount("10");
+      const payload = beginCell()
+        .storeUint(0, 32)
+        .storeStringTail(
+          `Pulse prediction | ${props.label} | ${direction.toUpperCase()} | ${numericStake} TON`,
+        )
+        .endCell()
+        .toBoc()
+        .toString("base64");
+
+      await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+        messages: [
+          {
+            address: predictionTreasuryAddress,
+            amount: toNano(stakeAmount).toString(),
+            payload,
+          },
+        ],
+      });
+
+      const submitted = await submitPrediction({
+        pairId: props.pairId,
+        label: props.label,
+        direction,
+        amount: numericStake,
+      });
+
+      if (submitted) {
+        toast({
+          title: t("prediction.txSent"),
+          description: t("prediction.txSentBody", {
+            amount: numericStake.toFixed(2),
+          }),
+        });
+        setStakeAmount("10");
+      }
+    } catch {
+      toast({
+        title: t("prediction.txFailed"),
+        description: t("prediction.txFailedBody"),
+      });
+    } finally {
+      setIsSubmittingTx(false);
     }
   };
 
@@ -182,7 +233,7 @@ export function PricePredictionCard(props: {
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               {t("prediction.totalPool")}
             </p>
-            <p className="text-2xl font-semibold text-slate-900">{totalPool.toFixed(2)} pts</p>
+            <p className="text-2xl font-semibold text-slate-900">{totalPool.toFixed(2)} TON</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
@@ -228,7 +279,7 @@ export function PricePredictionCard(props: {
               </p>
               <p className="text-lg font-semibold text-slate-900">
                 {myPotentialPayout > 0
-                  ? `${myPotentialPayout.toFixed(2)} pts`
+                  ? `${myPotentialPayout.toFixed(2)} TON`
                   : "-"}
               </p>
               <p className="text-sm text-slate-600">{t("prediction.potentialPreview")}</p>
@@ -266,7 +317,13 @@ export function PricePredictionCard(props: {
         <div className="grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
-            disabled={isDisabled || !isStakeValid}
+            disabled={
+              isDisabled ||
+              !isStakeValid ||
+              !isRoundOpen ||
+              !predictionTreasuryAddress ||
+              isSubmittingTx
+            }
             className="h-auto justify-between rounded-2xl border-emerald-200 bg-emerald-50 py-4 text-slate-900 hover:bg-emerald-100"
             onClick={() => void placePrediction("up")}
           >
@@ -280,7 +337,13 @@ export function PricePredictionCard(props: {
           </Button>
           <Button
             variant="outline"
-            disabled={isDisabled || !isStakeValid}
+            disabled={
+              isDisabled ||
+              !isStakeValid ||
+              !isRoundOpen ||
+              !predictionTreasuryAddress ||
+              isSubmittingTx
+            }
             className="h-auto justify-between rounded-2xl border-rose-200 bg-rose-50 py-4 text-slate-900 hover:bg-rose-100"
             onClick={() => void placePrediction("down")}
           >
@@ -457,17 +520,25 @@ export function PricePredictionCard(props: {
         <p className="text-sm text-slate-600">
           {t("prediction.disclaimer")}
         </p>
-        {!walletAddress ? (
-          <p className="text-sm text-slate-500">
-            {t("prediction.connectToVote")}
-          </p>
-        ) : !isRoundOpen ? (
-          <p className="text-sm text-slate-500">
-            {t("prediction.openRoundEnded")}
-          </p>
-        ) : !isStakeValid ? (
-          <p className="text-sm text-slate-500">
-            {t("prediction.validStakeHint")}
+          {!walletAddress ? (
+            <p className="text-sm text-slate-500">
+              {t("prediction.connectToVote")}
+            </p>
+          ) : !predictionTreasuryAddress ? (
+            <p className="text-sm text-amber-600">
+              {t("prediction.treasuryMissing")}
+            </p>
+          ) : !isRoundOpen ? (
+            <p className="text-sm text-slate-500">
+              {t("prediction.openRoundEnded")}
+            </p>
+          ) : isSubmittingTx ? (
+            <p className="text-sm text-slate-500">
+              {t("prediction.txInProgress")}
+            </p>
+          ) : !isStakeValid ? (
+            <p className="text-sm text-slate-500">
+              {t("prediction.validStakeHint")}
           </p>
         ) : null}
       </CardContent>
