@@ -71,11 +71,7 @@ export function SwapButton() {
   };
 
   if (!walletAddress) {
-    return (
-      <Button variant="default" onClick={() => tonConnectUI.openModal()}>
-        Connect wallet
-      </Button>
-    );
+    return null;
   }
 
   if (!offerAsset || !askAsset) {
