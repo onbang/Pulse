@@ -10,6 +10,11 @@ export function PoolCommentsSection() {
     assetA?.meta?.symbol && assetB?.meta?.symbol
       ? `${assetA.meta.symbol}/${assetB.meta.symbol}`
       : "selected pool";
+  const derivedPoolId =
+    pool?.address ??
+    (assetA?.contractAddress && assetB?.contractAddress
+      ? `pair:${assetA.contractAddress}:${assetB.contractAddress}`
+      : undefined);
 
-  return <PoolComments poolId={pool?.address} poolLabel={poolLabel} />;
+  return <PoolComments poolId={derivedPoolId} poolLabel={poolLabel} />;
 }

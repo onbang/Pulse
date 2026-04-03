@@ -10,7 +10,7 @@ import GitHubIcon from "@/public/icons/github.svg";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/8 bg-[linear-gradient(180deg,rgba(8,9,20,0.9),rgba(10,16,32,0.62))] backdrop-blur-2xl">
+    <header className="sticky top-0 z-30 border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(244,248,255,0.84))] backdrop-blur-2xl">
       <section className="container flex min-h-24 items-center gap-4 py-4">
         <a
           href="https://ston.fi/"
@@ -26,10 +26,10 @@ export function Header() {
             priority
           />
           <div className="hidden sm:block">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-500">
               Community Layer
             </p>
-            <p className="text-sm font-semibold text-white">STON Pulse</p>
+            <p className="text-sm font-semibold text-slate-900">STON Pulse</p>
           </div>
           <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0180FF,#7354F2)] text-white shadow-lg">
             pulse

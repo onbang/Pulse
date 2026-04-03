@@ -37,21 +37,27 @@ function sortAssets(a: AssetInfo, b: AssetInfo): number {
 
 export const SwapForm = (props: { className?: string }) => {
   return (
-    <Card {...props}>
-      <CardContent className="flex flex-col gap-4 p-6">
-        <section>
-          <OfferAssetHeader className="mb-1" />
+    <Card
+      {...props}
+      className={cn(
+        "overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] shadow-none",
+        props.className,
+      )}
+    >
+      <CardContent className="flex flex-col gap-4 p-4 md:p-5">
+        <section className="rounded-[22px] border border-white/8 bg-[#0f1527]/82 p-4">
+          <OfferAssetHeader className="mb-2" />
           <div className="flex gap-2">
-            <OfferAssetSelect className="min-w-[150px] w-1/3 max-w-[150px]" />
-            <OfferAssetInput />
+            <OfferAssetSelect className="min-w-[160px] w-[36%] max-w-[180px]" />
+            <OfferAssetInput className="h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28" />
           </div>
         </section>
 
-        <section className="flex flex-col gap-1">
+        <section className="rounded-[22px] border border-white/8 bg-[#0f1527]/82 p-4">
           <AskAssetHeader />
-          <div className="flex gap-2">
-            <AskAssetSelect className="min-w-[150px] w-1/3 max-w-[150px]" />
-            <AskAssetInput />
+          <div className="mt-2 flex gap-2">
+            <AskAssetSelect className="min-w-[160px] w-[36%] max-w-[180px]" />
+            <AskAssetInput className="h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28" />
           </div>
         </section>
       </CardContent>
@@ -65,6 +71,7 @@ const OfferAssetHeader = (props: { className?: string }) => {
       {...props}
       className={cn(
         "flex items-center justify-between gap-2 text-sm text-muted-foreground",
+        "text-white/72",
         props.className,
       )}
     >
@@ -122,6 +129,7 @@ const AskAssetHeader = (props: { className?: string }) => {
       {...props}
       className={cn(
         "flex items-center justify-between gap-2 text-sm text-muted-foreground",
+        "text-white/72",
         props.className,
       )}
     >

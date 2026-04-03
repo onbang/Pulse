@@ -294,7 +294,7 @@ export function SwapPriceChart() {
         </div>
       </CardHeader>
 
-      <CardContent className="grid gap-5 p-5 md:p-6 xl:grid-cols-[minmax(0,1fr)_250px]">
+      <CardContent className="space-y-5 p-5 md:p-6">
         <div className="rounded-[30px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-4 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -338,7 +338,7 @@ export function SwapPriceChart() {
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-3 text-right">
+            <div className="min-w-[190px] rounded-[22px] border border-white/8 bg-white/5 px-4 py-3 text-right">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Forecast pulse
               </p>
@@ -352,11 +352,11 @@ export function SwapPriceChart() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_74px] gap-3">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-4">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_90px]">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-4 md:p-5">
               <svg
                 viewBox="0 0 100 100"
-                className="h-[320px] w-full"
+                className="h-[360px] w-full md:h-[420px]"
                 preserveAspectRatio="none"
                 aria-label={`${pairLabel} live candlestick chart`}
               >
@@ -423,16 +423,25 @@ export function SwapPriceChart() {
                 />
               </svg>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
-                <span>Chart mode</span>
-                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-slate-300">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-400">
+                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-slate-200">
                   Candles
                 </span>
                 <span>{currentFrame.label}</span>
+                <span
+                  className={cn(
+                    "rounded-full px-3 py-1",
+                    priceDirection === "up"
+                      ? "bg-emerald-500/12 text-emerald-300"
+                      : "bg-rose-500/12 text-rose-300",
+                  )}
+                >
+                  Live {formatChartValue(livePrice)}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-col justify-between rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-3 py-4 text-right">
+            <div className="flex flex-row justify-between rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] px-4 py-3 text-right lg:flex-col lg:px-3 lg:py-4">
               {gridLevels.map((level, index) => (
                 <span key={index} className="text-sm font-medium text-slate-300">
                   {formatChartValue(level)}
@@ -452,7 +461,7 @@ export function SwapPriceChart() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[24px] border border-white/8 bg-white/4 p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               Structure high
@@ -484,7 +493,7 @@ export function SwapPriceChart() {
                 : "Indicative impact until the pair is selected"}
             </p>
           </div>
-          <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),rgba(168,85,247,0.16))] p-4 shadow-[0_24px_60px_-34px_rgba(37,99,235,0.5)]">
+          <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-400">
               Trade lens
             </p>

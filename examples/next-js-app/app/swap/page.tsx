@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-4 md:py-10">
       <SwapFormHeader />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
         <div className="space-y-6">
           <div className="mesh-card p-5 md:p-6">
             <div className="relative z-10 flex flex-col gap-4">
@@ -43,8 +43,8 @@ export default function Home() {
 
         <div className="space-y-6">
           <SwapPriceChart />
-          <SwapMarketIntelligence />
           <SwapPredictionPanel />
+          <SwapMarketIntelligence />
         </div>
       </div>
     </section>

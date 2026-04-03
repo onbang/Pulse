@@ -67,11 +67,14 @@ export function AssetSelect({
         <Button
           variant="outline"
           aria-expanded={open}
-          className={cn("w-full px-2!", className)}
+          className={cn(
+            "h-13 w-full rounded-2xl border-white/10 bg-white/5 px-3! text-sm font-semibold text-white hover:bg-white/10",
+            className,
+          )}
         >
           {selectedAsset ? (
             <>
-              <Avatar className="size-[20px]">
+              <Avatar className="size-6">
                 <AvatarImage
                   src={selectedAsset.meta?.imageUrl}
                   alt={
@@ -85,10 +88,13 @@ export function AssetSelect({
           ) : (
             "Select asset..."
           )}
-          <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" avoidCollisions={false}>
+      <PopoverContent
+        className="w-[320px] border-white/10 bg-[#101526] p-0 text-white shadow-[0_24px_70px_-34px_rgba(0,0,0,0.95)]"
+        avoidCollisions={false}
+      >
         <Command filter={handleFilter}>
           <CommandInput placeholder="Search asset..." />
           <CommandList>

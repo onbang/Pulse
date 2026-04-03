@@ -22,8 +22,8 @@ import { useSwapForm, useSwapFormDispatch } from "../providers/swap-form";
 
 export const ReferralForm = () => {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4 p-6">
+    <Card className="overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] shadow-none">
+      <CardContent className="flex flex-col gap-4 p-4 md:p-5">
         <section className="flex flex-col gap-2">
           <ReferralAddressInput />
           <ReferralValueInput />
@@ -57,13 +57,16 @@ const ReferralAddressInput: React.FC<
       {...props}
       className={cn("flex flex-col gap-1 w-full", props.className)}
     >
-      <label className="text-sm" htmlFor={id}>
+      <label className="text-sm text-white/72" htmlFor={id}>
         Referral address:
       </label>
       <Input
-        className={cn({
-          "border-[red]": !isValid,
-        })}
+        className={cn(
+          "h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28",
+          {
+            "border-[red]": !isValid,
+          },
+        )}
         placeholder="EQ…"
         id={id}
         name="referral_address"
@@ -115,13 +118,16 @@ const ReferralValueInput: React.FC<
       {...props}
       className={cn("flex flex-col gap-1 w-full", props.className)}
     >
-      <label className="text-sm" htmlFor={id}>
+      <label className="text-sm text-white/72" htmlFor={id}>
         Referral percentage:
       </label>
       <Input
-        className={cn({
-          "border-[red]": !isValidReferralValue,
-        })}
+        className={cn(
+          "h-13 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/28",
+          {
+            "border-[red]": !isValidReferralValue,
+          },
+        )}
         placeholder={`${MIN_REFERRAL_VALUE_PERCENT}-${MAX_REFERRAL_VALUE_PERCENT}%`}
         id={id}
         name="referral_percentage"
@@ -130,7 +136,7 @@ const ReferralValueInput: React.FC<
         disabled={!referralAddress}
       />
       {!isValidReferralValue && (
-        <span className="text-xs text-[red]">
+        <span className="text-xs text-rose-400">
           Invalid referral percentage (default {DEFAULT_REFERRAL_VALUE_PERCENT}%
           will be used)
         </span>
@@ -152,7 +158,7 @@ const ReferralValueDisclaimer = () => {
   }
 
   return (
-    <div className="text-sm text-[red]">
+    <div className="text-sm text-rose-400">
       Custom referral value cannot be applied since swap will be performed via
       v1 contracts (default {DEFAULT_REFERRAL_VALUE_PERCENT}% will be used)
     </div>
