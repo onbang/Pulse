@@ -8,6 +8,7 @@ import { SwapForm } from "./components/swap-form";
 import { SwapFormHeader } from "./components/swap-form-header";
 import { SwapMarketIntelligence } from "./components/swap-market-intelligence";
 import { SwapPriceChart } from "./components/swap-price-chart";
+import { SwapQuoteSync } from "./components/swap-quote-sync";
 import { SwapSimulationPreview } from "./components/swap-simulation";
 import { SwapPredictionPanel } from "./components/swap-prediction-panel";
 
@@ -16,6 +17,7 @@ export default function Home() {
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-4 md:py-10">
+      <SwapQuoteSync />
       <SwapFormHeader />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
         <div className="space-y-6">

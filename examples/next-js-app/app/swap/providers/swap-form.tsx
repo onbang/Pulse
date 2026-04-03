@@ -35,6 +35,10 @@ type IAction =
       type: "SET_OFFER_AMOUNT" | "SET_ASK_AMOUNT";
       payload: string;
     }
+  | {
+      type: "SYNC_OFFER_AMOUNT" | "SYNC_ASK_AMOUNT";
+      payload: string;
+    }
   | { type: "SET_REFERRAL_ADDRESS"; payload: string | undefined }
   | { type: "SET_REFERRAL_VALUE"; payload: number | undefined };
 
@@ -64,6 +68,14 @@ const swapReducer = (state: SwapState, action: IAction): SwapState => {
 
   if (action.type === "SET_ASK_AMOUNT") {
     return { ...state, askAmount: action.payload, offerAmount: "" };
+  }
+
+  if (action.type === "SYNC_OFFER_AMOUNT") {
+    return { ...state, offerAmount: action.payload };
+  }
+
+  if (action.type === "SYNC_ASK_AMOUNT") {
+    return { ...state, askAmount: action.payload };
   }
 
   if (action.type === "SET_REFERRAL_ADDRESS") {
