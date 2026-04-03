@@ -90,15 +90,15 @@ export const messages = {
     "swap.chart.routeImpact": "Route impact",
     "swap.chart.tradeLens": "Trade lens",
     "swap.chart.tradeLensTitle":
-      "Read momentum before you place the next prediction",
+      "Read momentum before the next move",
     "swap.chart.tradeLensBodyLive":
-      "Candles, live token price pulse, and community bias now sit in one market panel.",
+      "Candles, live token pulse, and community bias now sit in one panel.",
     "swap.chart.tradeLensBodyPreview":
       "The market panel is always visible now, and it upgrades into a live token chart as soon as you choose one.",
-    "swap.chart.upperBand": "Upper intraday band",
-    "swap.chart.lowerBand": "Lower support zone",
-    "swap.chart.impactLive": "Friction in the current quote path",
-    "swap.chart.impactPreview": "Indicative impact until the token is selected",
+    "swap.chart.upperBand": "Intraday upper band",
+    "swap.chart.lowerBand": "Support area",
+    "swap.chart.impactLive": "Current quote friction",
+    "swap.chart.impactPreview": "Will appear after token selection",
     "swap.prediction.selectorEyebrow": "Prediction token",
     "swap.prediction.selectorTitle": "Choose a token for the forecast round",
     "swap.prediction.selectorBody":
@@ -313,15 +313,15 @@ export const messages = {
     "swap.chart.routeImpact": "Влияние маршрута",
     "swap.chart.tradeLens": "Рыночный фокус",
     "swap.chart.tradeLensTitle":
-      "Смотри импульс перед тем, как делать следующий прогноз",
+      "Смотри импульс перед следующим действием",
     "swap.chart.tradeLensBodyLive":
-      "Свечи, живой ценовой импульс и настроение комьюнити теперь собраны в одной панели.",
+      "Свечи, живой импульс токена и сигнал комьюнити собраны в одной панели.",
     "swap.chart.tradeLensBodyPreview":
       "Панель рынка видна всегда и превращается в живой график сразу после выбора токена.",
-    "swap.chart.upperBand": "Верхний внутридневной диапазон",
-    "swap.chart.lowerBand": "Нижняя зона поддержки",
-    "swap.chart.impactLive": "Текущее влияние по выбранному сценарию",
-    "swap.chart.impactPreview": "Предварительное влияние до выбора токена",
+    "swap.chart.upperBand": "Верхняя граница дня",
+    "swap.chart.lowerBand": "Зона поддержки",
+    "swap.chart.impactLive": "Текущее влияние маршрута",
+    "swap.chart.impactPreview": "Появится после выбора токена",
     "swap.prediction.selectorEyebrow": "Токен прогноза",
     "swap.prediction.selectorTitle": "Выбери токен для раунда прогноза",
     "swap.prediction.selectorBody":

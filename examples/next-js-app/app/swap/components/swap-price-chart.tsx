@@ -560,45 +560,49 @@ export function SwapPriceChart() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
+          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureHigh")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(high)}
             </p>
-            <p className="mt-1 text-sm text-slate-500">{t("swap.chart.upperBand")}</p>
+            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
+              {t("swap.chart.upperBand")}
+            </p>
           </div>
-          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
+          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureLow")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {formatChartValue(low)}
             </p>
-            <p className="mt-1 text-sm text-slate-500">{t("swap.chart.lowerBand")}</p>
+            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
+              {t("swap.chart.lowerBand")}
+            </p>
           </div>
-          <div className="rounded-[24px] border border-sky-100 bg-white p-4">
+          <div className="flex min-h-[180px] flex-col rounded-[24px] border border-sky-100 bg-white p-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.routeImpact")}
             </p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-2 max-w-[16rem] text-sm leading-6 text-slate-500">
               {trackedAsset
                 ? t("swap.chart.impactLive")
                 : t("swap.chart.impactPreview")}
             </p>
           </div>
-          <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
+          <div className="flex min-h-[180px] flex-col rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.tradeLens")}
             </p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+            <p className="mt-3 max-w-[15rem] text-xl font-semibold leading-8 text-slate-900">
               {t("swap.chart.tradeLensTitle")}
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-600">
               {t("swap.chart.tradeLensBodyLive")}
             </p>
           </div>
