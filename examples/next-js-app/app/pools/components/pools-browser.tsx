@@ -25,6 +25,7 @@ import { useAssetsQuery } from "@/hooks/use-assets-query";
 import { useStonApi } from "@/hooks/use-ston-api";
 import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
+import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
 import { cn, validateFloatValue } from "@/lib/utils";
 
 type PoolCardEntry = {
@@ -174,8 +175,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
   const [tonConnectUI] = useTonConnectUI();
   const [stakeAmount, setStakeAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const predictionTreasuryAddress =
-    process.env.NEXT_PUBLIC_PREDICTION_TREASURY_ADDRESS?.trim() ?? "";
+  const predictionTreasuryAddress = getPredictionTreasuryAddress();
   const numericStake = Number(stakeAmount);
   const isStakeValid =
     stakeAmount.trim().length > 0 &&

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
 
@@ -120,8 +121,7 @@ export function PricePredictionCard(props: {
   const isRoundOpen = round?.status === "open";
   const isRoundClosed = round?.status === "closed";
   const isRoundSettled = round?.status === "settled";
-  const predictionTreasuryAddress =
-    process.env.NEXT_PUBLIC_PREDICTION_TREASURY_ADDRESS?.trim() ?? "";
+  const predictionTreasuryAddress = getPredictionTreasuryAddress();
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
     : 0;
