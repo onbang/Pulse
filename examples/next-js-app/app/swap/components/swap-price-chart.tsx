@@ -26,7 +26,7 @@ const TIMEFRAMES = [
     key: "1M",
     candles: 28,
     labelKey: "swap.chart.timeframe.1M",
-    liveStepMs: 1000,
+    liveStepMs: 60_000,
     driftScale: 1.15,
     noiseScale: 1.1,
   },
@@ -34,7 +34,7 @@ const TIMEFRAMES = [
     key: "5M",
     candles: 26,
     labelKey: "swap.chart.timeframe.5M",
-    liveStepMs: 5000,
+    liveStepMs: 5 * 60_000,
     driftScale: 0.95,
     noiseScale: 0.9,
   },
@@ -42,7 +42,7 @@ const TIMEFRAMES = [
     key: "15M",
     candles: 24,
     labelKey: "swap.chart.timeframe.15M",
-    liveStepMs: 12000,
+    liveStepMs: 15 * 60_000,
     driftScale: 0.78,
     noiseScale: 0.74,
   },
@@ -50,7 +50,7 @@ const TIMEFRAMES = [
     key: "1H",
     candles: 22,
     labelKey: "swap.chart.timeframe.1H",
-    liveStepMs: 25000,
+    liveStepMs: 60 * 60_000,
     driftScale: 0.56,
     noiseScale: 0.55,
   },
@@ -58,7 +58,7 @@ const TIMEFRAMES = [
     key: "4H",
     candles: 20,
     labelKey: "swap.chart.timeframe.4H",
-    liveStepMs: 45000,
+    liveStepMs: 4 * 60 * 60_000,
     driftScale: 0.38,
     noiseScale: 0.4,
   },
@@ -66,7 +66,7 @@ const TIMEFRAMES = [
     key: "1D",
     candles: 18,
     labelKey: "swap.chart.timeframe.1D",
-    liveStepMs: 65000,
+    liveStepMs: 24 * 60 * 60_000,
     driftScale: 0.24,
     noiseScale: 0.26,
   },
@@ -233,12 +233,10 @@ export function SwapPriceChart() {
   const trackedAsset = selectedChartAsset ?? offerAsset ?? askAsset ?? null;
   const trackedLabel = trackedAsset
     ? normalizeLabel(trackedAsset.meta?.symbol)
-    : "TON";
-  const chartId = trackedAsset
-    ? `token:${trackedAsset.contractAddress}`
-    : "token:preview-ton";
-  const chartLabel = trackedAsset ? trackedLabel : "TON";
-  const prediction = getPrediction(chartId);
+    : "";
+  const chartId = trackedAsset ? `token:${trackedAsset.contractAddress}` : null;
+  const chartLabel = trackedAsset ? trackedLabel : "";
+  const prediction = chartId ? getPrediction(chartId) : null;
   const bullishBias =
     ((prediction?.up.length ?? 0) - (prediction?.down.length ?? 0)) /
     Math.max((prediction?.up.length ?? 0) + (prediction?.down.length ?? 0), 1);
@@ -246,16 +244,17 @@ export function SwapPriceChart() {
   const basePrice =
     trackedAsset?.dexPriceUsd && Number.isFinite(Number(trackedAsset.dexPriceUsd))
       ? Number(trackedAsset.dexPriceUsd)
-      : 3.42;
+      : 0;
 
   const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe)!;
-  const livePrice =
-    basePrice *
-    (1 +
-      Math.sin(liveTick / 2.6 + bullishBias) *
-        Math.max(Number(simulation?.priceImpact ?? 0.004), 0.003) *
-        currentFrame.driftScale *
-        0.18);
+  const livePrice = trackedAsset
+    ? basePrice *
+      (1 +
+        Math.sin(liveTick / 2.6 + bullishBias) *
+          Math.max(Number(simulation?.priceImpact ?? 0.004), 0.003) *
+          currentFrame.driftScale *
+          0.18)
+    : 0;
 
   const volatilityBase = Math.max(
     trackedAsset ? Number(simulation?.priceImpact ?? 0.01) : 0.012,
@@ -265,7 +264,7 @@ export function SwapPriceChart() {
 
   const candles = useMemo(() => {
     return createCandles({
-      seed: hashSeed(`${chartId}:${timeframe}`),
+      seed: hashSeed(`${chartId ?? "no-token"}:${timeframe}`),
       currentPrice: livePrice,
       candles: currentFrame.candles,
       bullishBias,
@@ -286,14 +285,15 @@ export function SwapPriceChart() {
     volatility,
   ]);
 
-  const high = Math.max(...candles.map((candle) => candle.high));
-  const low = Math.min(...candles.map((candle) => candle.low));
-  const range = Math.max(high - low, livePrice * 0.02);
-  const lastCandle = candles[candles.length - 1];
-  const firstOpen = candles[0]?.open ?? livePrice;
-  const priceDirection = livePrice >= firstOpen ? "up" : "down";
-  const delta = livePrice - firstOpen;
-  const deltaPercent = (delta / Math.max(firstOpen, 0.000001)) * 100;
+  const high = trackedAsset ? Math.max(...candles.map((candle) => candle.high)) : 0;
+  const low = trackedAsset ? Math.min(...candles.map((candle) => candle.low)) : 0;
+  const range = trackedAsset ? Math.max(high - low, livePrice * 0.02) : 1;
+  const firstOpen = trackedAsset ? (candles[0]?.open ?? livePrice) : 0;
+  const priceDirection = trackedAsset && livePrice >= firstOpen ? "up" : "down";
+  const delta = trackedAsset ? livePrice - firstOpen : 0;
+  const deltaPercent = trackedAsset
+    ? (delta / Math.max(firstOpen, 0.000001)) * 100
+    : 0;
   const forecastDirection =
     bullishBias === 0 ? null : bullishBias > 0 ? "up" : "down";
   const forecastLabel =
@@ -325,19 +325,23 @@ export function SwapPriceChart() {
                     ? normalizeLabel(
                         trackedAsset.meta?.displayName ?? trackedLabel,
                       )
-                    : t("swap.chart.previewTitle")}
+                    : t("swap.chart.selectTokenTitle")}
                 </CardTitle>
-                <Badge className="border border-sky-100 bg-white text-slate-700">
-                  {chartLabel}
-                </Badge>
-                <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
-                  {trackedAsset ? t("swap.chart.live") : t("swap.chart.preview")}
-                </Badge>
+                {trackedAsset ? (
+                  <>
+                    <Badge className="border border-sky-100 bg-white text-slate-700">
+                      {chartLabel}
+                    </Badge>
+                    <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
+                      {t("swap.chart.live")}
+                    </Badge>
+                  </>
+                ) : null}
               </div>
               <CardDescription className="mt-1 max-w-xl text-slate-600">
                 {trackedAsset
                   ? t("swap.chart.liveDescription")
-                  : t("swap.chart.previewDescription")}
+                  : t("swap.chart.selectTokenDescription")}
               </CardDescription>
             </div>
           </div>
@@ -360,7 +364,10 @@ export function SwapPriceChart() {
                     frame.key === timeframe
                       ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
                       : "text-slate-500 hover:bg-sky-50 hover:text-slate-900",
+                    !trackedAsset &&
+                      "cursor-not-allowed opacity-50 hover:bg-transparent hover:text-slate-500",
                   )}
+                  disabled={!trackedAsset}
                 >
                   {frame.key}
                 </button>
@@ -371,6 +378,24 @@ export function SwapPriceChart() {
       </CardHeader>
 
       <CardContent className="space-y-5 p-5 md:p-6">
+        {!trackedAsset ? (
+          <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
+            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[28px] border border-dashed border-sky-200 bg-white/70 px-6 text-center">
+              <div className="mx-auto max-w-sm">
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#3DB1FF]/80">
+                  {t("swap.chart.selectTokenEyebrow")}
+                </p>
+                <h3 className="mt-3 text-2xl font-semibold text-slate-950">
+                  {t("swap.chart.selectTokenPrompt")}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {t("swap.chart.selectTokenBody")}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+        <>
         <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -406,11 +431,6 @@ export function SwapPriceChart() {
                 <span className="text-2xl font-semibold text-slate-500">
                   {timeframe}
                 </span>
-                {!trackedAsset ? (
-                  <span className="rounded-full border border-sky-100 bg-white px-3 py-1 text-sm font-medium text-slate-600">
-                    {t("swap.chart.waiting")}
-                  </span>
-                ) : null}
               </div>
             </div>
 
@@ -423,7 +443,7 @@ export function SwapPriceChart() {
               </p>
               <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                 <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                {trackedAsset ? t("swap.chart.liveMode") : t("swap.chart.previewMode")}
+                {t("swap.chart.liveMode")}
               </div>
             </div>
           </div>
@@ -579,12 +599,12 @@ export function SwapPriceChart() {
               {t("swap.chart.tradeLensTitle")}
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              {trackedAsset
-                ? t("swap.chart.tradeLensBodyLive")
-                : t("swap.chart.tradeLensBodyPreview")}
+              {t("swap.chart.tradeLensBodyLive")}
             </p>
           </div>
         </div>
+        </>
+        )}
       </CardContent>
     </Card>
   );

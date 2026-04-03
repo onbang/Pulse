@@ -62,6 +62,13 @@ export const messages = {
     "swap.chart.previewTitle": "Pulse market",
     "swap.chart.previewDescription":
       "Choose any token to switch this preview into a token-specific live market chart.",
+    "swap.chart.selectTokenTitle": "Choose a token first",
+    "swap.chart.selectTokenDescription":
+      "Pick a token to unlock the chart and activate interval controls.",
+    "swap.chart.selectTokenEyebrow": "Token required",
+    "swap.chart.selectTokenPrompt": "Select the token you want to track",
+    "swap.chart.selectTokenBody":
+      "Once you choose a token, the chart, price pulse, and timeframes will switch on for that asset.",
     "swap.chart.liveDescription":
       "Real-time styled market chart for the token you selected.",
     "swap.chart.liveValue": "Live {value}",
@@ -278,6 +285,13 @@ export const messages = {
     "swap.chart.previewTitle": "Рынок Pulse",
     "swap.chart.previewDescription":
       "Выбери любой токен, чтобы превратить превью в живой график именно этого токена.",
+    "swap.chart.selectTokenTitle": "Сначала выбери токен",
+    "swap.chart.selectTokenDescription":
+      "Выбери токен, чтобы открыть график и активировать интервалы.",
+    "swap.chart.selectTokenEyebrow": "Нужен токен",
+    "swap.chart.selectTokenPrompt": "Сначала выбери токен, который хочешь отслеживать",
+    "swap.chart.selectTokenBody":
+      "После выбора токена включатся график, ценовой импульс и интервалы именно для этого актива.",
     "swap.chart.liveDescription":
       "Живой график выбранного тобой токена.",
     "swap.chart.liveValue": "Live {value}",
