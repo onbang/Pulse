@@ -1,7 +1,7 @@
 "use client";
 
 import type { AssetInfoV2, PoolInfo } from "@ston-fi/api";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Activity, ArrowUpRight, Star, Waves } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -31,6 +31,9 @@ type PoolCardEntry = {
   pairLabel: string;
   priceRatio: number;
   popularityScore: number;
+  routerLabel: string;
+  poolLabel: string;
+  lpSupplyLabel: string;
 };
 
 const PRIORITY_SYMBOLS = ["TON", "USDT", "USDC", "STON", "NOT", "DOGS"] as const;
@@ -52,6 +55,26 @@ function formatRatio(value: number) {
     maximumFractionDigits: value < 1 ? 6 : 4,
     minimumFractionDigits: value < 1 ? 4 : 2,
   }).format(value);
+}
+
+function safeAddressLabel(value?: string | null, truncateSize = 5) {
+  if (!value) {
+    return "n/a";
+  }
+
+  return Formatter.address(value, { truncateSize });
+}
+
+function safeLpSupplyLabel(value?: bigint | string | number | null) {
+  const numeric = Number(value ?? 0);
+
+  if (!Number.isFinite(numeric)) {
+    return "0";
+  }
+
+  return numeric.toLocaleString("en", {
+    maximumFractionDigits: 0,
+  });
 }
 
 function buildCuratedAssets(assets: AssetInfoV2[]) {
@@ -133,6 +156,9 @@ function toPoolCardEntry({
     pairLabel: `${getSymbol(assetA)}/${getSymbol(assetB)}`,
     priceRatio,
     popularityScore: (assetA.popularityIndex ?? 0) + (assetB.popularityIndex ?? 0),
+    routerLabel: safeAddressLabel(pool.routerAddress),
+    poolLabel: safeAddressLabel(pool.address),
+    lpSupplyLabel: safeLpSupplyLabel(pool.lpTotalSupply),
   };
 }
 
@@ -150,60 +176,63 @@ export function PoolsBrowser() {
     [curatedAssets],
   );
 
-  const poolQueries = useQueries({
-    queries: pairCandidates.map(({ assetA, assetB }) => ({
-      queryKey: ["pools-browser", assetA.contractAddress, assetB.contractAddress],
-      queryFn: async () => {
-        const pools = await client.getPoolsByAssetPair({
-          asset0Address: assetA.contractAddress,
-          asset1Address: assetB.contractAddress,
-        });
+  const poolsQuery = useQuery({
+    queryKey: [
+      "pools-browser",
+      ...pairCandidates.map(
+        ({ assetA, assetB }) => `${assetA.contractAddress}:${assetB.contractAddress}`,
+      ),
+    ],
+    enabled: assetsQuery.isFetched && pairCandidates.length > 0,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const results = await Promise.all(
+        pairCandidates.map(async ({ assetA, assetB }) => {
+          const pools = await client.getPoolsByAssetPair({
+            asset0Address: assetA.contractAddress,
+            asset1Address: assetB.contractAddress,
+          });
 
-        return { pools, assetA, assetB };
-      },
-      staleTime: 60_000,
-    })),
+          return { pools, assetA, assetB };
+        }),
+      );
+
+      const entries = new Map<string, PoolCardEntry>();
+
+      for (const result of results) {
+        const bestPool = [...result.pools].sort((left, right) => {
+          return Number(right.lpTotalSupplyUsd ?? 0) - Number(left.lpTotalSupplyUsd ?? 0);
+        })[0];
+
+        if (!bestPool?.address) {
+          continue;
+        }
+
+        const entry = toPoolCardEntry({
+          pool: bestPool,
+          assetA: result.assetA,
+          assetB: result.assetB,
+        });
+        const previous = entries.get(entry.id);
+
+        if (!previous || entry.liquidityUsd > previous.liquidityUsd) {
+          entries.set(entry.id, entry);
+        }
+      }
+
+      return [...entries.values()].sort((left, right) => {
+        if (right.liquidityUsd !== left.liquidityUsd) {
+          return right.liquidityUsd - left.liquidityUsd;
+        }
+
+        return right.popularityScore - left.popularityScore;
+      });
+    },
   });
 
-  const pools = useMemo(() => {
-    const entries = new Map<string, PoolCardEntry>();
-
-    for (const query of poolQueries) {
-      if (!query.data) {
-        continue;
-      }
-
-      const bestPool = [...query.data.pools].sort((left, right) => {
-        return Number(right.lpTotalSupplyUsd ?? 0) - Number(left.lpTotalSupplyUsd ?? 0);
-      })[0];
-
-      if (!bestPool) {
-        continue;
-      }
-
-      const entry = toPoolCardEntry({
-        pool: bestPool,
-        assetA: query.data.assetA,
-        assetB: query.data.assetB,
-      });
-      const previous = entries.get(entry.id);
-
-      if (!previous || entry.liquidityUsd > previous.liquidityUsd) {
-        entries.set(entry.id, entry);
-      }
-    }
-
-    return [...entries.values()].sort((left, right) => {
-      if (right.liquidityUsd !== left.liquidityUsd) {
-        return right.liquidityUsd - left.liquidityUsd;
-      }
-
-      return right.popularityScore - left.popularityScore;
-    });
-  }, [poolQueries]);
-
-  const isLoading = assetsQuery.isLoading || poolQueries.some((query) => query.isLoading);
-  const isFetched = assetsQuery.isFetched && poolQueries.every((query) => query.isFetched);
+  const pools = poolsQuery.data ?? [];
+  const isLoading = assetsQuery.isLoading || poolsQuery.isLoading;
+  const isFetched = assetsQuery.isFetched && poolsQuery.isFetched;
   const totalLiquidity = pools.reduce((sum, pool) => sum + pool.liquidityUsd, 0);
   const watchedCount = profile?.watchedPools.length ?? 0;
 
@@ -402,10 +431,7 @@ export function PoolsBrowser() {
                             LP supply
                           </p>
                           <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                            {Number(entry.pool.lpTotalSupply ?? 0).toLocaleString(
-                              "en",
-                              { maximumFractionDigits: 0 },
-                            )}
+                            {entry.lpSupplyLabel}
                           </p>
                         </div>
 
@@ -414,15 +440,10 @@ export function PoolsBrowser() {
                             Router
                           </p>
                           <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
-                            {Formatter.address(entry.pool.routerAddress, {
-                              truncateSize: 5,
-                            })}
+                            {entry.routerLabel}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
-                            Pool{" "}
-                            {Formatter.address(entry.pool.address, {
-                              truncateSize: 5,
-                            })}
+                            Pool {entry.poolLabel}
                           </p>
                         </div>
                       </div>
