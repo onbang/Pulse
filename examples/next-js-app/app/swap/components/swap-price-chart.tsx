@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dot, TrendingDown, TrendingUp } from "lucide-react";
 
+import { AssetSelect } from "@/components/asset-select";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
 import { Formatter } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { useCommunityProfile } from "@/components/community/community-provider";
@@ -144,9 +146,12 @@ export function SwapPriceChart() {
   const [timeframe, setTimeframe] =
     useState<(typeof TIMEFRAMES)[number]["key"]>("5M");
   const [liveTick, setLiveTick] = useState(0);
+  const [selectedChartAsset, setSelectedChartAsset] =
+    useState<AssetInfo | null>(null);
   const { offerAsset, askAsset } = useSwapForm();
   const { data: simulation } = useSwapSimulation();
   const { getPrediction } = useCommunityProfile();
+  const assetsQuery = useAssetsQuery();
 
   useEffect(() => {
     const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe);
@@ -162,30 +167,23 @@ export function SwapPriceChart() {
     return () => window.clearInterval(intervalId);
   }, [timeframe]);
 
-  const hasSelectedPair = Boolean(offerAsset && askAsset);
-  const offerLabel = hasSelectedPair
-    ? normalizeLabel(offerAsset?.meta?.symbol)
+  const trackedAsset = selectedChartAsset ?? offerAsset ?? askAsset ?? null;
+  const trackedLabel = trackedAsset
+    ? normalizeLabel(trackedAsset.meta?.symbol)
     : "TON";
-  const askLabel = hasSelectedPair
-    ? normalizeLabel(askAsset?.meta?.symbol)
-    : "USDT";
-  const pairId = hasSelectedPair
-    ? `${offerAsset!.contractAddress}:${askAsset!.contractAddress}`
-    : "pulse:preview-ton-usdt";
-  const pairLabel = `${offerLabel}/${askLabel}`;
-  const prediction = getPrediction(pairId);
+  const chartId = trackedAsset
+    ? `token:${trackedAsset.contractAddress}`
+    : "token:preview-ton";
+  const chartLabel = trackedAsset ? trackedLabel : "TON";
+  const prediction = getPrediction(chartId);
   const bullishBias =
     ((prediction?.up.length ?? 0) - (prediction?.down.length ?? 0)) /
     Math.max((prediction?.up.length ?? 0) + (prediction?.down.length ?? 0), 1);
 
   const basePrice =
-    hasSelectedPair &&
-    simulation?.swapRate &&
-    Number.isFinite(Number(simulation.swapRate))
-      ? Number(simulation.swapRate)
-      : hasSelectedPair && offerAsset?.dexPriceUsd && askAsset?.dexPriceUsd
-        ? Number(offerAsset.dexPriceUsd) / Number(askAsset.dexPriceUsd)
-        : 3.42;
+    trackedAsset?.dexPriceUsd && Number.isFinite(Number(trackedAsset.dexPriceUsd))
+      ? Number(trackedAsset.dexPriceUsd)
+      : 3.42;
 
   const livePrice =
     basePrice *
@@ -196,14 +194,14 @@ export function SwapPriceChart() {
 
   const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe)!;
   const volatilityBase = Math.max(
-    Number(simulation?.priceImpact ?? 0.012),
+    trackedAsset ? Number(simulation?.priceImpact ?? 0.01) : 0.012,
     0.012,
   );
   const volatility = Math.min(volatilityBase * 2.4, 0.16);
 
   const candles = useMemo(() => {
     return createCandles({
-      seed: hashSeed(`${pairId}:${timeframe}`),
+      seed: hashSeed(`${chartId}:${timeframe}`),
       currentPrice: livePrice,
       candles: currentFrame.candles,
       bullishBias,
@@ -215,7 +213,7 @@ export function SwapPriceChart() {
     currentFrame.candles,
     livePrice,
     liveTick,
-    pairId,
+    chartId,
     timeframe,
     volatility,
   ]);
@@ -247,49 +245,59 @@ export function SwapPriceChart() {
             <div
               className={cn(
                 "flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-lg font-semibold text-white shadow-[0_16px_34px_-18px_rgba(59,130,246,0.75)]",
-                getAssetTone(offerLabel),
+                getAssetTone(trackedLabel),
               )}
             >
-              {offerLabel.slice(0, 1)}
+              {trackedLabel.slice(0, 1)}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-3xl font-semibold tracking-tight text-slate-950">
-                  {hasSelectedPair
-                    ? normalizeLabel(offerAsset?.meta?.displayName ?? offerLabel)
+                  {trackedAsset
+                    ? normalizeLabel(
+                        trackedAsset.meta?.displayName ?? trackedLabel,
+                      )
                     : "Pulse market"}
                 </CardTitle>
                 <Badge className="border border-sky-100 bg-white text-slate-700">
-                  {pairLabel}
+                  {chartLabel}
                 </Badge>
                 <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
-                  {hasSelectedPair ? "Live" : "Preview"}
+                  {trackedAsset ? "Live" : "Preview"}
                 </Badge>
               </div>
               <CardDescription className="mt-1 max-w-xl text-slate-600">
-                {hasSelectedPair
-                  ? "Real-time styled execution chart for the pair you are forecasting."
-                  : "Select a token pair to switch this preview into a live pair-specific market chart."}
+                {trackedAsset
+                  ? "Real-time styled market chart for the token you selected."
+                  : "Choose any token to switch this preview into a token-specific live market chart."}
               </CardDescription>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 rounded-full border border-sky-100 bg-white p-1">
-            {TIMEFRAMES.map((frame) => (
-              <button
-                key={frame.key}
-                type="button"
-                onClick={() => setTimeframe(frame.key)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                  frame.key === timeframe
-                    ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
-                    : "text-slate-500 hover:bg-sky-50 hover:text-slate-900",
-                )}
-              >
-                {frame.key}
-              </button>
-            ))}
+          <div className="flex min-w-[260px] max-w-[320px] flex-col gap-3">
+            <AssetSelect
+              assets={(assetsQuery.data ?? []).slice(0, 24)}
+              selectedAsset={selectedChartAsset}
+              onAssetSelect={setSelectedChartAsset}
+              loading={assetsQuery.isLoading}
+            />
+            <div className="flex flex-wrap gap-2 rounded-full border border-sky-100 bg-white p-1">
+              {TIMEFRAMES.map((frame) => (
+                <button
+                  key={frame.key}
+                  type="button"
+                  onClick={() => setTimeframe(frame.key)}
+                  className={cn(
+                    "rounded-full px-4 py-2 text-sm font-semibold transition-all",
+                    frame.key === timeframe
+                      ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
+                      : "text-slate-500 hover:bg-sky-50 hover:text-slate-900",
+                  )}
+                >
+                  {frame.key}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -330,9 +338,9 @@ export function SwapPriceChart() {
                 <span className="text-2xl font-semibold text-slate-500">
                   {timeframe}
                 </span>
-                {!hasSelectedPair ? (
+                {!trackedAsset ? (
                   <span className="rounded-full border border-sky-100 bg-white px-3 py-1 text-sm font-medium text-slate-600">
-                    Waiting for pair selection
+                    Waiting for token selection
                   </span>
                 ) : null}
               </div>
@@ -347,7 +355,7 @@ export function SwapPriceChart() {
               </p>
               <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                 <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                {hasSelectedPair ? "Live mode" : "Preview mode"}
+                {trackedAsset ? "Live mode" : "Preview mode"}
               </div>
             </div>
           </div>
@@ -358,7 +366,7 @@ export function SwapPriceChart() {
                 viewBox="0 0 100 100"
                 className="h-[360px] w-full md:h-[420px]"
                 preserveAspectRatio="none"
-                aria-label={`${pairLabel} live candlestick chart`}
+                aria-label={`${chartLabel} live candlestick chart`}
               >
                 {gridLevels.map((level, index) => {
                   const y = 100 - ((level - low) / range) * 100;
@@ -488,9 +496,9 @@ export function SwapPriceChart() {
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              {hasSelectedPair
+              {trackedAsset
                 ? "Friction in the current quote path"
-                : "Indicative impact until the pair is selected"}
+                : "Indicative impact until the token is selected"}
             </p>
           </div>
           <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
@@ -501,9 +509,9 @@ export function SwapPriceChart() {
               Read momentum before you place the next prediction
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              {hasSelectedPair
-                ? "Candles, live quote pulse, and community bias now sit in one market panel."
-                : "The market panel is always visible now, and it upgrades into a live pair chart as soon as you choose tokens."}
+              {trackedAsset
+                ? "Candles, live token price pulse, and community bias now sit in one market panel."
+                : "The market panel is always visible now, and it upgrades into a live token chart as soon as you choose one."}
             </p>
           </div>
         </div>
