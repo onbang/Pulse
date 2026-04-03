@@ -135,8 +135,8 @@ export function buildPredictionPlaceBetPayloadBase64(input: {
 }) {
   return beginCell()
     .storeUint(PREDICTION_OP_PLACE_BET, 32)
-    .storeStringTail(input.marketId)
-    .storeRef(beginCell().storeStringTail(input.label).endCell())
+    .storeStringRefTail(input.marketId)
+    .storeStringRefTail(input.label)
     .storeUint(input.direction === "up" ? 1 : 0, 8)
     .endCell()
     .toBoc()
@@ -175,7 +175,7 @@ export function buildPredictionCloseRoundPayloadBase64(
 ) {
   return beginCell()
     .storeUint(PREDICTION_OP_CLOSE_ROUND, 32)
-    .storeStringTail(input.marketId)
+    .storeStringRefTail(input.marketId)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -186,7 +186,7 @@ export function buildPredictionSettleRoundPayloadBase64(
 ) {
   return beginCell()
     .storeUint(PREDICTION_OP_SETTLE_ROUND, 32)
-    .storeStringTail(input.marketId)
+    .storeStringRefTail(input.marketId)
     .storeUint(input.result === "up" ? 1 : 0, 8)
     .endCell()
     .toBoc()
@@ -196,7 +196,7 @@ export function buildPredictionSettleRoundPayloadBase64(
 export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
   return beginCell()
     .storeUint(PREDICTION_OP_CLAIM, 32)
-    .storeStringTail(input.marketId)
+    .storeStringRefTail(input.marketId)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -214,8 +214,8 @@ export function parsePredictionContractPayloadBase64(
     const opcode = slice.loadUint(32);
 
     if (opcode === PREDICTION_OP_PLACE_BET) {
-      const marketId = slice.loadStringTail();
-      const label = slice.loadRef().beginParse().loadStringTail();
+      const marketId = slice.loadStringRefTail();
+      const label = slice.loadStringRefTail();
       const direction = slice.loadUint(8) === 1 ? "up" : "down";
 
       if (!marketId || !label) {
@@ -231,7 +231,7 @@ export function parsePredictionContractPayloadBase64(
     }
 
     if (opcode === PREDICTION_OP_CLOSE_ROUND) {
-      const marketId = slice.loadStringTail();
+      const marketId = slice.loadStringRefTail();
 
       return marketId
         ? {
@@ -242,7 +242,7 @@ export function parsePredictionContractPayloadBase64(
     }
 
     if (opcode === PREDICTION_OP_SETTLE_ROUND) {
-      const marketId = slice.loadStringTail();
+      const marketId = slice.loadStringRefTail();
       const result = slice.loadUint(8) === 1 ? "up" : "down";
 
       return marketId
@@ -255,7 +255,7 @@ export function parsePredictionContractPayloadBase64(
     }
 
     if (opcode === PREDICTION_OP_CLAIM) {
-      const marketId = slice.loadStringTail();
+      const marketId = slice.loadStringRefTail();
 
       return marketId
         ? {
