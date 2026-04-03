@@ -162,13 +162,16 @@ export function SwapPriceChart() {
     return () => window.clearInterval(intervalId);
   }, [timeframe]);
 
-  if (!offerAsset || !askAsset) {
-    return null;
-  }
-
-  const offerLabel = normalizeLabel(offerAsset.meta?.symbol);
-  const askLabel = normalizeLabel(askAsset.meta?.symbol);
-  const pairId = `${offerAsset.contractAddress}:${askAsset.contractAddress}`;
+  const hasSelectedPair = Boolean(offerAsset && askAsset);
+  const offerLabel = hasSelectedPair
+    ? normalizeLabel(offerAsset?.meta?.symbol)
+    : "TON";
+  const askLabel = hasSelectedPair
+    ? normalizeLabel(askAsset?.meta?.symbol)
+    : "USDT";
+  const pairId = hasSelectedPair
+    ? `${offerAsset!.contractAddress}:${askAsset!.contractAddress}`
+    : "pulse:preview-ton-usdt";
   const pairLabel = `${offerLabel}/${askLabel}`;
   const prediction = getPrediction(pairId);
   const bullishBias =
@@ -176,11 +179,13 @@ export function SwapPriceChart() {
     Math.max((prediction?.up.length ?? 0) + (prediction?.down.length ?? 0), 1);
 
   const basePrice =
-    simulation?.swapRate && Number.isFinite(Number(simulation.swapRate))
+    hasSelectedPair &&
+    simulation?.swapRate &&
+    Number.isFinite(Number(simulation.swapRate))
       ? Number(simulation.swapRate)
-      : offerAsset.dexPriceUsd && askAsset.dexPriceUsd
+      : hasSelectedPair && offerAsset?.dexPriceUsd && askAsset?.dexPriceUsd
         ? Number(offerAsset.dexPriceUsd) / Number(askAsset.dexPriceUsd)
-        : 1;
+        : 3.42;
 
   const livePrice =
     basePrice *
@@ -250,17 +255,21 @@ export function SwapPriceChart() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <CardTitle className="text-3xl font-semibold tracking-tight text-white">
-                  {normalizeLabel(offerAsset.meta?.displayName ?? offerLabel)}
+                  {hasSelectedPair
+                    ? normalizeLabel(offerAsset?.meta?.displayName ?? offerLabel)
+                    : "Pulse market"}
                 </CardTitle>
                 <Badge className="border-0 bg-white/10 text-slate-200">
                   {pairLabel}
                 </Badge>
                 <Badge className="border-0 bg-white/10 text-slate-200">
-                  Live
+                  {hasSelectedPair ? "Live" : "Preview"}
                 </Badge>
               </div>
               <CardDescription className="mt-1 max-w-xl text-slate-400">
-                Real-time styled execution chart for the pair you are forecasting.
+                {hasSelectedPair
+                  ? "Real-time styled execution chart for the pair you are forecasting."
+                  : "Select a token pair to switch this preview into a live pair-specific market chart."}
               </CardDescription>
             </div>
           </div>
@@ -321,6 +330,11 @@ export function SwapPriceChart() {
                 <span className="text-2xl font-semibold text-slate-300">
                   {timeframe}
                 </span>
+                {!hasSelectedPair ? (
+                  <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-sm font-medium text-slate-300">
+                    Waiting for pair selection
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -333,7 +347,7 @@ export function SwapPriceChart() {
               </p>
               <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                 <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                Live mode
+                {hasSelectedPair ? "Live mode" : "Preview mode"}
               </div>
             </div>
           </div>
@@ -465,7 +479,9 @@ export function SwapPriceChart() {
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
             <p className="mt-1 text-sm text-slate-400">
-              Friction in the current quote path
+              {hasSelectedPair
+                ? "Friction in the current quote path"
+                : "Indicative impact until the pair is selected"}
             </p>
           </div>
           <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),rgba(168,85,247,0.16))] p-4 shadow-[0_24px_60px_-34px_rgba(37,99,235,0.5)]">
@@ -476,8 +492,9 @@ export function SwapPriceChart() {
               Read momentum before you place the next prediction
             </p>
             <p className="mt-2 text-sm text-slate-300">
-              Candles, live quote pulse, and community bias now sit in one market
-              panel.
+              {hasSelectedPair
+                ? "Candles, live quote pulse, and community bias now sit in one market panel."
+                : "The market panel is always visible now, and it upgrades into a live pair chart as soon as you choose tokens."}
             </p>
           </div>
         </div>
