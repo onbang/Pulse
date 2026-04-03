@@ -22,12 +22,54 @@ import { useSwapSimulation } from "../hooks/swap-simulation-query";
 import { useSwapForm } from "../providers/swap-form";
 
 const TIMEFRAMES = [
-  { key: "1M", candles: 24, labelKey: "swap.chart.timeframe.1M", liveStepMs: 1600 },
-  { key: "5M", candles: 28, labelKey: "swap.chart.timeframe.5M", liveStepMs: 2200 },
-  { key: "15M", candles: 24, labelKey: "swap.chart.timeframe.15M", liveStepMs: 2800 },
-  { key: "1H", candles: 22, labelKey: "swap.chart.timeframe.1H", liveStepMs: 3600 },
-  { key: "4H", candles: 20, labelKey: "swap.chart.timeframe.4H", liveStepMs: 4200 },
-  { key: "1D", candles: 18, labelKey: "swap.chart.timeframe.1D", liveStepMs: 5200 },
+  {
+    key: "1M",
+    candles: 28,
+    labelKey: "swap.chart.timeframe.1M",
+    liveStepMs: 1000,
+    driftScale: 1.15,
+    noiseScale: 1.1,
+  },
+  {
+    key: "5M",
+    candles: 26,
+    labelKey: "swap.chart.timeframe.5M",
+    liveStepMs: 5000,
+    driftScale: 0.95,
+    noiseScale: 0.9,
+  },
+  {
+    key: "15M",
+    candles: 24,
+    labelKey: "swap.chart.timeframe.15M",
+    liveStepMs: 12000,
+    driftScale: 0.78,
+    noiseScale: 0.74,
+  },
+  {
+    key: "1H",
+    candles: 22,
+    labelKey: "swap.chart.timeframe.1H",
+    liveStepMs: 25000,
+    driftScale: 0.56,
+    noiseScale: 0.55,
+  },
+  {
+    key: "4H",
+    candles: 20,
+    labelKey: "swap.chart.timeframe.4H",
+    liveStepMs: 45000,
+    driftScale: 0.38,
+    noiseScale: 0.4,
+  },
+  {
+    key: "1D",
+    candles: 18,
+    labelKey: "swap.chart.timeframe.1D",
+    liveStepMs: 65000,
+    driftScale: 0.24,
+    noiseScale: 0.26,
+  },
 ] as const;
 
 type Candle = {
@@ -58,6 +100,8 @@ function createCandles({
   bullishBias,
   volatility,
   liveOffset,
+  driftScale,
+  noiseScale,
 }: {
   seed: number;
   currentPrice: number;
@@ -65,6 +109,8 @@ function createCandles({
   bullishBias: number;
   volatility: number;
   liveOffset: number;
+  driftScale: number;
+  noiseScale: number;
 }) {
   const data: Candle[] = [];
   let previousClose = currentPrice * (0.94 + (seed % 9) / 100);
@@ -73,29 +119,44 @@ function createCandles({
     const pulse = Math.sin((index + liveOffset + (seed % 5)) / 2.8);
     const wave = Math.cos((index + liveOffset + (seed % 11)) / 4.4);
     const directionalDrift =
-      bullishBias * currentPrice * 0.045 * (index / Math.max(candles, 1) - 0.4);
+      bullishBias *
+      currentPrice *
+      0.045 *
+      driftScale *
+      (index / Math.max(candles, 1) - 0.4);
     const driftNoise =
       ((seed % (index + 7)) - (index % 5)) *
       volatility *
       currentPrice *
-      0.012;
+      0.012 *
+      noiseScale;
     const close = Math.max(
       currentPrice * 0.45,
       previousClose +
-        pulse * currentPrice * volatility * 0.34 +
-        wave * currentPrice * volatility * 0.18 +
+        pulse * currentPrice * volatility * 0.34 * noiseScale +
+        wave * currentPrice * volatility * 0.18 * noiseScale +
         directionalDrift +
         driftNoise,
     );
     const open =
       previousClose +
-      Math.sin((index + seed) / 3.6) * currentPrice * volatility * 0.08;
+      Math.sin((index + seed) / 3.6) *
+        currentPrice *
+        volatility *
+        0.08 *
+        noiseScale;
     const high =
       Math.max(open, close) +
-      currentPrice * volatility * (0.08 + ((index + seed) % 5) * 0.02);
+      currentPrice *
+        volatility *
+        noiseScale *
+        (0.08 + ((index + seed) % 5) * 0.02);
     const low =
       Math.min(open, close) -
-      currentPrice * volatility * (0.08 + ((index + seed) % 4) * 0.018);
+      currentPrice *
+        volatility *
+        noiseScale *
+        (0.08 + ((index + seed) % 4) * 0.018);
 
     data.push({
       open,
@@ -187,14 +248,15 @@ export function SwapPriceChart() {
       ? Number(trackedAsset.dexPriceUsd)
       : 3.42;
 
+  const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe)!;
   const livePrice =
     basePrice *
     (1 +
       Math.sin(liveTick / 2.6 + bullishBias) *
         Math.max(Number(simulation?.priceImpact ?? 0.004), 0.003) *
+        currentFrame.driftScale *
         0.18);
 
-  const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe)!;
   const volatilityBase = Math.max(
     trackedAsset ? Number(simulation?.priceImpact ?? 0.01) : 0.012,
     0.012,
@@ -209,10 +271,14 @@ export function SwapPriceChart() {
       bullishBias,
       volatility,
       liveOffset: liveTick,
+      driftScale: currentFrame.driftScale,
+      noiseScale: currentFrame.noiseScale,
     });
   }, [
     bullishBias,
     currentFrame.candles,
+    currentFrame.driftScale,
+    currentFrame.noiseScale,
     livePrice,
     liveTick,
     chartId,
