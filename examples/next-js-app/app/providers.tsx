@@ -23,27 +23,27 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
 
 function TonConnectProvider({ children }: { children: React.ReactNode }) {
   const manifestUrl = useMemo(() => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    const baseOrigin =
+      appUrl || (typeof window !== "undefined" ? window.location.origin : "");
     const configuredUrl =
       process.env.NEXT_PUBLIC_TONCONNECT_MANIFEST_URL?.trim();
 
     if (configuredUrl) {
-      return configuredUrl;
+      if (/^https?:\/\//i.test(configuredUrl)) {
+        return configuredUrl;
+      }
+
+      if (baseOrigin) {
+        return new URL(configuredUrl, baseOrigin).toString();
+      }
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-
-    if (appUrl) {
-      return new URL("/tonconnect-manifest.json", appUrl).toString();
+    if (baseOrigin) {
+      return new URL("/api/tonconnect-manifest", baseOrigin).toString();
     }
 
-    if (typeof window !== "undefined") {
-      return new URL(
-        "/tonconnect-manifest.json",
-        window.location.origin,
-      ).toString();
-    }
-
-    return "/tonconnect-manifest.json";
+    return "/api/tonconnect-manifest";
   }, []);
 
   return (
