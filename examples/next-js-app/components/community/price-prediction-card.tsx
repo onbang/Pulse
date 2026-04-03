@@ -36,6 +36,7 @@ export function PricePredictionCard(props: {
   const { toast } = useToast();
   const {
     getPrediction,
+    optimisticRecordPrediction,
     submitPrediction,
     settlePredictionRound,
     walletAddress,
@@ -150,11 +151,16 @@ export function PricePredictionCard(props: {
     isStakeValid && previewDownPool > 0 ? previewTotalPool / previewDownPool : downOdds;
 
   const placePrediction = async (direction: "up" | "down") => {
-    if (
-      !canPlacePrediction
-    ) {
+    if (!canPlacePrediction) {
       return;
     }
+
+    const predictionInput = {
+      pairId: props.pairId,
+      label: props.label,
+      direction,
+      amount: numericStake,
+    } as const;
 
     try {
       setIsSubmittingTx(true);
@@ -168,23 +174,32 @@ export function PricePredictionCard(props: {
         .toBoc()
         .toString("base64");
 
-      await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-        messages: [
-          {
-            address: predictionTreasuryAddress,
-            amount: toNano(stakeAmount).toString(),
-            payload,
-          },
-        ],
-      });
+      try {
+        await tonConnectUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+          messages: [
+            {
+              address: predictionTreasuryAddress,
+              amount: toNano(stakeAmount).toString(),
+              payload,
+            },
+          ],
+        });
+      } catch {
+        toast({
+          title: t("prediction.txFailed"),
+          description: t("prediction.txFailedBody"),
+        });
+        return;
+      }
 
-      const submitted = await submitPrediction({
-        pairId: props.pairId,
-        label: props.label,
-        direction,
-        amount: numericStake,
-      });
+      let submitted = false;
+
+      try {
+        submitted = await submitPrediction(predictionInput);
+      } catch {
+        submitted = false;
+      }
 
       if (submitted) {
         toast({
@@ -194,12 +209,17 @@ export function PricePredictionCard(props: {
           }),
         });
         setStakeAmount("10");
+        return;
       }
-    } catch {
+
+      optimisticRecordPrediction(predictionInput);
       toast({
-        title: t("prediction.txFailed"),
-        description: t("prediction.txFailedBody"),
+        title: t("prediction.txSentPending"),
+        description: t("prediction.txSentPendingBody", {
+          amount: numericStake.toFixed(2),
+        }),
       });
+      setStakeAmount("10");
     } finally {
       setIsSubmittingTx(false);
     }

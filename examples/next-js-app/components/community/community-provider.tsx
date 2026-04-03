@@ -67,6 +67,12 @@ type CommunityContextValue = {
     direction: PredictionDirection;
     amount: number;
   }) => Promise<boolean>;
+  optimisticRecordPrediction: (input: {
+    pairId: string;
+    label: string;
+    direction: PredictionDirection;
+    amount: number;
+  }) => void;
   settlePredictionRound: (input: {
     pairId: string;
     direction: PredictionDirection;
@@ -319,6 +325,70 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const optimisticRecordPrediction: CommunityContextValue["optimisticRecordPrediction"] =
+    ({ pairId, label, direction, amount }) => {
+      if (!walletAddress) {
+        return;
+      }
+
+      const createdAt = new Date().toISOString();
+      const optimisticBet: PredictionBet = {
+        id: `optimistic-${walletAddress}-${Date.now()}`,
+        walletAddress,
+        author: profile?.displayName || `STON ${walletAddress.slice(0, 4)}`,
+        amount: Math.round(amount * 100) / 100,
+        direction,
+        createdAt,
+      };
+
+      setStore((currentStore) => {
+        const existingPrediction = currentStore.predictions[pairId] ?? {
+          label,
+          up: [],
+          down: [],
+          bets: [],
+          round: {
+            id: `optimistic-round-${pairId}`,
+            status: "open" as const,
+            openedAt: createdAt,
+            closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            durationMinutes: 60,
+          },
+          payoutPreviews: [],
+        };
+
+        const nextPrediction: PairPrediction = {
+          ...existingPrediction,
+          label,
+          up:
+            direction === "up"
+              ? Array.from(new Set([...existingPrediction.up, walletAddress]))
+              : existingPrediction.up.filter((item) => item !== walletAddress),
+          down:
+            direction === "down"
+              ? Array.from(new Set([...existingPrediction.down, walletAddress]))
+              : existingPrediction.down.filter((item) => item !== walletAddress),
+          bets: [optimisticBet, ...existingPrediction.bets],
+          round:
+            existingPrediction.round ?? {
+              id: `optimistic-round-${pairId}`,
+              status: "open",
+              openedAt: createdAt,
+              closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+              durationMinutes: 60,
+            },
+        };
+
+        return {
+          ...currentStore,
+          predictions: {
+            ...currentStore.predictions,
+            [pairId]: nextPrediction,
+          },
+        };
+      });
+    };
+
   const trackActivity: CommunityContextValue["trackActivity"] = async (
     track,
   ) => {
@@ -439,6 +509,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         getComments,
         toggleCommentReaction,
         submitPrediction,
+        optimisticRecordPrediction,
         settlePredictionRound,
         getPrediction,
         trackActivity,

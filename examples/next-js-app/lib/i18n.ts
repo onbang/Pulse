@@ -194,6 +194,9 @@ export const messages = {
     "prediction.txInProgress": "Confirm the transaction in your wallet to place the bet.",
     "prediction.txSent": "Prediction transaction sent",
     "prediction.txSentBody": "{amount} TON has been sent and your bet is now recorded in the round.",
+    "prediction.txSentPending": "Prediction transaction sent, UI sync pending",
+    "prediction.txSentPendingBody":
+      "{amount} TON has already been sent on-chain. The bet is shown locally while the app sync catches up.",
     "prediction.txFailed": "Prediction transaction failed",
     "prediction.txFailedBody":
       "The wallet transaction was cancelled or failed, so the bet was not recorded.",
@@ -586,6 +589,9 @@ export const messages = {
     "prediction.txInProgress": "Подтверди транзакцию в кошельке, чтобы сделать ставку.",
     "prediction.txSent": "Транзакция прогноза отправлена",
     "prediction.txSentBody": "{amount} TON отправлено, и ставка записана в текущий раунд.",
+    "prediction.txSentPending": "Транзакция отправлена, синхронизация UI ожидается",
+    "prediction.txSentPendingBody":
+      "{amount} TON уже отправлено в сеть. Пока приложение догоняет синхронизацию, ставка будет показана локально.",
     "prediction.txFailed": "Не удалось отправить транзакцию прогноза",
     "prediction.txFailedBody":
       "Транзакция в кошельке была отменена или завершилась ошибкой, поэтому ставка не записана.",
