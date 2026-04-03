@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
-import { Address } from "@ton/core";
+import { Address, Cell } from "@ton/core";
 import { parsePredictionContractPayloadBase64 } from "@ston-pulse/prediction-sdk";
 
 import {
@@ -1329,7 +1329,13 @@ function extractPredictionContractPayload(
       continue;
     }
 
-    const parsed = parsePredictionContractPayloadBase64(candidate);
+    const normalizedCandidate = normalizePredictionPayloadCandidate(candidate);
+
+    if (!normalizedCandidate) {
+      continue;
+    }
+
+    const parsed = parsePredictionContractPayloadBase64(normalizedCandidate);
 
     if (parsed?.type === "place_bet") {
       return parsed;
@@ -1337,6 +1343,31 @@ function extractPredictionContractPayload(
   }
 
   return null;
+}
+
+function normalizePredictionPayloadCandidate(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^[0-9a-fA-F]+$/.test(trimmed) && trimmed.length % 2 === 0) {
+    try {
+      const bytes = Buffer.from(trimmed, "hex");
+      const [cell] = Cell.fromBoc(bytes);
+
+      if (!cell) {
+        return null;
+      }
+
+      return cell.toBoc().toString("base64");
+    } catch {
+      return null;
+    }
+  }
+
+  return trimmed;
 }
 
 function extractMessageTonValue(message: Record<string, unknown> | null) {
