@@ -79,6 +79,18 @@ type Candle = {
   low: number;
 };
 
+type ChartSignal = {
+  tone: "bullish" | "bearish" | "neutral";
+  titleKey:
+    | "swap.chart.signalBullish"
+    | "swap.chart.signalBearish"
+    | "swap.chart.signalNeutral";
+  bodyKey:
+    | "swap.chart.signalBodyBullish"
+    | "swap.chart.signalBodyBearish"
+    | "swap.chart.signalBodyNeutral";
+};
+
 function normalizeLabel(label?: string | null) {
   return label?.trim() || "token";
 }
@@ -204,6 +216,51 @@ function getAssetTone(symbol: string) {
   return "from-fuchsia-500 to-sky-500";
 }
 
+function analyzeChartSignal(candles: Candle[]): ChartSignal {
+  if (candles.length < 4) {
+    return {
+      tone: "neutral",
+      titleKey: "swap.chart.signalNeutral",
+      bodyKey: "swap.chart.signalBodyNeutral",
+    };
+  }
+
+  const closes = candles.map((candle) => candle.close);
+  const recent = closes.slice(-4);
+  const previous = closes.slice(-8, -4);
+  const recentAverage =
+    recent.reduce((sum, value) => sum + value, 0) / Math.max(recent.length, 1);
+  const previousAverage =
+    previous.reduce((sum, value) => sum + value, 0) / Math.max(previous.length, 1);
+  const lastClose = closes[closes.length - 1] ?? 0;
+  const firstClose = closes[0] ?? lastClose;
+  const totalMove = ((lastClose - firstClose) / Math.max(firstClose, 0.000001)) * 100;
+  const shortMove =
+    ((lastClose - previousAverage) / Math.max(previousAverage, 0.000001)) * 100;
+
+  if (recentAverage > previousAverage && totalMove > 0.6 && shortMove > 0.2) {
+    return {
+      tone: "bullish",
+      titleKey: "swap.chart.signalBullish",
+      bodyKey: "swap.chart.signalBodyBullish",
+    };
+  }
+
+  if (recentAverage < previousAverage && totalMove < -0.6 && shortMove < -0.2) {
+    return {
+      tone: "bearish",
+      titleKey: "swap.chart.signalBearish",
+      bodyKey: "swap.chart.signalBodyBearish",
+    };
+  }
+
+  return {
+    tone: "neutral",
+    titleKey: "swap.chart.signalNeutral",
+    bodyKey: "swap.chart.signalBodyNeutral",
+  };
+}
+
 export function SwapPriceChart() {
   const { t } = useI18n();
   const [timeframe, setTimeframe] =
@@ -294,14 +351,7 @@ export function SwapPriceChart() {
   const deltaPercent = trackedAsset
     ? (delta / Math.max(firstOpen, 0.000001)) * 100
     : 0;
-  const forecastDirection =
-    bullishBias === 0 ? null : bullishBias > 0 ? "up" : "down";
-  const forecastLabel =
-    forecastDirection === "up"
-      ? t("prediction.bullish")
-      : forecastDirection === "down"
-        ? t("prediction.bearish")
-        : t("misc.neutralFlow");
+  const chartSignal = analyzeChartSignal(candles);
   const liveColor = priceDirection === "up" ? "#5ad66f" : "#ff6d5a";
   const gridLevels = [high, high - range * 0.33, high - range * 0.66, low];
 
@@ -440,11 +490,23 @@ export function SwapPriceChart() {
                 {t("swap.chart.forecastPulse")}
               </p>
               <p className="mt-2 text-lg font-semibold text-slate-900">
-                {forecastLabel}
+                {t(chartSignal.titleKey)}
               </p>
-              <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
+              <p className="mt-2 max-w-[15rem] text-sm leading-6 text-slate-500">
+                {t(chartSignal.bodyKey, { timeframe })}
+              </p>
+              <div
+                className={cn(
+                  "mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                  chartSignal.tone === "bullish" &&
+                    "bg-emerald-500/10 text-emerald-500",
+                  chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
+                  chartSignal.tone === "neutral" &&
+                    "bg-slate-100 text-slate-500",
+                )}
+              >
                 <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                {t("swap.chart.liveMode")}
+                {t("swap.chart.basedOnChart")}
               </div>
             </div>
           </div>

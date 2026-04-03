@@ -90,6 +90,16 @@ export const messages = {
     "swap.chart.preview": "Preview",
     "swap.chart.waiting": "Waiting for token selection",
     "swap.chart.forecastPulse": "Forecast pulse",
+    "swap.chart.basedOnChart": "Based on chart structure",
+    "swap.chart.signalBullish": "Bullish bias on chart",
+    "swap.chart.signalBearish": "Bearish bias on chart",
+    "swap.chart.signalNeutral": "Neutral chart structure",
+    "swap.chart.signalBodyBullish":
+      "On the {timeframe} chart, recent candles are holding above the prior average. Use this as context, not a guarantee.",
+    "swap.chart.signalBodyBearish":
+      "On the {timeframe} chart, recent candles are slipping below the prior average. Read this as weakness, not certainty.",
+    "swap.chart.signalBodyNeutral":
+      "On the {timeframe} chart, candles are mixed and structure is not decisive yet. Wait for cleaner confirmation.",
     "swap.chart.liveMode": "Live mode",
     "swap.chart.previewMode": "Preview mode",
     "swap.chart.candles": "Candles",
@@ -384,6 +394,16 @@ export const messages = {
     "swap.chart.preview": "Превью",
     "swap.chart.waiting": "Ожидается выбор токена",
     "swap.chart.forecastPulse": "Импульс прогноза",
+    "swap.chart.basedOnChart": "Основано на графике",
+    "swap.chart.signalBullish": "По графику перевес вверх",
+    "swap.chart.signalBearish": "По графику перевес вниз",
+    "swap.chart.signalNeutral": "По графику нейтрально",
+    "swap.chart.signalBodyBullish":
+      "На графике {timeframe} последние свечи держатся выше предыдущего среднего уровня. Используй это как контекст, а не как гарантию.",
+    "swap.chart.signalBodyBearish":
+      "На графике {timeframe} последние свечи уходят ниже предыдущего среднего уровня. Считай это сигналом слабости, а не точным исходом.",
+    "swap.chart.signalBodyNeutral":
+      "На графике {timeframe} свечи смешанные, и структура пока не дает явного перевеса. Лучше дождаться более чистого подтверждения.",
     "swap.chart.liveMode": "Живой режим",
     "swap.chart.previewMode": "Режим превью",
     "swap.chart.candles": "Свечи",
