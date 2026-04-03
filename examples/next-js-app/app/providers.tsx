@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react";
@@ -21,16 +22,37 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
 }
 
 function TonConnectProvider({ children }: { children: React.ReactNode }) {
+  const manifestUrl = useMemo(() => {
+    const configuredUrl =
+      process.env.NEXT_PUBLIC_TONCONNECT_MANIFEST_URL?.trim();
+
+    if (configuredUrl) {
+      return configuredUrl;
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+    if (appUrl) {
+      return new URL("/tonconnect-manifest.json", appUrl).toString();
+    }
+
+    if (typeof window !== "undefined") {
+      return new URL(
+        "/tonconnect-manifest.json",
+        window.location.origin,
+      ).toString();
+    }
+
+    return "/tonconnect-manifest.json";
+  }, []);
+
   return (
     <TonConnectUIProvider
       uiPreferences={{
         borderRadius: "s",
         theme: THEME.LIGHT,
       }}
-      manifestUrl={
-        process.env.NEXT_PUBLIC_TONCONNECT_MANIFEST_URL ??
-        "/api/tonconnect-manifest"
-      }
+      manifestUrl={manifestUrl}
     >
       {children}
     </TonConnectUIProvider>
