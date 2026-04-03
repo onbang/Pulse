@@ -73,6 +73,15 @@ const TIMEFRAMES = [
   },
 ] as const;
 
+const LIVE_FRAME = {
+  key: "LIVE",
+  candles: 30,
+  labelKey: "swap.chart.realtime",
+  liveStepMs: 1_000,
+  driftScale: 1.22,
+  noiseScale: 1.18,
+} as const;
+
 type Candle = {
   open: number;
   close: number;
@@ -246,8 +255,9 @@ function analyzeChartSignal(candles: Candle[]): ChartSignal {
 
 export function SwapPriceChart() {
   const { t } = useI18n();
-  const [timeframe, setTimeframe] =
-    useState<(typeof TIMEFRAMES)[number]["key"]>("5M");
+  const [timeframe, setTimeframe] = useState<
+    (typeof TIMEFRAMES)[number]["key"] | null
+  >(null);
   const [liveTick, setLiveTick] = useState(0);
   const [selectedChartAsset, setSelectedChartAsset] =
     useState<AssetInfo | null>(null);
@@ -257,11 +267,8 @@ export function SwapPriceChart() {
   const assetsQuery = useAssetsQuery();
 
   useEffect(() => {
-    const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe);
-
-    if (!currentFrame) {
-      return;
-    }
+    const currentFrame =
+      TIMEFRAMES.find((frame) => frame.key === timeframe) ?? LIVE_FRAME;
 
     const intervalId = window.setInterval(() => {
       setLiveTick((tick) => tick + 1);
@@ -286,7 +293,8 @@ export function SwapPriceChart() {
       ? Number(trackedAsset.dexPriceUsd)
       : 0;
 
-  const currentFrame = TIMEFRAMES.find((frame) => frame.key === timeframe)!;
+  const currentFrame =
+    TIMEFRAMES.find((frame) => frame.key === timeframe) ?? LIVE_FRAME;
   const livePrice = trackedAsset
     ? basePrice *
       (1 +
@@ -304,7 +312,7 @@ export function SwapPriceChart() {
 
   const candles = useMemo(() => {
     return createCandles({
-      seed: hashSeed(`${chartId ?? "no-token"}:${timeframe}`),
+      seed: hashSeed(`${chartId ?? "no-token"}:${timeframe ?? LIVE_FRAME.key}`),
       currentPrice: livePrice,
       candles: currentFrame.candles,
       bullishBias,
@@ -454,7 +462,7 @@ export function SwapPriceChart() {
                   {formatChartValue(Math.abs(delta))}
                 </span>
                 <span className="text-xl font-semibold text-slate-500 sm:text-2xl">
-                  {timeframe}
+                  {timeframe ?? t("swap.chart.realtimeShort")}
                 </span>
               </div>
             </div>
@@ -555,7 +563,9 @@ export function SwapPriceChart() {
                 <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
                   {t("swap.chart.candles")}
                 </span>
-                <span className="text-xs sm:text-sm">{t(currentFrame.labelKey)}</span>
+                <span className="text-xs sm:text-sm">
+                  {timeframe ? t(currentFrame.labelKey) : t("swap.chart.realtime")}
+                </span>
                 <span
                   className={cn(
                     "rounded-full px-3 py-1",
@@ -591,71 +601,68 @@ export function SwapPriceChart() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureHigh")}
             </p>
             <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {formatChartValue(high)}
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
+            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
               {t("swap.chart.upperBand")}
             </p>
           </div>
-          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
+          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureLow")}
             </p>
             <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {formatChartValue(low)}
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
+            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
               {t("swap.chart.lowerBand")}
             </p>
           </div>
-          <div className="flex min-h-[132px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[160px]">
+          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.routeImpact")}
             </p>
             <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
               {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
             </p>
-            <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-500 sm:leading-6">
+            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
               {trackedAsset
                 ? t("swap.chart.impactLive")
                 : t("swap.chart.impactPreview")}
             </p>
           </div>
-        </div>
-
-        <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.35)] sm:min-h-[136px]">
+            <div className="flex flex-wrap items-start justify-between gap-2">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 {t("swap.chart.forecastPulse")}
               </p>
-              <p className="mt-2 text-lg font-semibold leading-7 text-slate-900 sm:text-xl sm:leading-8">
-                {t(chartSignal.titleKey)}
-              </p>
+              <div
+                className={cn(
+                  "inline-flex w-fit items-center rounded-full px-2 py-1 text-[11px] font-semibold",
+                  chartSignal.tone === "bullish" &&
+                    "bg-emerald-500/10 text-emerald-500",
+                  chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
+                  chartSignal.tone === "neutral" &&
+                    "bg-slate-100 text-slate-500",
+                )}
+              >
+                <Dot className="-mx-1 h-4 w-4 animate-pulse" />
+                {t("swap.chart.basedOnChart")}
+              </div>
             </div>
-            <div
-              className={cn(
-                "inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold",
-                chartSignal.tone === "bullish" &&
-                  "bg-emerald-500/10 text-emerald-500",
-                chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
-                chartSignal.tone === "neutral" &&
-                  "bg-slate-100 text-slate-500",
-              )}
-            >
-              <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-              {t("swap.chart.basedOnChart")}
-            </div>
-          </div>
-          <div className="mt-3 max-w-2xl">
-            <p className="text-sm leading-6 text-slate-600">
-              {t(chartSignal.bodyKey, { timeframe })}
+            <p className="mt-2 text-lg font-semibold leading-7 text-slate-900">
+              {t(chartSignal.titleKey)}
+            </p>
+            <p className="mt-2 text-sm leading-5 text-slate-600">
+              {t(chartSignal.bodyKey, {
+                timeframe: timeframe ?? t("swap.chart.realtimeShort"),
+              })}
             </p>
           </div>
         </div>
