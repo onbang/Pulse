@@ -458,31 +458,6 @@ export function SwapPriceChart() {
                 </span>
               </div>
             </div>
-
-            <div className="w-full rounded-[22px] border border-sky-100 bg-white px-4 py-3 text-left sm:w-auto sm:min-w-[190px] sm:text-right">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                {t("swap.chart.forecastPulse")}
-              </p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">
-                {t(chartSignal.titleKey)}
-              </p>
-              <p className="mt-2 max-w-[15rem] text-sm leading-6 text-slate-500">
-                {t(chartSignal.bodyKey, { timeframe })}
-              </p>
-              <div
-                className={cn(
-                  "mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
-                  chartSignal.tone === "bullish" &&
-                    "bg-emerald-500/10 text-emerald-500",
-                  chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
-                  chartSignal.tone === "neutral" &&
-                    "bg-slate-100 text-slate-500",
-                )}
-              >
-                <Dot className="-mx-1 h-5 w-5 animate-pulse" />
-                {t("swap.chart.basedOnChart")}
-              </div>
-            </div>
           </div>
 
           <div className="mt-4 grid gap-3 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_90px]">
@@ -654,14 +629,27 @@ export function SwapPriceChart() {
           </div>
           <div className="flex min-h-[150px] flex-col rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.45)] sm:min-h-[180px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.tradeLens")}
+              {t("swap.chart.forecastPulse")}
             </p>
             <p className="mt-2 max-w-[15rem] text-lg font-semibold leading-7 text-slate-900 sm:mt-3 sm:text-xl sm:leading-8">
-              {t("swap.chart.tradeLensTitle")}
+              {t(chartSignal.titleKey)}
             </p>
             <p className="mt-2 max-w-[16rem] text-sm leading-5 text-slate-600 sm:mt-3 sm:leading-6">
-              {t("swap.chart.tradeLensBodyLive")}
+              {t(chartSignal.bodyKey, { timeframe })}
             </p>
+            <div
+              className={cn(
+                "mt-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                chartSignal.tone === "bullish" &&
+                  "bg-emerald-500/10 text-emerald-500",
+                chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
+                chartSignal.tone === "neutral" &&
+                  "bg-slate-100 text-slate-500",
+              )}
+            >
+              <Dot className="-mx-1 h-5 w-5 animate-pulse" />
+              {t("swap.chart.basedOnChart")}
+            </div>
           </div>
         </div>
         </>
