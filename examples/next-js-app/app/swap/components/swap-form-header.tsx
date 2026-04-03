@@ -23,7 +23,7 @@ export const SwapFormHeader = () => {
               <h1 className="page-heading text-4xl md:text-5xl">
                 {t("swap.hero.title")}
               </h1>
-              <p className="max-w-xl text-sm leading-6 text-white/78 md:text-base">
+              <p className="max-w-xl text-sm leading-6 text-slate-600 md:text-base">
                 {t("swap.hero.subtitle")}
               </p>
             </div>
@@ -31,7 +31,7 @@ export const SwapFormHeader = () => {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="glass-strip size-10 border-white/20 bg-white/10 p-0 text-white hover:bg-white/20 hover:text-white"
+              className="glass-strip size-10 border-sky-100 bg-white/90 p-0 text-slate-700 hover:bg-sky-50 hover:text-slate-900"
               disabled={
                 !swapSimulationQuery.isFetched || swapSimulationQuery.isFetching
               }
@@ -46,7 +46,7 @@ export const SwapFormHeader = () => {
               trigger={
                 <Button
                   variant="outline"
-                  className="glass-strip size-10 border-white/20 bg-white/10 p-0 text-white hover:bg-white/20 hover:text-white"
+                  className="glass-strip size-10 border-sky-100 bg-white/90 p-0 text-slate-700 hover:bg-sky-50 hover:text-slate-900"
                 >
                   <Settings size={18} />
                 </Button>
@@ -56,38 +56,38 @@ export const SwapFormHeader = () => {
         </div>
 
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="stat-pill border-white/20 bg-white/10 text-white">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
+          <div className="stat-pill">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-500/80">
               {t("swap.hero.execution")}
             </p>
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-2 text-lg font-semibold text-slate-950">
               {t("swap.hero.executionTitle")}
             </p>
-            <p className="mt-1 text-sm text-white/72">
+            <p className="mt-1 text-sm text-slate-600">
               {t("swap.hero.executionBody")}
             </p>
           </div>
-          <div className="stat-pill border-white/20 bg-white/10 text-white">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
+          <div className="stat-pill">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-500/80">
               {t("swap.hero.community")}
             </p>
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-2 text-lg font-semibold text-slate-950">
               {t("swap.hero.communityTitle")}
             </p>
-            <p className="mt-1 text-sm text-white/72">
+            <p className="mt-1 text-sm text-slate-600">
               {t("swap.hero.communityBody")}
             </p>
           </div>
-          <div className="stat-pill border-white/20 bg-white/10 text-white">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
+          <div className="stat-pill">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-sky-500/80">
               {t("swap.hero.precision")}
             </p>
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-2 text-lg font-semibold text-slate-950">
               {swapSimulationQuery.isFetching
                 ? t("swap.hero.precisionLoading")
                 : t("swap.hero.precisionTitle")}
             </p>
-            <p className="mt-1 text-sm text-white/72">
+            <p className="mt-1 text-sm text-slate-600">
               {t("swap.hero.precisionBody")}
             </p>
           </div>
