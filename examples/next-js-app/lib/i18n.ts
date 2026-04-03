@@ -13,7 +13,6 @@ export const messages = {
     "header.communityLayer": "Community Layer",
     "header.language": "Language",
     "header.productHint": "Swap, pools, streaks, and community signal in one app.",
-    "nav.overview": "Overview",
     "nav.swap": "Swap",
     "nav.pools": "Pools",
     "nav.liquidityProvide": "Liquidity provide",
@@ -41,6 +40,21 @@ export const messages = {
     "swap.hero.precisionLoading": "Refreshing route",
     "swap.hero.precisionBody":
       "Fine-tune slippage, routing, and timing before execution.",
+    "swap.onboarding.eyebrow": "Simple path",
+    "swap.onboarding.title": "If you're new, start with these three steps.",
+    "swap.onboarding.body":
+      "No separate overview page needed: choose a route, check the live quote and chart, then swap only when everything looks clear. If you want, you can explore pools or start your daily streak first.",
+    "swap.onboarding.secondary": "Explore pools",
+    "swap.onboarding.tertiary": "Open check-in",
+    "swap.onboarding.step1.title": "Choose tokens",
+    "swap.onboarding.step1.body":
+      "Pick what you want to give and what you want to receive.",
+    "swap.onboarding.step2.title": "Read the quote",
+    "swap.onboarding.step2.body":
+      "See the amount, route impact, and token chart before acting.",
+    "swap.onboarding.step3.title": "Swap when ready",
+    "swap.onboarding.step3.body":
+      "Use the swap button only after the quote and route look right to you.",
     "swap.ticket.eyebrow": "Trade ticket",
     "swap.ticket.title": "Execute with confidence",
     "swap.ticket.mode": "Mode",
@@ -236,7 +250,6 @@ export const messages = {
     "header.communityLayer": "Комьюнити слой",
     "header.language": "Язык",
     "header.productHint": "Обмен, пулы, серия чек-инов и сигнал комьюнити в одном приложении.",
-    "nav.overview": "Обзор",
     "nav.swap": "Обмен",
     "nav.pools": "Пулы",
     "nav.liquidityProvide": "Добавить ликвидность",
@@ -264,6 +277,21 @@ export const messages = {
     "swap.hero.precisionLoading": "Обновляем маршрут",
     "swap.hero.precisionBody":
       "Настрой slippage, маршрут и тайминг до исполнения.",
+    "swap.onboarding.eyebrow": "Простой старт",
+    "swap.onboarding.title": "Если ты здесь впервые, начни с этих трех шагов.",
+    "swap.onboarding.body":
+      "Без отдельной обзорной страницы: выбери маршрут, посмотри живую котировку и график, а затем меняй только когда все понятно. Если хочешь, сначала можно изучить пулы или начать ежедневную серию.",
+    "swap.onboarding.secondary": "Изучить пулы",
+    "swap.onboarding.tertiary": "Открыть чек-ин",
+    "swap.onboarding.step1.title": "Выбери токены",
+    "swap.onboarding.step1.body":
+      "Укажи, что хочешь отдать и что хочешь получить.",
+    "swap.onboarding.step2.title": "Посмотри котировку",
+    "swap.onboarding.step2.body":
+      "Проверь сумму, влияние маршрута и график токена перед действием.",
+    "swap.onboarding.step3.title": "Обменивай, когда готов",
+    "swap.onboarding.step3.body":
+      "Нажимай обмен только после того, как тебя устраивают котировка и маршрут.",
     "swap.ticket.eyebrow": "Торговый тикет",
     "swap.ticket.title": "Обменивай уверенно",
     "swap.ticket.mode": "Режим",
