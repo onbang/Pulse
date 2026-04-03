@@ -421,8 +421,11 @@ export function SwapPriceChart() {
         <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                {t("swap.chart.priceInUsd")}
+              </p>
               <p className="text-5xl font-semibold tracking-tight text-slate-950">
-                {formatChartValue(livePrice)}
+                ${formatChartValue(livePrice)}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <Badge

@@ -119,6 +119,7 @@ export const messages = {
       "Candles, live token pulse, and community bias now sit in one panel.",
     "swap.chart.tradeLensBodyPreview":
       "The market panel is always visible now, and it upgrades into a live token chart as soon as you choose one.",
+    "swap.chart.priceInUsd": "Price in USD",
     "swap.chart.upperBand": "Intraday upper band",
     "swap.chart.lowerBand": "Support area",
     "swap.chart.impactLive": "Current quote friction",
@@ -487,6 +488,7 @@ export const messages = {
       "Свечи, живой импульс токена и сигнал комьюнити собраны в одной панели.",
     "swap.chart.tradeLensBodyPreview":
       "Панель рынка видна всегда и превращается в живой график сразу после выбора токена.",
+    "swap.chart.priceInUsd": "Курс в $",
     "swap.chart.upperBand": "Верхняя граница дня",
     "swap.chart.lowerBand": "Зона поддержки",
     "swap.chart.impactLive": "Текущее влияние маршрута",
