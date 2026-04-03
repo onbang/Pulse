@@ -601,7 +601,7 @@ export function SwapPriceChart() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
               {t("swap.chart.structureHigh")}
@@ -637,34 +637,34 @@ export function SwapPriceChart() {
                 : t("swap.chart.impactPreview")}
             </p>
           </div>
-          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.18),rgba(115,84,242,0.18))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.35)] sm:min-h-[136px]">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                {t("swap.chart.forecastPulse")}
-              </p>
-              <div
-                className={cn(
-                  "inline-flex w-fit items-center rounded-full px-2 py-1 text-[11px] font-semibold",
-                  chartSignal.tone === "bullish" &&
-                    "bg-emerald-500/10 text-emerald-500",
-                  chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
-                  chartSignal.tone === "neutral" &&
-                    "bg-slate-100 text-slate-500",
-                )}
-              >
-                <Dot className="-mx-1 h-4 w-4 animate-pulse" />
-                {t("swap.chart.basedOnChart")}
-              </div>
+        </div>
+        <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.14),rgba(115,84,242,0.16))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.28)]">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              {t("swap.chart.forecastPulse")}
+            </p>
+            <div
+              className={cn(
+                "inline-flex w-fit items-center rounded-full px-2 py-1 text-[11px] font-semibold",
+                chartSignal.tone === "bullish" &&
+                  "bg-emerald-500/10 text-emerald-500",
+                chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
+                chartSignal.tone === "neutral" &&
+                  "bg-slate-100 text-slate-500",
+              )}
+            >
+              <Dot className="-mx-1 h-4 w-4 animate-pulse" />
+              {t("swap.chart.basedOnChart")}
             </div>
-            <p className="mt-2 text-lg font-semibold leading-7 text-slate-900">
-              {t(chartSignal.titleKey)}
-            </p>
-            <p className="mt-2 text-sm leading-5 text-slate-600">
-              {t(chartSignal.bodyKey, {
-                timeframe: timeframe ?? t("swap.chart.realtimeShort"),
-              })}
-            </p>
           </div>
+          <p className="mt-2 text-lg font-semibold leading-7 text-slate-900">
+            {t(chartSignal.titleKey)}
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            {t(chartSignal.bodyKey, {
+              timeframe: timeframe ?? t("swap.chart.realtimeShort"),
+            })}
+          </p>
         </div>
         </>
         )}
