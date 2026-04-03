@@ -14,6 +14,7 @@ export const messages = {
     "header.language": "Language",
     "header.productHint":
       "Swap, pools, streaks, and community signal in one app.",
+    "nav.overview": "Overview",
     "nav.swap": "Swap",
     "nav.pools": "Pools",
     "nav.liquidityProvide": "Liquidity provide",
@@ -451,6 +452,7 @@ export const messages = {
     "header.language": "Язык",
     "header.productHint":
       "Обмен, пулы, серия чек-инов и сигнал комьюнити в одном приложении.",
+    "nav.overview": "Обзор",
     "nav.swap": "Обмен",
     "nav.pools": "Пулы",
     "nav.liquidityProvide": "Добавить ликвидность",

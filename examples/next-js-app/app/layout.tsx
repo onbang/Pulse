@@ -11,6 +11,7 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 const navBarLinks = [
+  { href: ROUTES.overview, labelKey: "nav.overview" },
   { href: ROUTES.swap, labelKey: "nav.swap" },
   { href: ROUTES.pools, labelKey: "nav.pools" },
   { href: ROUTES.profile, labelKey: "nav.profile" },
