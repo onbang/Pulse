@@ -1,6 +1,9 @@
+"use client";
+
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 
+import { useCommunityProfile } from "@/components/community/community-provider";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 import { buildVaultWithdrawalFeeTx } from "../actions/build-vault-withdrawal-fee-tx";
@@ -10,6 +13,7 @@ export const ClaimWithdrawalFeeButton: React.FC<
   ButtonProps & { routerAddress: string; assetAddress: string }
 > = ({ routerAddress, assetAddress, ...props }) => {
   const { walletAddress: userWalletAddress } = useVaultClaimParams();
+  const { trackActivity } = useCommunityProfile();
 
   const [tonConnectUI] = useTonConnectUI();
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +38,7 @@ export const ClaimWithdrawalFeeButton: React.FC<
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes
         messages: withdrawalFeeTxParams,
       });
+      trackActivity("farming");
     } finally {
       setIsLoading(false);
     }

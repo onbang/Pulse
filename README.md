@@ -1,59 +1,76 @@
-<div align="center" style="margin-bottom: 20px">
-  <img
-    alt="Ston.fi logo"
-    height="100px"
-    style="max-width: 100%; height: 100px;"
-    src="https://static.ston.fi/branbook/ston/logo/black.svg"
-  />
-</div>
+# STON Pulse
 
-Our SDKs are written in TypeScript and designed to be thin wrappers on top of the [STON.fi](https://ston.fi) contracts, making it easier to integrate STON.fi protocols into JavaScript/TypeScript projects.
+STON Pulse is a productized STON.fi-based social trading app built on top of the public SDK workspace. It combines swap execution, liquidity workflows, Telegram Mini App entrypoints, community predictions, profiles, gamification, and social interaction in one monorepo.
 
-All SDKs are built on [@ton/ton](https://github.com/ton-org/ton) package
+## What is inside
 
-## SDKs
+- `examples/next-js-app`: the main STON Pulse web app and Telegram Mini App frontend
+- `packages/telegram-bot`: Telegram bot that launches and deep-links into the Mini App
+- `packages/sdk`: STON.fi SDK workspace package
+- `packages/stake-sdk`: STON.fi stake SDK workspace package
 
-All SDKs can be found in the [`packages/`](https://github.com/ston-fi/sdk/tree/main/packages) directory
+## Product features
 
-### [@ston-fi/sdk](https://github.com/ston-fi/sdk/tree/main/packages/sdk)
+- TON Connect profile with points, streaks, levels, and achievements
+- Daily check-ins and community progression
+- Swap prediction rounds with stakes, odds, settlement flow, and payout previews
+- Pool comments with emoji reactions
+- Watchlist, leaderboard, and live activity feed
+- Telegram Mini App routing and bot launch flows
+- TonAPI-powered wallet profile insights
 
-[![TON](https://img.shields.io/badge/based%20on-TON-blue)](https://ton.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://img.shields.io/npm/v/@ston-fi/sdk/latest.svg)](https://www.npmjs.com/package/@ston-fi/sdk/v/latest)
+## Local development
 
-SDK for interacting with STON.fi DEX contracts including Router, Pool, LpAccount, and pTON (proxyTON).
+1. Install dependencies:
 
-Key capabilities:
+```sh
+pnpm install
+```
 
-- Token swaps
-- Liquidity management
-  - Liquidity provision
-  - Liquidity withdrawal
+2. Copy env templates:
 
-### [@ston-fi/stake-sdk](https://github.com/ston-fi/sdk/tree/main/packages/stake-sdk)
+```sh
+cp examples/next-js-app/.env.example examples/next-js-app/.env.local
+cp packages/telegram-bot/.env.example packages/telegram-bot/.env.local
+```
 
-[![TON](https://img.shields.io/badge/based%20on-TON-blue)](https://ton.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://img.shields.io/npm/v/@ston-fi/stake-sdk/latest.svg)](https://www.npmjs.com/package/@ston-fi/stake-sdk/v/latest)
+3. Run the app:
 
-SDK for interacting with STON.fi staking contracts (StakeNftMinter and StakeNftItem).
+```sh
+pnpm dev
+```
 
-Key capabilities:
+## Verification
 
-- Stake tokens
-- Manage stake positions represented as NFTs
-  - Unstake and claim rewards
-  - Re-stake existing positions
-  - Burn stake NFTs
+```sh
+pnpm ci
+```
 
-## Next steps
+This runs:
 
-### Take a look at the demo app
+- monorepo lint
+- Next.js typecheck
+- Next.js production build with webpack
+- Telegram bot build
 
-We provide a fully functional demo application showcasing SDK usage in a Next.js environment. The source code is open-source and available [here](https://github.com/ston-fi/sdk/tree/main/examples/next-js-app).
+## Deployment checklist
 
-Try the demo app at https://sdk-demo-app.ston.fi
+- Set `NEXT_PUBLIC_APP_URL`
+- Set `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
+- Set `TELEGRAM_BOT_TOKEN`
+- Set `TELEGRAM_MINI_APP_URL`
+- Set `STON_PULSE_DB_FILE` for persistent SQLite storage
+- Register Telegram bot commands with `pnpm --filter @ston-pulse/telegram-bot register`
+- Point TON Connect manifest to `/api/tonconnect-manifest` or your own production manifest URL
+- Use `GET /api/health` as a simple platform health probe
+- Follow the full release flow in `docs/release-checklist.md`
 
-### Explore the documentation
+## GitHub and CI
 
-Comprehensive guides and API references are available at https://docs.ston.fi/docs/developer-section/sdk
+The repo includes a GitHub Actions workflow at `.github/workflows/ci.yml` that validates the web app and Telegram bot on every push and pull request.
+
+## Notes
+
+- The current persistence layer uses SQLite through `node:sqlite`
+- Node 22 is required
+- During production builds, Node may print an experimental warning for `node:sqlite`; this is expected with the current runtime

@@ -52,7 +52,7 @@ export class BasePoolV2_1 extends JettonMinter {
   }
 
   public async getCollectFeeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

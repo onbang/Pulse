@@ -1,5 +1,6 @@
 "use client";
 
+import { AchievementsPanel } from "@/components/community/achievements-panel";
 import { WalletGuard } from "@/components/wallet-guard";
 
 import { NftList } from "./components/nft-list";
@@ -10,6 +11,8 @@ import { StakeFormProvider } from "./providers/stake-form";
 export default function StakePage() {
   return (
     <>
+      <AchievementsPanel />
+
       <div className="max-w-[500px] w-full mx-auto space-y-4">
         <h1 className="text-xl leading-8 font-medium mr-auto">
           Stake your STON

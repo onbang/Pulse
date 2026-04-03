@@ -33,7 +33,7 @@ export class FarmNftItemV2 extends FarmNftItemV1 {
    * @returns {SenderArguments} all data required to execute a `destroy` transaction.
    */
   public async getDestroyTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

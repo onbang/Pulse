@@ -66,7 +66,7 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
   }
 
   public override async getTonTransferTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       tonAmount: AmountType;
       destinationAddress: AddressType;
@@ -97,7 +97,7 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
   }
 
   public override async sendTonTransfer(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<PtonV2_1["getTonTransferTxParams"]>[1],
   ) {
@@ -120,7 +120,7 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
   }
 
   public override async getDeployWalletTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       ownerAddress: AddressType;
       excessAddress: AddressType;

@@ -11,7 +11,7 @@ import {
 import { DEX_VERSION } from "../../constants";
 import { VaultV2_1 } from "./VaultV2_1";
 
-const USER_WALLET_ADDRESS = "UQAQnxLqlX2B6w4jQzzzPWA8eyWZVZBz6Y0D_8noARLOaEAn";
+const _USER_WALLET_ADDRESS = "UQAQnxLqlX2B6w4jQzzzPWA8eyWZVZBz6Y0D_8noARLOaEAn";
 const VAULT_ADDRESS = "EQB1HMY-_uCVDH4MkShZrf4tathj8_RNvdF6ChuFl7Vbt1tu"; // Vault for `USER_WALLET_ADDRESS` wallet and TestRED token
 
 describe("VaultV2_1", () => {

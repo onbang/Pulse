@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { WalletGuard } from "@/components/wallet-guard";
 import { cn } from "@/lib/utils";
+import { useCommunityProfile } from "@/components/community/community-provider";
 
 import { buildStakeMessage } from "../actions/build-stake-message";
 import { useStakeForm } from "../providers/stake-form";
@@ -109,6 +110,7 @@ function StakeFormSubmitButton(
   props: Omit<React.ComponentProps<typeof Button>, "children">,
 ) {
   const { state } = useStakeForm();
+  const { trackActivity } = useCommunityProfile();
 
   const walletAddress = useTonAddress();
   const [tonConnectUI] = useTonConnectUI();
@@ -133,6 +135,7 @@ function StakeFormSubmitButton(
           validUntil: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes
           messages: [message],
         });
+        trackActivity("staking");
       }}
     >
       Stake

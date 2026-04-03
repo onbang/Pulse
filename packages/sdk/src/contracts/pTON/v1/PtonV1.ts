@@ -49,7 +49,7 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
   }
 
   public async getTonTransferTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       tonAmount: AmountType;
       destinationAddress: AddressType;
@@ -79,7 +79,7 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
   }
 
   public async sendTonTransfer(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<PtonV1["getTonTransferTxParams"]>[1],
   ) {
@@ -100,7 +100,7 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
   }
 
   public async getDeployWalletTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       ownerAddress: AddressType;
       gasAmount?: AmountType;

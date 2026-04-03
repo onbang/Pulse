@@ -14,8 +14,9 @@ const NavBarLink: React.FC<React.ComponentPropsWithoutRef<typeof Link>> = (
     <Link
       {...props}
       className={cn(
-        "transition-opacity duration-200 hover:opacity-75 p-2",
-        pathname === props.href && "underline",
+        "rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-slate-950",
+        pathname === props.href &&
+          "bg-[linear-gradient(135deg,#082f49,#0369a1)] text-white shadow-[0_16px_34px_-18px_rgba(3,105,161,0.85)]",
         props.className,
       )}
     />
@@ -28,8 +29,8 @@ export const NavBar: React.FC<
   }
 > = ({ links, ...props }) => {
   return (
-    <nav {...props} className={cn("p-4", props.className)}>
-      <ul className="flex gap-2">
+    <nav {...props} className={cn("w-full px-4 pb-2 pt-4", props.className)}>
+      <ul className="mx-auto flex max-w-6xl flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/70 p-2 shadow-[0_22px_70px_-42px_rgba(15,23,42,0.5)] backdrop-blur-xl">
         {links.map(({ label, href }) => (
           <li key={href}>
             <NavBarLink href={href}>{label}</NavBarLink>

@@ -2,6 +2,8 @@ import { LiquidityProvideButton } from "./components/liquidity-provide-button";
 import { LiquidityProvideForm } from "./components/liquidity-provide-form";
 import { LiquidityProvideFormHeader } from "./components/liquidity-provide-form-header";
 import { LiquidityProvideSimulationPreview } from "./components/liquidity-provide-simulation";
+import { PoolCommentsSection } from "./components/pool-comments-section";
+import { WatchlistToggle } from "./components/watchlist-toggle";
 
 export default function LiquidityProvidePage() {
   return (
@@ -9,7 +11,9 @@ export default function LiquidityProvidePage() {
       <LiquidityProvideFormHeader />
       <LiquidityProvideForm />
       <LiquidityProvideSimulationPreview />
+      <WatchlistToggle />
       <LiquidityProvideButton />
+      <PoolCommentsSection />
     </section>
   );
 }

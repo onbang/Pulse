@@ -63,7 +63,7 @@ export class LpAccountV1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `refund_me` transaction.
    */
   public async getRefundTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;
@@ -81,7 +81,7 @@ export class LpAccountV1 extends Contract {
   }
 
   public async sendRefund(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<LpAccountV1["getRefundTxParams"]>[1],
   ) {
@@ -117,7 +117,7 @@ export class LpAccountV1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `direct_add_liquidity` transaction.
    */
   public async getDirectAddLiquidityTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       amount0: AmountType;
       amount1: AmountType;
@@ -141,7 +141,7 @@ export class LpAccountV1 extends Contract {
   }
 
   public async sendDirectAddLiquidity(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<LpAccountV1["getDirectAddLiquidityTxParams"]>[1],
   ) {
@@ -168,7 +168,7 @@ export class LpAccountV1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `reset_gas` transaction.
    */
   public async getResetGasTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

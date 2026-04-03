@@ -66,7 +66,7 @@ export class VaultV2_1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `withdraw_fee` transaction.
    */
   public async getWithdrawFeeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

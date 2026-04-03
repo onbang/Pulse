@@ -82,4 +82,4 @@ EXPOSE ${PORT}
 
 ENTRYPOINT ["dumb-init"]
 
-CMD ["node", "--enable-source-maps", "./examples/next-js-app/server.js", "--port", "${PORT}"]
+CMD ["sh", "-c", "node --enable-source-maps ./examples/next-js-app/server.js --port ${PORT}"]

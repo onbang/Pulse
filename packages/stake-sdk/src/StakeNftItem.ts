@@ -70,7 +70,7 @@ export class StakeNftItem extends Contract {
    * @returns {SenderArguments} all data required to execute a `unstake` transaction.
    */
   public async getUnstakeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;
@@ -88,7 +88,7 @@ export class StakeNftItem extends Contract {
   }
 
   public async sendUnstake(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<StakeNftItem["getUnstakeTxParams"]>[1],
   ) {
@@ -109,7 +109,7 @@ export class StakeNftItem extends Contract {
   }
 
   public async sendRestake(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<StakeNftItem["getRestakeTxParams"]>[1],
   ) {
@@ -128,7 +128,7 @@ export class StakeNftItem extends Contract {
    * @returns {SenderArguments} all data required to execute a `restake` transaction.
    */
   public async getRestakeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       durationSeconds?: bigint | number;
       gasAmount?: AmountType;
@@ -165,7 +165,7 @@ export class StakeNftItem extends Contract {
    * @returns {SenderArguments} all data required to execute a `claim_rewards` transaction.
    */
   public async getClaimRewardsTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;
@@ -183,7 +183,7 @@ export class StakeNftItem extends Contract {
   }
 
   public async sendClaimRewards(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<StakeNftItem["getClaimRewardsTxParams"]>[1],
   ) {
@@ -209,7 +209,7 @@ export class StakeNftItem extends Contract {
    * @returns {SenderArguments} all data required to execute a `destroy` transaction.
    */
   public async getDestroyTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

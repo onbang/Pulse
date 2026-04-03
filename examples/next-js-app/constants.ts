@@ -9,4 +9,8 @@ export const ROUTES = {
   liquidityProvide: "/liquidity/provide",
   liquidityRefund: "/liquidity/refund",
   stake: "/stake",
+  profile: "/profile",
+  checkIn: "/check-in",
+  leaderboard: "/leaderboard",
+  community: "/community",
 } as const;

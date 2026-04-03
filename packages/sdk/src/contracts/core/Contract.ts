@@ -9,7 +9,7 @@ export interface ContractOptions {}
 export abstract class Contract implements ContractInterface {
   public readonly address: Address;
 
-  constructor(address: AddressType, options?: ContractOptions) {
+  constructor(address: AddressType, _options?: ContractOptions) {
     this.address = toAddress(address);
   }
 

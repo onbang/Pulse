@@ -1,5 +1,5 @@
 {
-  "url": "https://sdk-demo-app.ston.fi",
-  "name": "SDK (demo)",
+  "url": "https://your-domain.example",
+  "name": "STON Pulse",
   "iconUrl": "https://static.ston.fi/logo/external-logo.jpg"
 }

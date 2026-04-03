@@ -3,6 +3,7 @@
 import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 
+import { useCommunityProfile } from "@/components/community/community-provider";
 import { Button } from "@/components/ui/button";
 import { buildLpTransaction } from "../actions/build-lp-transaction";
 import { useLiquiditySimulationQuery } from "../hooks/liquidity-simulation-query";
@@ -11,6 +12,7 @@ import { useLiquidityProvideForm } from "../providers/liquidity-provide-form";
 export const LiquidityProvideButton = () => {
   const walletAddress = useTonAddress();
   const [tonConnectUI] = useTonConnectUI();
+  const { trackActivity } = useCommunityProfile();
   const { assetA, assetB, pool, assetAUnits, assetBUnits } =
     useLiquidityProvideForm();
   const lpSimulationQuery = useLiquiditySimulationQuery();
@@ -32,6 +34,7 @@ export const LiquidityProvideButton = () => {
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes
         messages,
       });
+      trackActivity("liquidity");
     } finally {
       setIsClicked(false);
     }

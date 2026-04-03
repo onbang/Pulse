@@ -62,7 +62,7 @@ export class FarmNftItemV1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `claim_rewards` transaction.
    */
   public async getClaimRewardsTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;
@@ -80,7 +80,7 @@ export class FarmNftItemV1 extends Contract {
   }
 
   public async sendClaimRewards(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<FarmNftItemV1["getClaimRewardsTxParams"]>[1],
   ) {
@@ -107,7 +107,7 @@ export class FarmNftItemV1 extends Contract {
    * @returns {SenderArguments} all data required to execute a `unstake` transaction.
    */
   public async getUnstakeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

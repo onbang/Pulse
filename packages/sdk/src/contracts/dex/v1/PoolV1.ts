@@ -65,7 +65,7 @@ export class PoolV1 extends JettonMinter {
    * @returns {SenderArguments} all data required to execute a `collect_fees` transaction.
    */
   public async getCollectFeeTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;

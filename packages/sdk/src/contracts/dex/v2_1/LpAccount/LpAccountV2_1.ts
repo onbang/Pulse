@@ -54,7 +54,7 @@ export class LpAccountV2_1 extends Contract {
   }
 
   public async getRefundTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       leftMaybePayload?: Cell;
       rightMaybePayload?: Cell;
@@ -76,7 +76,7 @@ export class LpAccountV2_1 extends Contract {
   }
 
   public async sendRefund(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<LpAccountV2_1["getRefundTxParams"]>[1],
   ) {
@@ -123,7 +123,7 @@ export class LpAccountV2_1 extends Contract {
   }
 
   public async getDirectAddLiquidityTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       userWalletAddress: AddressType;
       amount0: AmountType;
@@ -157,7 +157,7 @@ export class LpAccountV2_1 extends Contract {
   }
 
   public async sendDirectAddLiquidity(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<LpAccountV2_1["getDirectAddLiquidityTxParams"]>[1],
   ) {
@@ -176,7 +176,7 @@ export class LpAccountV2_1 extends Contract {
   }
 
   public async getResetGasTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params?: {
       gasAmount?: AmountType;
       queryId?: QueryIdType;
