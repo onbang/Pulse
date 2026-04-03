@@ -1216,8 +1216,17 @@ async function syncOnchainPredictionTransactions(
 
         db.prepare(`
           INSERT INTO prediction_bets (
-            id, pair_id, pair_label, wallet_address, author, amount, direction, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            id,
+            pair_id,
+            pair_label,
+            wallet_address,
+            author,
+            amount,
+            direction,
+            created_at,
+            source_message_hash,
+            source_kind
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           `onchain-${txHash}`,
           pairId,
@@ -1227,6 +1236,8 @@ async function syncOnchainPredictionTransactions(
           Math.round(parsed.amount * 100) / 100,
           parsed.direction,
           new Date().toISOString(),
+          txHash,
+          "onchain_sync",
         );
 
         db.prepare(`

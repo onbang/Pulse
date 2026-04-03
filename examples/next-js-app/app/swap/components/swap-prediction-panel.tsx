@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { AssetSelect } from "@/components/asset-select";
@@ -10,6 +10,8 @@ import { useSwapForm } from "../providers/swap-form";
 
 import { PricePredictionCard } from "@/components/community/price-prediction-card";
 import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
+
+const PREDICTION_ASSET_STORAGE_KEY = "ston-pulse:selected-prediction-asset";
 
 function normalizeLabel(label?: string | null) {
   return label?.trim() || "token";
@@ -26,6 +28,46 @@ export function SwapPredictionPanel() {
   const predictionAssets = useMemo(() => {
     return (assetsQuery.data ?? []).slice(0, 24);
   }, [assetsQuery.data]);
+
+  useEffect(() => {
+    if (offerAsset && askAsset) {
+      return;
+    }
+
+    if (typeof window === "undefined" || selectedPredictionAsset) {
+      return;
+    }
+
+    const savedAddress = window.localStorage.getItem(PREDICTION_ASSET_STORAGE_KEY);
+
+    if (!savedAddress || predictionAssets.length === 0) {
+      return;
+    }
+
+    const matchedAsset =
+      predictionAssets.find((asset) => asset.contractAddress === savedAddress) ??
+      null;
+
+    if (matchedAsset) {
+      setSelectedPredictionAsset(matchedAsset);
+    }
+  }, [offerAsset, askAsset, predictionAssets, selectedPredictionAsset]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (selectedPredictionAsset?.contractAddress) {
+      window.localStorage.setItem(
+        PREDICTION_ASSET_STORAGE_KEY,
+        selectedPredictionAsset.contractAddress,
+      );
+      return;
+    }
+
+    window.localStorage.removeItem(PREDICTION_ASSET_STORAGE_KEY);
+  }, [selectedPredictionAsset]);
 
   const offerLabel = normalizeLabel(offerAsset?.meta?.symbol);
   const askLabel = normalizeLabel(askAsset?.meta?.symbol);
