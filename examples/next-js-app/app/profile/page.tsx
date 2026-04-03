@@ -75,11 +75,9 @@ export default function ProfilePage() {
           </p>
         </div>
         <ProfileSummary />
+        <DailyCheckInCard />
+        <ProfileCheckInHistory />
         <LevelProgressCard />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <DailyCheckInCard />
-          <ProfileCheckInHistory />
-        </div>
         <TelegramLaunchCard />
         <NotificationCenterCard />
         <AchievementsPanel />
