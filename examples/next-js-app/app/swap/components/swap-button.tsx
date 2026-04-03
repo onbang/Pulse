@@ -3,6 +3,7 @@
 import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,6 +16,7 @@ import { useSwapSettings } from "../providers/swap-settings";
 import { useSetSwapTransactionDetails } from "../providers/swap-transaction";
 
 export function SwapButton() {
+  const { t } = useI18n();
   const walletAddress = useTonAddress();
   const [tonConnectUI] = useTonConnectUI();
   const {
@@ -57,7 +59,7 @@ export function SwapButton() {
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60, // 5 minutes
         messages,
       });
-      toast({ title: "Transaction sent to the network" });
+      toast({ title: t("swap.button.sent") });
       setSwapTransaction({
         queryId,
         ownerAddress: walletAddress,
@@ -71,40 +73,65 @@ export function SwapButton() {
   };
 
   if (!walletAddress) {
-    return null;
+    return (
+      <Button
+        variant="outline"
+        disabled
+        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+      >
+        {t("swap.button.connect")}
+      </Button>
+    );
   }
 
   if (!offerAsset || !askAsset) {
     return (
-      <Button variant="ghost" disabled>
-        Select an asset
+      <Button
+        variant="outline"
+        disabled
+        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+      >
+        {t("swap.button.selectAsset")}
       </Button>
     );
   }
 
   if (!offerAmount && !askAmount) {
     return (
-      <Button variant="ghost" disabled>
-        Enter an amount
+      <Button
+        variant="outline"
+        disabled
+        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+      >
+        {t("swap.button.enterAmount")}
       </Button>
     );
   }
 
   if (swapSimulationQuery.isLoading) {
     return (
-      <Button variant="ghost" disabled>
-        ...
+      <Button
+        variant="outline"
+        disabled
+        className="h-12 w-full rounded-2xl border-sky-100 bg-slate-50 text-slate-500"
+      >
+        {t("swap.button.loading")}
       </Button>
     );
   }
 
   if (!swapSimulationQuery.data) {
-    return <Button variant="destructive">Invalid swap</Button>;
+    return (
+      <Button variant="destructive" className="h-12 w-full rounded-2xl">
+        {t("swap.button.invalid")}
+      </Button>
+    );
   }
 
   return (
     <Button
       variant="default"
+      className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_20px_44px_-24px_rgba(1,128,255,0.55)] hover:opacity-95"
       onClick={handleSwap}
       disabled={
         isClicked ||
@@ -112,7 +139,7 @@ export function SwapButton() {
         swapStatusQuery.isFetching
       }
     >
-      Swap
+      {t("swap.button.submit")}
     </Button>
   );
 }
