@@ -111,7 +111,9 @@ function setupSchema(db: DatabaseSync) {
       author TEXT NOT NULL,
       amount REAL NOT NULL,
       direction TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      source_message_hash TEXT,
+      source_kind TEXT NOT NULL DEFAULT 'offchain'
     );
 
     CREATE TABLE IF NOT EXISTS prediction_rounds (
@@ -160,6 +162,18 @@ function setupSchema(db: DatabaseSync) {
     "profiles",
     "notification_preferences_json",
     "TEXT NOT NULL DEFAULT '{}'",
+  );
+  ensureColumn(
+    db,
+    "prediction_bets",
+    "source_message_hash",
+    "TEXT",
+  );
+  ensureColumn(
+    db,
+    "prediction_bets",
+    "source_kind",
+    "TEXT NOT NULL DEFAULT 'offchain'",
   );
 }
 
@@ -714,6 +728,8 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     amount: number;
     direction: PredictionDirection;
     created_at: string;
+    source_message_hash: string | null;
+    source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
   }>;
   const positionRows = db
     .prepare("SELECT * FROM prediction_positions")
@@ -787,6 +803,8 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
       amount: row.amount,
       direction: row.direction,
       createdAt: row.created_at,
+      txHash: row.source_message_hash ?? undefined,
+      sourceKind: row.source_kind,
     };
 
     predictions[row.pair_id] = {
@@ -1461,6 +1479,7 @@ export async function addPrediction(input: {
   label: string;
   direction: PredictionDirection;
   amount: number;
+  txHash?: string;
 }) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
@@ -1512,8 +1531,17 @@ export async function addPrediction(input: {
 
     db.prepare(`
       INSERT INTO prediction_bets (
-        id, pair_id, pair_label, wallet_address, author, amount, direction, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        id,
+        pair_id,
+        pair_label,
+        wallet_address,
+        author,
+        amount,
+        direction,
+        created_at,
+        source_message_hash,
+        source_kind
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       betId,
       input.pairId,
@@ -1523,6 +1551,8 @@ export async function addPrediction(input: {
       Math.round(input.amount * 100) / 100,
       input.direction,
       createdAt,
+      input.txHash ?? null,
+      input.txHash ? "wallet_signed" : "offchain",
     );
 
     db.prepare(`

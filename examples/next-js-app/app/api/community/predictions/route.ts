@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     label?: string;
     direction?: PredictionDirection;
     amount?: number;
+    txHash?: string;
   };
 
   if (
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
       label: body.label,
       direction: body.direction,
       amount: body.amount,
+      txHash: body.txHash,
     }),
   );
 }

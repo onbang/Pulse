@@ -1,5 +1,7 @@
 "use client";
 
+import { beginCell, toNano } from "@ton/core";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
@@ -11,15 +13,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import {
+  buildCheckInTransferComment,
+  CHECK_IN_CONFIRM_TON_AMOUNT,
+  getCheckInTreasuryAddress,
+} from "@/lib/check-in-config";
 import { DAILY_CHECK_IN_POINTS } from "@/lib/community";
 import { useCommunityProfile } from "./community-provider";
 
 export function DailyCheckInCard() {
   const { t } = useI18n();
   const { profile, checkIn } = useCommunityProfile();
+  const [tonConnectUI] = useTonConnectUI();
+  const { toast } = useToast();
   const [message, setMessage] = useState(
     t("checkin.messageDefault"),
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!profile) {
     return null;
@@ -48,22 +59,89 @@ export function DailyCheckInCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button
-          className="h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#082f49,#0284c7)] px-5 text-base shadow-[0_16px_40px_-22px_rgba(2,132,199,0.8)]"
-          disabled={hasCheckedInToday}
-          onClick={async () => {
-            const result = await checkIn();
-            setMessage(
-              result.ok
-                ? t("checkin.messageSuccess", {
-                    points: String(result.points),
-                  })
-                : t("checkin.messageAlready"),
-            );
-          }}
-        >
-          {hasCheckedInToday ? t("checkin.claimed") : t("checkin.claim")}
-        </Button>
+        <div className="rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(224,242,254,0.92),rgba(245,243,255,0.94))] p-4 shadow-[0_18px_48px_-28px_rgba(14,116,214,0.35)]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700/70">
+                {t("checkin.confirmLabel")}
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-3xl font-semibold text-slate-950">
+                  {CHECK_IN_CONFIRM_TON_AMOUNT} TON
+                </p>
+                <span className="rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-sky-700 shadow-sm">
+                  +{DAILY_CHECK_IN_POINTS} points
+                </span>
+              </div>
+              <p className="max-w-xl text-sm leading-6 text-slate-600">
+                {t("checkin.confirmBody")}
+              </p>
+            </div>
+            <Button
+              className="h-12 min-w-[240px] rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] px-6 text-base text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.65)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.35),rgba(61,177,255,0.35),rgba(115,84,242,0.35))] disabled:text-white/85 disabled:opacity-100"
+              disabled={hasCheckedInToday || isSubmitting}
+              onClick={async () => {
+                if (hasCheckedInToday || isSubmitting) {
+                  return;
+                }
+
+                try {
+                  setIsSubmitting(true);
+
+                  const payload = beginCell()
+                    .storeUint(0, 32)
+                    .storeStringTail(
+                      buildCheckInTransferComment({
+                        walletAddress: profile.walletAddress,
+                        dateKey: new Date().toISOString().slice(0, 10),
+                      }),
+                    )
+                    .endCell()
+                    .toBoc()
+                    .toString("base64");
+
+                  await tonConnectUI.sendTransaction({
+                    validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+                    messages: [
+                      {
+                        address: getCheckInTreasuryAddress(),
+                        amount: toNano(CHECK_IN_CONFIRM_TON_AMOUNT).toString(),
+                        payload,
+                      },
+                    ],
+                  });
+
+                  const result = await checkIn();
+                  const nextMessage = result.ok
+                    ? t("checkin.messageSuccess", {
+                        points: String(result.points),
+                      })
+                    : t("checkin.messageAlready");
+
+                  setMessage(nextMessage);
+                  toast({
+                    title: result.ok ? t("checkin.claimed") : t("checkin.title"),
+                    description: nextMessage,
+                  });
+                } catch {
+                  setMessage(t("checkin.messageWalletCancelled"));
+                  toast({
+                    title: t("checkin.txFailed"),
+                    description: t("checkin.messageWalletCancelled"),
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+            >
+              {hasCheckedInToday
+                ? t("checkin.claimed")
+                : isSubmitting
+                  ? t("checkin.processing")
+                  : t("checkin.claim")}
+            </Button>
+          </div>
+        </div>
         <div className="space-y-3">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-[24px] border border-sky-200 bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] px-5 py-4">

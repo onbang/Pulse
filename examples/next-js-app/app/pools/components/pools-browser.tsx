@@ -27,6 +27,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
 import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
+import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
+import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { cn, validateFloatValue } from "@/lib/utils";
 
 type PoolCardEntry = {
@@ -211,7 +213,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         .toBoc()
         .toString("base64");
 
-      await tonConnectUI.sendTransaction({
+      const txResult = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
         messages: [
           {
@@ -222,11 +224,26 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         ],
       });
 
+      const messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
+
+      if (messageHash) {
+        upsertPendingPredictionBet({
+          messageHash,
+          walletAddress,
+          pairId: props.pairId,
+          label: props.pairLabel,
+          direction,
+          amount: numericStake,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       const submitted = await submitPrediction({
         pairId: props.pairId,
         label: props.pairLabel,
         direction,
         amount: numericStake,
+        txHash: messageHash,
       });
 
       if (submitted) {

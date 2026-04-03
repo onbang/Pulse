@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
 import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
+import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
+import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
 
@@ -180,8 +182,10 @@ export function PricePredictionCard(props: {
         .toBoc()
         .toString("base64");
 
+      let messageHash: string | undefined;
+
       try {
-        await tonConnectUI.sendTransaction({
+        const txResult = await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
           messages: [
             {
@@ -191,6 +195,8 @@ export function PricePredictionCard(props: {
             },
           ],
         });
+
+        messageHash = getMessageHashFromSignedBoc(txResult.boc) ?? undefined;
       } catch {
         toast({
           title: t("prediction.txFailed"),
@@ -199,10 +205,25 @@ export function PricePredictionCard(props: {
         return;
       }
 
+      if (messageHash && walletAddress) {
+        upsertPendingPredictionBet({
+          messageHash,
+          walletAddress,
+          pairId: props.pairId,
+          label: props.label,
+          direction,
+          amount: numericStake,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       let submitted = false;
 
       try {
-        submitted = await submitPrediction(predictionInput);
+        submitted = await submitPrediction({
+          ...predictionInput,
+          txHash: messageHash,
+        });
       } catch {
         submitted = false;
       }

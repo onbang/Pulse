@@ -28,6 +28,10 @@ import {
   buildAchievements,
   defaultCommunityStore,
 } from "@/lib/community";
+import {
+  readPendingPredictionBets,
+  removePendingPredictionBet,
+} from "@/lib/pending-predictions";
 import type { TelegramMiniAppUser } from "@/lib/telegram-mini-app";
 
 type CommunityStatePayload = {
@@ -66,6 +70,7 @@ type CommunityContextValue = {
     label: string;
     direction: PredictionDirection;
     amount: number;
+    txHash?: string;
   }) => Promise<boolean>;
   optimisticRecordPrediction: (input: {
     pairId: string;
@@ -131,7 +136,12 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const applyPayload = (payload: CommunityStatePayload) => {
-    setStore(payload.store);
+    const nextStore =
+      walletAddress && typeof window !== "undefined"
+        ? mergePendingPredictions(payload.store, walletAddress, profile?.displayName)
+        : payload.store;
+
+    setStore(nextStore);
     setProfile(payload.profile);
     setAchievements(payload.achievements);
     setLeaderboard(payload.leaderboard);
@@ -520,6 +530,86 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       {children}
     </CommunityContext.Provider>
   );
+}
+
+function mergePendingPredictions(
+  store: CommunityStore,
+  walletAddress: string,
+  displayName?: string,
+) {
+  const pendingBets = readPendingPredictionBets(walletAddress);
+
+  if (pendingBets.length === 0) {
+    return store;
+  }
+
+  const nextStore: CommunityStore = {
+    ...store,
+    predictions: { ...store.predictions },
+  };
+
+  for (const pending of pendingBets) {
+    const existingPrediction = nextStore.predictions[pending.pairId] ?? {
+      label: pending.label,
+      up: [],
+      down: [],
+      bets: [],
+      round: {
+        id: `pending-round-${pending.pairId}`,
+        status: "open" as const,
+        openedAt: pending.createdAt,
+        closesAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        durationMinutes: 60,
+      },
+      payoutPreviews: [],
+    };
+
+    const alreadySynced = existingPrediction.bets.some((bet) => {
+      const createdGap = Math.abs(
+        new Date(bet.createdAt).getTime() - new Date(pending.createdAt).getTime(),
+      );
+
+      return (
+        bet.walletAddress === pending.walletAddress &&
+        bet.direction === pending.direction &&
+        Math.abs(bet.amount - pending.amount) < 0.0001 &&
+        createdGap < 15 * 60 * 1000
+      );
+    });
+
+    if (alreadySynced) {
+      removePendingPredictionBet(pending.messageHash);
+      continue;
+    }
+
+    nextStore.predictions[pending.pairId] = {
+      ...existingPrediction,
+      label: pending.label,
+      up:
+        pending.direction === "up"
+          ? Array.from(new Set([...existingPrediction.up, pending.walletAddress]))
+          : existingPrediction.up,
+      down:
+        pending.direction === "down"
+          ? Array.from(new Set([...existingPrediction.down, pending.walletAddress]))
+          : existingPrediction.down,
+      bets: [
+        {
+          id: `pending-${pending.messageHash}`,
+          walletAddress: pending.walletAddress,
+          author: displayName || `STON ${pending.walletAddress.slice(0, 4)}`,
+          amount: pending.amount,
+          direction: pending.direction,
+          createdAt: pending.createdAt,
+          txHash: pending.messageHash,
+          sourceKind: "pending",
+        },
+        ...existingPrediction.bets,
+      ],
+    };
+  }
+
+  return nextStore;
 }
 
 export function useCommunityProfile() {

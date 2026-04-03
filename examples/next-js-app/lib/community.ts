@@ -9,6 +9,8 @@ export type PredictionBet = {
   amount: number;
   direction: PredictionDirection;
   createdAt: string;
+  txHash?: string;
+  sourceKind?: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
 };
 
 export type PredictionRoundStatus = "open" | "closed" | "settled";
@@ -149,7 +151,7 @@ export type UserLevel = {
   minScore: number;
 };
 
-export const DAILY_CHECK_IN_POINTS = 25;
+export const DAILY_CHECK_IN_POINTS = 10;
 export const COMMENT_POINTS = 7;
 export const PREDICTION_POINTS = 5;
 export const TRACK_POINTS = 20;
