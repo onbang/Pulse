@@ -122,19 +122,36 @@ export function PricePredictionCard(props: {
   const isRoundClosed = round?.status === "closed";
   const isRoundSettled = round?.status === "settled";
   const predictionTreasuryAddress = getPredictionTreasuryAddress();
+  const isTokenPrediction = props.pairId.startsWith("prediction:");
+  const canAutoReopenRound = isTokenPrediction && !isRoundOpen;
+  const canPlacePrediction =
+    !isDisabled &&
+    isStakeValid &&
+    !isSubmittingTx &&
+    !!predictionTreasuryAddress &&
+    (isRoundOpen || canAutoReopenRound);
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
     : 0;
   const hoursLeft = Math.floor(timeLeftMs / (1000 * 60 * 60));
   const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+  const previewUpPool = upPool + (isStakeValid ? numericStake : 0);
+  const previewDownPool = downPool + (isStakeValid ? numericStake : 0);
+  const previewTotalPool = totalPool + (isStakeValid ? numericStake : 0);
+  const displayedUpShare =
+    previewTotalPool > 0 ? Math.round((previewUpPool / previewTotalPool) * 100) : upShare;
+  const displayedDownShare =
+    previewTotalPool > 0
+      ? Math.round((previewDownPool / previewTotalPool) * 100)
+      : downShare;
+  const displayedUpOdds =
+    isStakeValid && previewUpPool > 0 ? previewTotalPool / previewUpPool : upOdds;
+  const displayedDownOdds =
+    isStakeValid && previewDownPool > 0 ? previewTotalPool / previewDownPool : downOdds;
 
   const placePrediction = async (direction: "up" | "down") => {
     if (
-      isDisabled ||
-      !isStakeValid ||
-      !isRoundOpen ||
-      !predictionTreasuryAddress ||
-      isSubmittingTx
+      !canPlacePrediction
     ) {
       return;
     }
@@ -348,13 +365,7 @@ export function PricePredictionCard(props: {
         <div className="grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
-            disabled={
-              isDisabled ||
-              !isStakeValid ||
-              !isRoundOpen ||
-              !predictionTreasuryAddress ||
-              isSubmittingTx
-            }
+            disabled={!canPlacePrediction}
             className="h-auto justify-between rounded-2xl border-emerald-200 bg-emerald-50 py-4 text-slate-900 hover:bg-emerald-100"
             onClick={() => void placePrediction("up")}
           >
@@ -363,18 +374,12 @@ export function PricePredictionCard(props: {
               {t("prediction.bullish")}
             </span>
             <strong>
-              {upShare}% · {upOdds > 0 ? `${upOdds.toFixed(2)}x` : "-"}
+              {displayedUpShare}% · {displayedUpOdds > 0 ? `${displayedUpOdds.toFixed(2)}x` : "-"}
             </strong>
           </Button>
           <Button
             variant="outline"
-            disabled={
-              isDisabled ||
-              !isStakeValid ||
-              !isRoundOpen ||
-              !predictionTreasuryAddress ||
-              isSubmittingTx
-            }
+            disabled={!canPlacePrediction}
             className="h-auto justify-between rounded-2xl border-rose-200 bg-rose-50 py-4 text-slate-900 hover:bg-rose-100"
             onClick={() => void placePrediction("down")}
           >
@@ -383,11 +388,11 @@ export function PricePredictionCard(props: {
               {t("prediction.bearish")}
             </span>
             <strong>
-              {downShare}% · {downOdds > 0 ? `${downOdds.toFixed(2)}x` : "-"}
+              {displayedDownShare}% · {displayedDownOdds > 0 ? `${displayedDownOdds.toFixed(2)}x` : "-"}
             </strong>
           </Button>
         </div>
-        {isRoundClosed ? (
+        {isRoundClosed && !canAutoReopenRound ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
