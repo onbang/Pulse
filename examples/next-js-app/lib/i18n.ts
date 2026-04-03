@@ -71,6 +71,18 @@ export const messages = {
     "swap.button.invalid": "Invalid swap",
     "swap.button.submit": "Swap",
     "swap.button.sent": "Transaction sent to the network",
+    "liquidity.provide.cta": "Provide",
+    "liquidity.provide.loading": "Preparing transaction...",
+    "liquidity.provide.simulationFailed": "Simulation failed",
+    "liquidity.provide.unavailable": "Liquidity transaction is not ready",
+    "liquidity.provide.unavailableBody":
+      "Choose both tokens, a pool, and an amount before confirming liquidity.",
+    "liquidity.provide.sent": "Liquidity transaction sent",
+    "liquidity.provide.sentBody":
+      "Tonkeeper should now show the confirmation flow for providing liquidity.",
+    "liquidity.provide.failed": "Failed to prepare liquidity transaction",
+    "liquidity.provide.failedBody":
+      "The app could not build the provide-liquidity transaction.",
     "swap.referral.address": "Referral address:",
     "swap.referral.percent": "Referral percentage:",
     "swap.chart.previewTitle": "Pulse market",
@@ -481,6 +493,18 @@ export const messages = {
     "swap.button.invalid": "Некорректный обмен",
     "swap.button.submit": "Обменять",
     "swap.button.sent": "Транзакция отправлена в сеть",
+    "liquidity.provide.cta": "Provide",
+    "liquidity.provide.loading": "Готовим транзакцию...",
+    "liquidity.provide.simulationFailed": "Не удалось выполнить симуляцию",
+    "liquidity.provide.unavailable": "Транзакция ликвидности еще не готова",
+    "liquidity.provide.unavailableBody":
+      "Выбери оба токена, пул и сумму, прежде чем подтверждать добавление ликвидности.",
+    "liquidity.provide.sent": "Транзакция ликвидности отправлена",
+    "liquidity.provide.sentBody":
+      "Tonkeeper должен открыть подтверждение добавления ликвидности.",
+    "liquidity.provide.failed": "Не удалось подготовить транзакцию ликвидности",
+    "liquidity.provide.failedBody":
+      "Приложение не смогло собрать транзакцию для добавления ликвидности.",
     "swap.referral.address": "Реферальный адрес:",
     "swap.referral.percent": "Реферальный процент:",
     "swap.chart.previewTitle": "Рынок Pulse",
