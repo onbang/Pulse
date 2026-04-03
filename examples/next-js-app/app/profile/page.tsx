@@ -1,6 +1,7 @@
 "use client";
 
 import { AchievementsPanel } from "@/components/community/achievements-panel";
+import { ActivePredictionsPanel } from "@/components/community/active-predictions-panel";
 import { useCommunityProfile } from "@/components/community/community-provider";
 import { DailyCheckInCard } from "@/components/community/daily-check-in-card";
 import { LevelProgressCard } from "@/components/community/level-progress-card";
@@ -82,10 +83,13 @@ export default function ProfilePage() {
         <NotificationCenterCard />
         <AchievementsPanel />
         <div className="grid gap-6 lg:grid-cols-2">
-          <WatchlistPanel />
+          <ActivePredictionsPanel />
           <ProfileBetHistory />
         </div>
-        <ProfileTonPanel />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WatchlistPanel />
+          <ProfileTonPanel />
+        </div>
       </section>
     </WalletGuard>
   );

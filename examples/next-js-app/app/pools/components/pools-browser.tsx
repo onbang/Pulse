@@ -26,6 +26,7 @@ import { useStonApi } from "@/hooks/use-ston-api";
 import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
 import { cn, validateFloatValue } from "@/lib/utils";
 
 type PoolCardEntry = {
@@ -199,7 +200,12 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
       const payload = beginCell()
         .storeUint(0, 32)
         .storeStringTail(
-          `Pulse pool prediction | ${props.pairLabel} | ${direction.toUpperCase()} | ${numericStake} TON`,
+          buildPredictionTransferComment({
+            pairId: props.pairId,
+            label: props.pairLabel,
+            direction,
+            amount: numericStake,
+          }),
         )
         .endCell()
         .toBoc()

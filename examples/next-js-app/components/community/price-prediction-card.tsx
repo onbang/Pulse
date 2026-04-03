@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import { buildPredictionTransferComment } from "@/lib/prediction-transfer";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
 
@@ -168,7 +169,12 @@ export function PricePredictionCard(props: {
       const payload = beginCell()
         .storeUint(0, 32)
         .storeStringTail(
-          `Pulse prediction | ${props.label} | ${direction.toUpperCase()} | ${numericStake} TON`,
+          buildPredictionTransferComment({
+            pairId: props.pairId,
+            label: props.label,
+            direction,
+            amount: numericStake,
+          }),
         )
         .endCell()
         .toBoc()

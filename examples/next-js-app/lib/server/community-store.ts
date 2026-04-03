@@ -1,6 +1,7 @@
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
+import { Address } from "@ton/core";
 
 import {
   COMMENT_POINTS,
@@ -24,6 +25,8 @@ import {
   defaultCommunityStore,
   normalizeNotificationPreferences,
 } from "@/lib/community";
+import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
 
 const databaseFile =
   process.env.STON_PULSE_DB_FILE ??
@@ -35,6 +38,7 @@ const legacyJsonFile =
 let database: DatabaseSync | null = null;
 let initialized = false;
 const DEFAULT_ROUND_DURATION_MINUTES = 240;
+const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
 
 async function ensureDatabase() {
   if (database && initialized) {
@@ -1011,9 +1015,231 @@ function getProfileRow(db: DatabaseSync, walletAddress: string) {
     | undefined;
 }
 
+function normalizeTonAddress(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return Address.parse(value).toString();
+  } catch {
+    return value;
+  }
+}
+
+function resolvePredictionPairIdByLabel(db: DatabaseSync, label: string) {
+  const rows = db
+    .prepare(
+      "SELECT pair_id FROM prediction_rounds WHERE pair_label = ? ORDER BY opened_at DESC LIMIT 5",
+    )
+    .all(label) as Array<{ pair_id: string }>;
+
+  if (rows.length === 1) {
+    return rows[0]?.pair_id ?? null;
+  }
+
+  return rows[0]?.pair_id ?? null;
+}
+
+function extractTxHash(transaction: Record<string, unknown>) {
+  const candidates = [
+    transaction.hash,
+    transaction.tx_id,
+    transaction.transaction_id,
+    transaction.lt_hash,
+  ];
+
+  return candidates.find((value): value is string => typeof value === "string") ?? null;
+}
+
+function extractMessageComment(message: Record<string, unknown> | null) {
+  if (!message) {
+    return null;
+  }
+
+  const direct = [
+    message.comment,
+    message.text,
+    message.decoded_comment,
+    message.decodedComment,
+    message.body,
+  ];
+
+  const directMatch = direct.find(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const content = (message.message_content ??
+    message.messageContent ??
+    message.decoded_body ??
+    message.decodedBody) as Record<string, unknown> | undefined;
+
+  if (!content) {
+    return null;
+  }
+
+  const nested = [
+    content.comment,
+    content.text,
+    (content.decoded as Record<string, unknown> | undefined)?.comment,
+    (content.decoded as Record<string, unknown> | undefined)?.text,
+  ];
+
+  return (
+    nested.find(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    ) ?? null
+  );
+}
+
+async function syncOnchainPredictionTransactions(
+  db: DatabaseSync,
+  walletAddress: string | null,
+) {
+  const treasuryAddress = getPredictionTreasuryAddress();
+
+  if (!treasuryAddress) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
+        treasuryAddress,
+      )}/transactions?limit=50`,
+      {
+        headers: process.env.TON_CONSOLE_API_KEY
+          ? { Authorization: `Bearer ${process.env.TON_CONSOLE_API_KEY}` }
+          : {},
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = (await response.json()) as {
+      transactions?: Array<Record<string, unknown>>;
+    };
+    const transactions = payload.transactions ?? [];
+    const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+
+    for (const transaction of transactions) {
+      const txHash = extractTxHash(transaction);
+      const incomingMessage = (transaction.in_msg ??
+        transaction.inMessage) as Record<string, unknown> | null;
+      const sourceValue =
+        (incomingMessage?.source as Record<string, unknown> | string | undefined) ??
+        (incomingMessage?.src as Record<string, unknown> | string | undefined) ??
+        null;
+      const sourceAddress =
+        typeof sourceValue === "string"
+          ? sourceValue
+          : typeof sourceValue?.["address"] === "string"
+            ? (sourceValue["address"] as string)
+            : null;
+      const normalizedSourceAddress = normalizeTonAddress(sourceAddress);
+
+      if (
+        normalizedWalletAddress &&
+        normalizedSourceAddress &&
+        normalizedSourceAddress !== normalizedWalletAddress
+      ) {
+        continue;
+      }
+
+      const comment = extractMessageComment(incomingMessage);
+      const parsed = parsePredictionTransferComment(comment);
+
+      if (!txHash || !normalizedSourceAddress || !parsed) {
+        continue;
+      }
+
+      const pairId =
+        parsed.pairId ?? resolvePredictionPairIdByLabel(db, parsed.label);
+
+      if (!pairId) {
+        continue;
+      }
+
+      const existingBet = db
+        .prepare("SELECT id FROM prediction_bets WHERE id = ?")
+        .get(`onchain-${txHash}`) as { id: string } | undefined;
+
+      if (existingBet) {
+        continue;
+      }
+
+      ensureProfile(db, normalizedSourceAddress);
+      const current = getProfileRow(db, normalizedSourceAddress);
+
+      if (!current) {
+        continue;
+      }
+
+      const round = ensureRoundState(db, pairId, parsed.label);
+
+      if (round.status !== "open") {
+        continue;
+      }
+
+      db.exec("BEGIN");
+      try {
+        db.prepare(`
+          INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
+          VALUES (?, ?, ?)
+        `).run(pairId, normalizedSourceAddress, parsed.direction);
+
+        db.prepare(`
+          INSERT INTO prediction_bets (
+            id, pair_id, pair_label, wallet_address, author, amount, direction, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          `onchain-${txHash}`,
+          pairId,
+          parsed.label,
+          normalizedSourceAddress,
+          current.display_name,
+          Math.round(parsed.amount * 100) / 100,
+          parsed.direction,
+          new Date().toISOString(),
+        );
+
+        db.prepare(`
+          UPDATE profiles
+          SET predictions_count = predictions_count + 1
+          WHERE wallet_address = ?
+        `).run(normalizedSourceAddress);
+
+        pushActivity(db, {
+          type: "prediction_added",
+          walletAddress: normalizedSourceAddress,
+          author: current.display_name,
+          createdAt: new Date().toISOString(),
+          title: "Synced onchain prediction bet",
+          detail: `${parsed.direction === "up" ? "Bullish" : "Bearish"} on ${parsed.label} for ${parsed.amount.toFixed(2)} TON.`,
+        });
+
+        db.exec("COMMIT");
+      } catch {
+        db.exec("ROLLBACK");
+      }
+    }
+  } catch {
+    return;
+  }
+}
+
 export async function getCommunityState(walletAddress: string | null) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
+  await syncOnchainPredictionTransactions(db, walletAddress);
   const store = hydrateStore(db);
   return buildCommunityState(store, walletAddress);
 }

@@ -211,6 +211,11 @@ export const messages = {
     "profile.history.eyebrow": "Recent check-ins",
     "profile.history.title": "Your streak history",
     "profile.history.empty": "No check-ins yet.",
+    "profile.activePredictions.title": "Active predictions",
+    "profile.activePredictions.subtitle":
+      "Your current open views and rounds awaiting settlement.",
+    "profile.activePredictions.empty":
+      "No active prediction positions yet.",
     "profile.summary.identity": "Profile Identity",
     "profile.summary.connected":
       "Connected through TON Connect. This profile powers comments, predictions, check-ins, and achievement progress.",
@@ -606,6 +611,11 @@ export const messages = {
     "profile.history.eyebrow": "Последние чек-ины",
     "profile.history.title": "История твоей серии",
     "profile.history.empty": "Чек-инов пока нет.",
+    "profile.activePredictions.title": "Активные прогнозы",
+    "profile.activePredictions.subtitle":
+      "Твои текущие открытые позиции и раунды в ожидании завершения.",
+    "profile.activePredictions.empty":
+      "Активных прогнозов пока нет.",
     "profile.summary.identity": "Идентичность профиля",
     "profile.summary.connected":
       "Профиль подключен через TON Connect. Он используется для комментариев, прогнозов, чек-инов и прогресса достижений.",
