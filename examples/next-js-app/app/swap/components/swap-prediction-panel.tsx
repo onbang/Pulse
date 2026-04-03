@@ -61,13 +61,18 @@ export function SwapPredictionPanel() {
           <p className="mt-2 text-sm text-slate-600">
             {t("swap.prediction.selectorBody")}
           </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.75fr)]">
-            <AssetSelect
-              assets={predictionAssets}
-              selectedAsset={selectedPredictionAsset}
-              onAssetSelect={setSelectedPredictionAsset}
-              loading={assetsQuery.isLoading}
-            />
+          <div className="mt-4 grid items-end gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.75fr)]">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                {t("prediction.tokenLabel")}
+              </label>
+              <AssetSelect
+                assets={predictionAssets}
+                selectedAsset={selectedPredictionAsset}
+                onAssetSelect={setSelectedPredictionAsset}
+                loading={assetsQuery.isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <label
                 className="text-sm font-medium text-slate-700"

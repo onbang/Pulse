@@ -148,6 +148,7 @@ export const messages = {
       "Preview for the entered stake before you confirm a direction.",
     "prediction.previewPayoutSplit": "Up {up} TON · Down {down} TON",
     "prediction.stakeAmount": "Stake amount",
+    "prediction.tokenLabel": "Token",
     "prediction.stakePlaceholder": "Enter stake in TON",
     "prediction.selectTokenFirst": "Choose a token first",
     "prediction.payoutHint":
@@ -517,6 +518,7 @@ export const messages = {
       "Предпросмотр по введенной ставке до подтверждения направления.",
     "prediction.previewPayoutSplit": "Вверх {up} TON · Вниз {down} TON",
     "prediction.stakeAmount": "Размер ставки",
+    "prediction.tokenLabel": "Токен",
     "prediction.stakePlaceholder": "Введи ставку в TON",
     "prediction.selectTokenFirst": "Сначала выбери токен",
     "prediction.payoutHint":
