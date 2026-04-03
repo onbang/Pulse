@@ -43,7 +43,7 @@ pnpm dev
 ## Verification
 
 ```sh
-pnpm ci
+pnpm run verify
 ```
 
 This runs:
