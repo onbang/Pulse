@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import { getPredictionEntryAddress } from "@/lib/prediction-config";
 import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
+import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
 import { useCommunityProfile } from "./community-provider";
@@ -124,14 +125,14 @@ export function PricePredictionCard(props: {
   const isRoundOpen = round?.status === "open";
   const isRoundClosed = round?.status === "closed";
   const isRoundSettled = round?.status === "settled";
-  const predictionTreasuryAddress = getPredictionTreasuryAddress();
+  const predictionEntryAddress = getPredictionEntryAddress();
   const isTokenPrediction = props.pairId.startsWith("prediction:");
   const canAutoReopenRound = isTokenPrediction && !isRoundOpen;
   const canPlacePrediction =
     !isDisabled &&
     isStakeValid &&
     !isSubmittingTx &&
-    !!predictionTreasuryAddress &&
+    !!predictionEntryAddress &&
     (isRoundOpen || canAutoReopenRound);
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
@@ -166,9 +167,8 @@ export function PricePredictionCard(props: {
 
     try {
       setIsSubmittingTx(true);
-      const message = buildPredictionBetTransferMessage({
-        treasuryAddress: predictionTreasuryAddress,
-        marketId: props.pairId,
+      const message = buildPredictionTransferMessage({
+        pairId: props.pairId,
         label: props.label,
         direction,
         amountTon: numericStake,
@@ -593,7 +593,7 @@ export function PricePredictionCard(props: {
             <p className="text-sm text-slate-500">
               {t("prediction.connectToVote")}
             </p>
-          ) : !predictionTreasuryAddress ? (
+          ) : !predictionEntryAddress ? (
             <p className="text-sm text-amber-600">
               {t("prediction.treasuryMissing")}
             </p>

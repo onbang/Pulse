@@ -1,21 +1,21 @@
 # PulsePredictionMarket Contract Spec
 
-This document describes the target contract that the UI and SDK are being prepared for.
+This package now targets a concrete onchain message model for prediction betting.
 
 ## Goals
 
-- Accept onchain bets for `up` / `down`
-- Separate rounds by market id and timeframe
-- Keep total pool, side pool, and per-wallet stake onchain
-- Support closing, settlement, and claims
+- Accept `up` / `down` bets onchain
+- Track one active round per `marketId`
+- Keep side pools and user positions onchain
+- Allow admin close/settle and user claim
+- Preserve a stable fallback format for treasury-mode reconciliation until deployment
 
 ## Storage
 
 - `admin: Address`
-- `treasury: Address`
-- `round_seqno: uint64`
-- `rounds: map<uint64, Round>`
-- `wallet_positions: map<(uint64, Address), Position>`
+- `current_rounds: map<string, Round>`
+- `positions: map<string, map<Address, Position>>`
+- `protocol_fee_bps: uint16`
 
 ## Round
 
@@ -31,7 +31,6 @@ This document describes the target contract that the UI and SDK are being prepar
 
 ## Position
 
-- `round_id: uint64`
 - `wallet: Address`
 - `up_stake: coins`
 - `down_stake: coins`
@@ -41,32 +40,43 @@ This document describes the target contract that the UI and SDK are being prepar
 
 ### PlaceBet
 
-- `op: uint32`
-- `round_id: uint64`
+- `op: 0x50554231`
+- `market_id: string`
+- `market_label: string` in a ref cell
 - `direction: uint8`
+- `value: coins` from the incoming transfer
 
-The UI currently uses a transfer with a machine-readable comment:
-
-`PULSE_PREDICTION_BET_V1|marketId|label|direction|amount`
-
-This format is kept stable so treasury-mode and future contract-mode can be reconciled consistently.
+If no open round exists for the market, the contract opens one automatically.
 
 ### CloseRound
 
-- Admin only
-- Stops accepting new bets
+- `op: 0x50554331`
+- `market_id: string`
+
+Admin only. Stops new bets for that market.
 
 ### SettleRound
 
-- Admin/oracle only
-- Sets final direction
+- `op: 0x50555331`
+- `market_id: string`
+- `result: uint8`
+
+Admin/oracle only. Writes final result and unlocks claims.
 
 ### Claim
 
-- Wallet claims winnings after settlement
+- `op: 0x50555031`
+- `market_id: string`
 
-## UI Integration Direction
+Transfers the winning payout back to the bettor.
 
-- `buildPredictionBetTransferMessage(...)` already generates a stable message
-- once the contract is deployed, the SDK can switch from treasury comments to explicit contract opcodes
-- the app should not need another UI rewrite when that happens
+## Compatibility Layer
+
+Until the contract is deployed, the app can still use treasury-mode comments:
+
+`PULSE_PREDICTION_BET_V1|marketId|label|direction|amount`
+
+This is why the SDK exposes both:
+
+- treasury compatibility builders
+- contract opcode builders

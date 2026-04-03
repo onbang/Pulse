@@ -1,9 +1,16 @@
 import {
   buildPredictionBetComment,
+  buildPredictionBetTransferMessage,
+  buildPredictionPlaceBetTransferMessage,
   parsePredictionBetComment,
 } from "@ston-pulse/prediction-sdk";
 
 import type { PredictionDirection } from "@/lib/community";
+import {
+  getPredictionMarketAddress,
+  getPredictionTreasuryAddress,
+  isPredictionContractModeEnabled,
+} from "@/lib/prediction-config";
 
 export function buildPredictionTransferComment(input: {
   pairId: string;
@@ -33,4 +40,29 @@ export function parsePredictionTransferComment(value?: string | null) {
     amount: parsed.amount,
     source: parsed.source,
   };
+}
+
+export function buildPredictionTransferMessage(input: {
+  pairId: string;
+  label: string;
+  direction: PredictionDirection;
+  amountTon: number | string;
+}) {
+  if (isPredictionContractModeEnabled()) {
+    return buildPredictionPlaceBetTransferMessage({
+      contractAddress: getPredictionMarketAddress(),
+      marketId: input.pairId,
+      label: input.label,
+      direction: input.direction,
+      amountTon: input.amountTon,
+    });
+  }
+
+  return buildPredictionBetTransferMessage({
+    treasuryAddress: getPredictionTreasuryAddress(),
+    marketId: input.pairId,
+    label: input.label,
+    direction: input.direction,
+    amountTon: input.amountTon,
+  });
 }

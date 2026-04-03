@@ -4,10 +4,19 @@ import {
   DEFAULT_PREDICTION_TREASURY_ADDRESS,
   PREDICTION_COMMENT_PREFIX,
 } from "./constants";
+import {
+  PREDICTION_OP_CLAIM,
+  PREDICTION_OP_CLOSE_ROUND,
+  PREDICTION_OP_PLACE_BET,
+  PREDICTION_OP_SETTLE_ROUND,
+} from "./opcodes";
 import type {
+  PredictionClaimInput,
+  PredictionCloseRoundInput,
   ParsedPredictionBetTransfer,
   PredictionBetTransferInput,
   PredictionDirection,
+  PredictionSettleRoundInput,
 } from "./types";
 
 export function resolvePredictionTreasuryAddress(value?: string | null) {
@@ -116,6 +125,80 @@ export function buildPredictionBetTransferMessage(input: {
       amount: numericAmount,
     }),
   };
+}
+
+export function buildPredictionPlaceBetPayloadBase64(input: {
+  marketId: string;
+  label: string;
+  direction: PredictionDirection;
+}) {
+  return beginCell()
+    .storeUint(PREDICTION_OP_PLACE_BET, 32)
+    .storeStringTail(input.marketId)
+    .storeRef(beginCell().storeStringTail(input.label).endCell())
+    .storeUint(input.direction === "up" ? 1 : 0, 8)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildPredictionPlaceBetTransferMessage(input: {
+  contractAddress: string;
+  marketId: string;
+  label: string;
+  direction: PredictionDirection;
+  amountTon: number | string;
+}) {
+  const numericAmount =
+    typeof input.amountTon === "string"
+      ? Number(input.amountTon)
+      : input.amountTon;
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    throw new Error("Prediction stake amount must be a positive TON value.");
+  }
+
+  return {
+    address: input.contractAddress,
+    amount: toNano(numericAmount).toString(),
+    payload: buildPredictionPlaceBetPayloadBase64({
+      marketId: input.marketId,
+      label: input.label,
+      direction: input.direction,
+    }),
+  };
+}
+
+export function buildPredictionCloseRoundPayloadBase64(
+  input: PredictionCloseRoundInput,
+) {
+  return beginCell()
+    .storeUint(PREDICTION_OP_CLOSE_ROUND, 32)
+    .storeStringTail(input.marketId)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildPredictionSettleRoundPayloadBase64(
+  input: PredictionSettleRoundInput,
+) {
+  return beginCell()
+    .storeUint(PREDICTION_OP_SETTLE_ROUND, 32)
+    .storeStringTail(input.marketId)
+    .storeUint(input.result === "up" ? 1 : 0, 8)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
+  return beginCell()
+    .storeUint(PREDICTION_OP_CLAIM, 32)
+    .storeStringTail(input.marketId)
+    .endCell()
+    .toBoc()
+    .toString("base64");
 }
 
 function isPredictionDirection(

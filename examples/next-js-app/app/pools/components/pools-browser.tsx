@@ -25,8 +25,9 @@ import { useAssetsQuery } from "@/hooks/use-assets-query";
 import { useStonApi } from "@/hooks/use-ston-api";
 import { useToast } from "@/hooks/use-toast";
 import { Formatter } from "@/lib/formatter";
-import { getPredictionTreasuryAddress } from "@/lib/prediction-config";
+import { getPredictionEntryAddress } from "@/lib/prediction-config";
 import { upsertPendingPredictionBet } from "@/lib/pending-predictions";
+import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { cn, validateFloatValue } from "@/lib/utils";
 
@@ -177,7 +178,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
   const [tonConnectUI] = useTonConnectUI();
   const [stakeAmount, setStakeAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const predictionTreasuryAddress = getPredictionTreasuryAddress();
+  const predictionEntryAddress = getPredictionEntryAddress();
   const numericStake = Number(stakeAmount);
   const isStakeValid =
     stakeAmount.trim().length > 0 &&
@@ -188,7 +189,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
   const placePrediction = async (direction: "up" | "down") => {
     if (
       !walletAddress ||
-      !predictionTreasuryAddress ||
+      !predictionEntryAddress ||
       !isStakeValid ||
       isSubmitting
     ) {
@@ -197,9 +198,8 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
 
     try {
       setIsSubmitting(true);
-      const message = buildPredictionBetTransferMessage({
-        treasuryAddress: predictionTreasuryAddress,
-        marketId: props.pairId,
+      const message = buildPredictionTransferMessage({
+        pairId: props.pairId,
         label: props.pairLabel,
         direction,
         amountTon: numericStake,
@@ -276,7 +276,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
           variant="outline"
           disabled={
             !walletAddress ||
-            !predictionTreasuryAddress ||
+            !predictionEntryAddress ||
             !isStakeValid ||
             isSubmitting
           }
@@ -289,7 +289,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
           variant="outline"
           disabled={
             !walletAddress ||
-            !predictionTreasuryAddress ||
+            !predictionEntryAddress ||
             !isStakeValid ||
             isSubmitting
           }
