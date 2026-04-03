@@ -51,11 +51,11 @@ export class FarmNftItemV2 extends FarmNftItemV1 {
   }
 
   public async sendDestroy(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<FarmNftItemV2["getDestroyTxParams"]>[1],
   ) {
-    const txParams = await this.getDestroyTxParams(provider, params);
+    const txParams = await this.getDestroyTxParams(_provider, params);
 
     return via.send(txParams);
   }

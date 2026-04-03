@@ -70,11 +70,11 @@ export class BasePoolV2_1 extends JettonMinter {
   }
 
   public async sendCollectFees(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<BasePoolV2_1["getCollectFeeTxParams"]>[1],
   ) {
-    const txParams = await this.getCollectFeeTxParams(provider, params);
+    const txParams = await this.getCollectFeeTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -94,7 +94,7 @@ export class BasePoolV2_1 extends JettonMinter {
   }
 
   public async getBurnTxParams(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       amount: AmountType;
       userWalletAddress: AddressType;
@@ -104,7 +104,7 @@ export class BasePoolV2_1 extends JettonMinter {
     },
   ): Promise<SenderArguments> {
     const [to, body] = await Promise.all([
-      this.getWalletAddress(provider, params.userWalletAddress),
+      this.getWalletAddress(_provider, params.userWalletAddress),
       this.createBurnBody({
         amount: params.amount,
         dexCustomPayload: params.dexCustomPayload,
@@ -118,11 +118,11 @@ export class BasePoolV2_1 extends JettonMinter {
   }
 
   public async sendBurn(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<BasePoolV2_1["getBurnTxParams"]>[1],
   ) {
-    const txParams = await this.getBurnTxParams(provider, params);
+    const txParams = await this.getBurnTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -152,12 +152,12 @@ export class BasePoolV2_1 extends JettonMinter {
   }
 
   public async getLpAccount(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     params: {
       ownerAddress: AddressType;
     },
   ) {
-    const lpAccountAddress = await this.getLpAccountAddress(provider, params);
+    const lpAccountAddress = await this.getLpAccountAddress(_provider, params);
 
     return LpAccountV2_1.create(lpAccountAddress);
   }

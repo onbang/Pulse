@@ -92,7 +92,7 @@ export class StakeNftItem extends Contract {
     via: Sender,
     params: Parameters<StakeNftItem["getUnstakeTxParams"]>[1],
   ) {
-    const txParams = await this.getUnstakeTxParams(provider, params);
+    const txParams = await this.getUnstakeTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -113,7 +113,7 @@ export class StakeNftItem extends Contract {
     via: Sender,
     params: Parameters<StakeNftItem["getRestakeTxParams"]>[1],
   ) {
-    const txParams = await this.getRestakeTxParams(provider, params);
+    const txParams = await this.getRestakeTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -187,7 +187,7 @@ export class StakeNftItem extends Contract {
     via: Sender,
     params: Parameters<StakeNftItem["getClaimRewardsTxParams"]>[1],
   ) {
-    const txParams = await this.getClaimRewardsTxParams(provider, params);
+    const txParams = await this.getClaimRewardsTxParams(_provider, params);
 
     return via.send(txParams);
   }

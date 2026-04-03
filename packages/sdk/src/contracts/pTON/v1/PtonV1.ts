@@ -62,7 +62,7 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
   ): Promise<SenderArguments> {
     const to = params.destinationWalletAddress
       ? toAddress(params.destinationWalletAddress)
-      : await this.getWalletAddress(provider, params.destinationAddress);
+      : await this.getWalletAddress(_provider, params.destinationAddress);
 
     const body = createJettonTransferMessage({
       queryId: params.queryId ?? 0,
@@ -83,7 +83,7 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
     via: Sender,
     params: Parameters<PtonV1["getTonTransferTxParams"]>[1],
   ) {
-    const txParams = await this.getTonTransferTxParams(provider, params);
+    const txParams = await this.getTonTransferTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -120,11 +120,11 @@ export class PtonV1 extends JettonMinter implements AbstractPton {
   }
 
   public async sendDeployWallet(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<PtonV1["getDeployWalletTxParams"]>[1],
   ) {
-    const txParams = await this.getDeployWalletTxParams(provider, params);
+    const txParams = await this.getDeployWalletTxParams(_provider, params);
 
     return via.send(txParams);
   }

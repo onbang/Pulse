@@ -84,11 +84,11 @@ export class VaultV2_1 extends Contract {
   }
 
   public async sendWithdrawFee(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<VaultV2_1["getWithdrawFeeTxParams"]>[1],
   ) {
-    const txParams = await this.getWithdrawFeeTxParams(provider, params);
+    const txParams = await this.getWithdrawFeeTxParams(_provider, params);
 
     return via.send(txParams);
   }

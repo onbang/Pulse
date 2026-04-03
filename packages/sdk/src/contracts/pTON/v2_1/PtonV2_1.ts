@@ -79,7 +79,7 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
   ): Promise<SenderArguments> {
     const to = params.destinationWalletAddress
       ? toAddress(params.destinationWalletAddress)
-      : await this.getWalletAddress(provider, params.destinationAddress);
+      : await this.getWalletAddress(_provider, params.destinationAddress);
 
     const body = await this.createTonTransferBody({
       tonAmount: params.tonAmount,
@@ -101,7 +101,7 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
     via: Sender,
     params: Parameters<PtonV2_1["getTonTransferTxParams"]>[1],
   ) {
-    const txParams = await this.getTonTransferTxParams(provider, params);
+    const txParams = await this.getTonTransferTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -142,11 +142,11 @@ export class PtonV2_1 extends PtonV1 implements AbstractPton {
   }
 
   public override async sendDeployWallet(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<PtonV2_1["getDeployWalletTxParams"]>[1],
   ) {
-    const txParams = await this.getDeployWalletTxParams(provider, params);
+    const txParams = await this.getDeployWalletTxParams(_provider, params);
 
     return via.send(txParams);
   }

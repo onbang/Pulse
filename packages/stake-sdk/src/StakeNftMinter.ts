@@ -138,11 +138,11 @@ export class StakeNftMinter extends Contract {
   }
 
   public async sendStake(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<StakeNftMinter["getStakeTxParams"]>[1],
   ) {
-    const txParams = await this.getStakeTxParams(provider, params);
+    const txParams = await this.getStakeTxParams(_provider, params);
 
     return via.send(txParams);
   }

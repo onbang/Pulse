@@ -80,7 +80,7 @@ export class LpAccountV2_1 extends Contract {
     via: Sender,
     params: Parameters<LpAccountV2_1["getRefundTxParams"]>[1],
   ) {
-    const txParams = await this.getRefundTxParams(provider, params);
+    const txParams = await this.getRefundTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -161,7 +161,10 @@ export class LpAccountV2_1 extends Contract {
     via: Sender,
     params: Parameters<LpAccountV2_1["getDirectAddLiquidityTxParams"]>[1],
   ) {
-    const txParams = await this.getDirectAddLiquidityTxParams(provider, params);
+    const txParams = await this.getDirectAddLiquidityTxParams(
+      _provider,
+      params,
+    );
 
     return via.send(txParams);
   }

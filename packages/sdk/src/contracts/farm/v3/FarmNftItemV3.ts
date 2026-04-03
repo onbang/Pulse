@@ -97,7 +97,7 @@ export class FarmNftItemV3 extends Contract {
       poolIndex: params?.poolIndex ?? 0,
     });
 
-    const poolCount = params?.poolCount ?? (await this.getPoolCount(provider));
+    const poolCount = params?.poolCount ?? (await this.getPoolCount(_provider));
 
     const value =
       this.gasConstants.claimRewardsBase +
@@ -112,7 +112,7 @@ export class FarmNftItemV3 extends Contract {
     via: Sender,
     params: Parameters<FarmNftItemV3["getClaimRewardsTxParams"]>[1],
   ) {
-    const txParams = await this.getClaimRewardsTxParams(provider, params);
+    const txParams = await this.getClaimRewardsTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -147,7 +147,7 @@ export class FarmNftItemV3 extends Contract {
       queryId: params?.queryId,
     });
 
-    const poolCount = params?.poolCount ?? (await this.getPoolCount(provider));
+    const poolCount = params?.poolCount ?? (await this.getPoolCount(_provider));
 
     const value =
       this.gasConstants.unstakeBase +
@@ -161,7 +161,7 @@ export class FarmNftItemV3 extends Contract {
     via: Sender,
     params: Parameters<FarmNftItemV3["getUnstakeTxParams"]>[1],
   ) {
-    const txParams = await this.getUnstakeTxParams(provider, params);
+    const txParams = await this.getUnstakeTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -199,11 +199,11 @@ export class FarmNftItemV3 extends Contract {
   }
 
   public async sendDestroy(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<FarmNftItemV3["getDestroyTxParams"]>[1],
   ) {
-    const txParams = await this.getDestroyTxParams(provider, params);
+    const txParams = await this.getDestroyTxParams(_provider, params);
 
     return via.send(txParams);
   }

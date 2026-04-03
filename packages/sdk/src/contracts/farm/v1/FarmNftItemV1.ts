@@ -84,7 +84,7 @@ export class FarmNftItemV1 extends Contract {
     via: Sender,
     params: Parameters<FarmNftItemV1["getClaimRewardsTxParams"]>[1],
   ) {
-    const txParams = await this.getClaimRewardsTxParams(provider, params);
+    const txParams = await this.getClaimRewardsTxParams(_provider, params);
 
     return via.send(txParams);
   }
@@ -125,11 +125,11 @@ export class FarmNftItemV1 extends Contract {
   }
 
   public async sendUnstake(
-    provider: ContractProvider,
+    _provider: ContractProvider,
     via: Sender,
     params: Parameters<FarmNftItemV1["getUnstakeTxParams"]>[1],
   ) {
-    const txParams = await this.getUnstakeTxParams(provider, params);
+    const txParams = await this.getUnstakeTxParams(_provider, params);
 
     return via.send(txParams);
   }
