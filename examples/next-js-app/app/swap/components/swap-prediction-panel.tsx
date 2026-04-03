@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { AssetSelect } from "@/components/asset-select";
+import { Input } from "@/components/ui/input";
+import { validateFloatValue } from "@/lib/utils";
 import { useSwapForm } from "../providers/swap-form";
 
 import { PricePredictionCard } from "@/components/community/price-prediction-card";
@@ -19,6 +21,7 @@ export function SwapPredictionPanel() {
   const assetsQuery = useAssetsQuery();
   const [selectedPredictionAsset, setSelectedPredictionAsset] =
     useState<AssetInfo | null>(null);
+  const [predictionStakeAmount, setPredictionStakeAmount] = useState("");
 
   const predictionAssets = useMemo(() => {
     return (assetsQuery.data ?? []).slice(0, 24);
@@ -43,10 +46,11 @@ export function SwapPredictionPanel() {
   const isPredictionEnabled = Boolean(
     (offerAsset && askAsset) || selectedPredictionAsset,
   );
+  const showExternalControls = !offerAsset || !askAsset;
 
   return (
     <div className="space-y-4">
-      {!offerAsset || !askAsset ? (
+      {showExternalControls ? (
         <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.14)]">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
             {t("swap.prediction.selectorEyebrow")}
@@ -57,13 +61,43 @@ export function SwapPredictionPanel() {
           <p className="mt-2 text-sm text-slate-600">
             {t("swap.prediction.selectorBody")}
           </p>
-          <div className="mt-4">
+          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.75fr)]">
             <AssetSelect
               assets={predictionAssets}
               selectedAsset={selectedPredictionAsset}
               onAssetSelect={setSelectedPredictionAsset}
               loading={assetsQuery.isLoading}
             />
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium text-slate-700"
+                htmlFor="prediction-stake-amount"
+              >
+                {t("prediction.stakeAmount")}
+              </label>
+              <Input
+                className="h-11 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
+                id="prediction-stake-amount"
+                inputMode="decimal"
+                value={predictionStakeAmount}
+                disabled={!selectedPredictionAsset}
+                onChange={(event) => {
+                  if (
+                    event.target.value &&
+                    !validateFloatValue(event.target.value, 2)
+                  ) {
+                    return;
+                  }
+
+                  setPredictionStakeAmount(event.target.value);
+                }}
+                placeholder={
+                  selectedPredictionAsset
+                    ? t("prediction.stakePlaceholder")
+                    : t("prediction.selectTokenFirst")
+                }
+              />
+            </div>
           </div>
         </div>
       ) : null}
@@ -72,6 +106,11 @@ export function SwapPredictionPanel() {
         pairId={pairId}
         label={pairLabel}
         disabled={!isPredictionEnabled}
+        stakeAmount={showExternalControls ? predictionStakeAmount : undefined}
+        onStakeAmountChange={
+          showExternalControls ? setPredictionStakeAmount : undefined
+        }
+        showStakeInput={!showExternalControls}
       />
     </div>
   );

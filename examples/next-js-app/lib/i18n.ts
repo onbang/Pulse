@@ -145,6 +145,7 @@ export const messages = {
       "Live preview based on the current pool split and your existing exposure.",
     "prediction.stakeAmount": "Stake amount",
     "prediction.stakePlaceholder": "Enter stake in TON",
+    "prediction.selectTokenFirst": "Choose a token first",
     "prediction.payoutHint":
       "Your TON stake is sent through the wallet. Payout preview is calculated from the current pool split on each side.",
     "prediction.bullish": "Bullish",
@@ -457,6 +458,7 @@ export const messages = {
       "Живой предпросмотр на основе текущего распределения пула и твоей позиции.",
     "prediction.stakeAmount": "Размер ставки",
     "prediction.stakePlaceholder": "Введи ставку в TON",
+    "prediction.selectTokenFirst": "Сначала выбери токен",
     "prediction.payoutHint":
       "Ставка в TON отправляется через кошелек. Предпросмотр выплаты считается по текущему распределению пула на каждой стороне.",
     "prediction.bullish": "Вверх",

@@ -24,9 +24,12 @@ export function PricePredictionCard(props: {
   pairId: string;
   label: string;
   disabled?: boolean;
+  stakeAmount?: string;
+  onStakeAmountChange?: (value: string) => void;
+  showStakeInput?: boolean;
 }) {
   const { t } = useI18n();
-  const [stakeAmount, setStakeAmount] = useState("10");
+  const [internalStakeAmount, setInternalStakeAmount] = useState("10");
   const [isSubmittingTx, setIsSubmittingTx] = useState(false);
   const [tonConnectUI] = useTonConnectUI();
   const { toast } = useToast();
@@ -36,6 +39,8 @@ export function PricePredictionCard(props: {
     settlePredictionRound,
     walletAddress,
   } = useCommunityProfile();
+  const stakeAmount = props.stakeAmount ?? internalStakeAmount;
+  const setStakeAmount = props.onStakeAmountChange ?? setInternalStakeAmount;
   const prediction = getPrediction(props.pairId);
   const round = prediction?.round;
   const upVotes = prediction?.up.length ?? 0;
@@ -94,6 +99,7 @@ export function PricePredictionCard(props: {
 
     return settledRound;
   }, [round, totalPool]);
+  const showStakeInput = props.showStakeInput ?? true;
   const isDisabled = props.disabled || !walletAddress;
   const numericStake = Number(stakeAmount);
   const isStakeValid =
@@ -286,34 +292,40 @@ export function PricePredictionCard(props: {
             </div>
           </div>
         ) : null}
-        <div className="space-y-2">
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor={`${props.pairId}-stake`}
-          >
-            {t("prediction.stakeAmount")}
-          </label>
-          <Input
-            className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
-            id={`${props.pairId}-stake`}
-            inputMode="decimal"
-            value={stakeAmount}
-            onChange={(event) => {
-              if (
-                event.target.value &&
-                !validateFloatValue(event.target.value, 2)
-              ) {
-                return;
-              }
+        {showStakeInput ? (
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium text-slate-700"
+              htmlFor={`${props.pairId}-stake`}
+            >
+              {t("prediction.stakeAmount")}
+            </label>
+            <Input
+              className="h-13 rounded-2xl border-sky-100 bg-white text-slate-900 placeholder:text-slate-400"
+              id={`${props.pairId}-stake`}
+              inputMode="decimal"
+              value={stakeAmount}
+              onChange={(event) => {
+                if (
+                  event.target.value &&
+                  !validateFloatValue(event.target.value, 2)
+                ) {
+                  return;
+                }
 
-              setStakeAmount(event.target.value);
-            }}
-            placeholder={t("prediction.stakePlaceholder")}
-          />
+                setStakeAmount(event.target.value);
+              }}
+              placeholder={t("prediction.stakePlaceholder")}
+            />
+            <p className="text-xs text-slate-500">
+              {t("prediction.payoutHint")}
+            </p>
+          </div>
+        ) : (
           <p className="text-xs text-slate-500">
             {t("prediction.payoutHint")}
           </p>
-        </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
