@@ -17,7 +17,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "blueprint build",
+    "build": "blueprint build && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration false --outDir build/PulsePredictionMarket",
     "lint": "tsc --noEmit --pretty",
     "deploy": "blueprint run deployPulsePredictionMarket",
     "close-round": "blueprint run closePredictionRound",

@@ -1,8 +1,8 @@
 import type { NetworkProvider } from "@ton/blueprint";
 import { toNano } from "@ton/core";
 
-import { PulsePredictionMarket } from "../wrappers/PulsePredictionMarket.js";
-import { resolveContractAddress, resolveMarketId } from "./_helpers";
+import { PulsePredictionMarket } from "../build/PulsePredictionMarket/tact_PulsePredictionMarket.js";
+import { resolveContractAddress, resolveMarketId } from "./_helpers.js";
 
 export async function run(provider: NetworkProvider) {
   const ui = provider.ui();
@@ -12,7 +12,9 @@ export async function run(provider: NetworkProvider) {
   );
   const marketId = await resolveMarketId(ui, process.env.PREDICTION_MARKET_ID);
 
-  const contract = provider.open(PulsePredictionMarket.fromAddress(contractAddress));
+  const contract = provider.open(
+    PulsePredictionMarket.fromAddress(contractAddress),
+  );
 
   ui.setActionPrompt(`Closing round ${marketId}...`);
   await contract.send(

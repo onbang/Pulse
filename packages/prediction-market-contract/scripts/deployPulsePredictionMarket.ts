@@ -1,8 +1,8 @@
 import type { NetworkProvider } from "@ton/blueprint";
 import { toNano } from "@ton/core";
 
-import { PulsePredictionMarket } from "../wrappers/PulsePredictionMarket.js";
-import { resolveBigIntInput } from "./_helpers";
+import { PulsePredictionMarket } from "../build/PulsePredictionMarket/tact_PulsePredictionMarket.js";
+import { resolveBigIntInput } from "./_helpers.js";
 
 export async function run(provider: NetworkProvider) {
   const ui = provider.ui();
