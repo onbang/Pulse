@@ -1,8 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
+import { AssetSelect } from "@/components/asset-select";
 import { useSwapForm } from "../providers/swap-form";
 
 import { PricePredictionCard } from "@/components/community/price-prediction-card";
+import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
 
 function normalizeLabel(label?: string | null) {
   return label?.trim() || "token";
@@ -10,21 +14,64 @@ function normalizeLabel(label?: string | null) {
 
 export function SwapPredictionPanel() {
   const { offerAsset, askAsset } = useSwapForm();
+  const assetsQuery = useAssetsQuery();
+  const [selectedPredictionAsset, setSelectedPredictionAsset] =
+    useState<AssetInfo | null>(null);
+
+  const predictionAssets = useMemo(() => {
+    return (assetsQuery.data ?? []).slice(0, 24);
+  }, [assetsQuery.data]);
 
   const offerLabel = normalizeLabel(offerAsset?.meta?.symbol);
   const askLabel = normalizeLabel(askAsset?.meta?.symbol);
+  const selectedAssetLabel = normalizeLabel(selectedPredictionAsset?.meta?.symbol);
+
   const pairId =
     offerAsset && askAsset
       ? `${offerAsset.contractAddress}:${askAsset.contractAddress}`
-      : "market-overview";
+      : selectedPredictionAsset
+        ? `prediction:${selectedPredictionAsset.contractAddress}`
+        : "market-overview";
   const pairLabel =
-    offerAsset && askAsset ? `${offerLabel}/${askLabel}` : "the selected pair";
+    offerAsset && askAsset
+      ? `${offerLabel}/${askLabel}`
+      : selectedPredictionAsset
+        ? `${selectedAssetLabel}/TON`
+        : "the selected pair";
+  const isPredictionEnabled = Boolean(
+    (offerAsset && askAsset) || selectedPredictionAsset,
+  );
 
   return (
-    <PricePredictionCard
-      pairId={pairId}
-      label={pairLabel}
-      disabled={!offerAsset || !askAsset}
-    />
+    <div className="space-y-4">
+      {!offerAsset || !askAsset ? (
+        <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,248,255,0.96))] p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.14)]">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Prediction pair
+          </p>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+            Choose a token for the forecast round
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            If you have not selected a swap pair yet, you can still open a prediction
+            round by choosing a token directly here.
+          </p>
+          <div className="mt-4">
+            <AssetSelect
+              assets={predictionAssets}
+              selectedAsset={selectedPredictionAsset}
+              onAssetSelect={setSelectedPredictionAsset}
+              loading={assetsQuery.isLoading}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <PricePredictionCard
+        pairId={pairId}
+        label={pairLabel}
+        disabled={!isPredictionEnabled}
+      />
+    </div>
   );
 }
