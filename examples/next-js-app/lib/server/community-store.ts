@@ -31,6 +31,7 @@ import {
   getPredictionMarketAddress,
   isPredictionContractModeEnabled,
 } from "@/lib/prediction-config";
+import { resolvePredictionDurationMinutes } from "@/lib/prediction-timeframes";
 import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
 
 const databaseFile =
@@ -168,12 +169,7 @@ function setupSchema(db: DatabaseSync) {
     "notification_preferences_json",
     "TEXT NOT NULL DEFAULT '{}'",
   );
-  ensureColumn(
-    db,
-    "prediction_bets",
-    "source_message_hash",
-    "TEXT",
-  );
+  ensureColumn(db, "prediction_bets", "source_message_hash", "TEXT");
   ensureColumn(
     db,
     "prediction_bets",
@@ -588,7 +584,7 @@ function createRound(
 ): PredictionRound {
   const openedAt = input?.openedAt ?? new Date().toISOString();
   const durationMinutes =
-    input?.durationMinutes ?? DEFAULT_ROUND_DURATION_MINUTES;
+    input?.durationMinutes ?? resolvePredictionDurationMinutes(pairId);
   const closesAt =
     input?.closesAt ??
     new Date(
@@ -1072,7 +1068,10 @@ function extractTxHash(transaction: Record<string, unknown>) {
     transaction.lt_hash,
   ];
 
-  return candidates.find((value): value is string => typeof value === "string") ?? null;
+  return (
+    candidates.find((value): value is string => typeof value === "string") ??
+    null
+  );
 }
 
 function extractMessageComment(message: Record<string, unknown> | null) {
@@ -1089,7 +1088,8 @@ function extractMessageComment(message: Record<string, unknown> | null) {
   ];
 
   const directMatch = direct.find(
-    (value): value is string => typeof value === "string" && value.trim().length > 0,
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
   );
 
   if (directMatch) {
@@ -1160,8 +1160,14 @@ async function syncOnchainPredictionTransactions(
       const incomingMessage = (transaction.in_msg ??
         transaction.inMessage) as Record<string, unknown> | null;
       const sourceValue =
-        (incomingMessage?.source as Record<string, unknown> | string | undefined) ??
-        (incomingMessage?.src as Record<string, unknown> | string | undefined) ??
+        (incomingMessage?.source as
+          | Record<string, unknown>
+          | string
+          | undefined) ??
+        (incomingMessage?.src as
+          | Record<string, unknown>
+          | string
+          | undefined) ??
         null;
       const sourceAddress =
         typeof sourceValue === "string"
@@ -1182,17 +1188,24 @@ async function syncOnchainPredictionTransactions(
       const comment = extractMessageComment(incomingMessage);
       const parsedComment = parsePredictionTransferComment(comment);
       const parsedContractPayload =
-        isContractMode && normalizeTonAddress(entryAddress) === normalizeTonAddress(contractAddress)
+        isContractMode &&
+        normalizeTonAddress(entryAddress) ===
+          normalizeTonAddress(contractAddress)
           ? extractPredictionContractPayload(incomingMessage)
           : null;
 
-      if (!txHash || !normalizedSourceAddress || (!parsedComment && !parsedContractPayload)) {
+      if (
+        !txHash ||
+        !normalizedSourceAddress ||
+        (!parsedComment && !parsedContractPayload)
+      ) {
         continue;
       }
 
       const pairId = parsedContractPayload?.marketId
         ? parsedContractPayload.marketId
-        : parsedComment?.pairId ?? resolvePredictionPairIdByLabel(db, parsedComment?.label ?? "");
+        : (parsedComment?.pairId ??
+          resolvePredictionPairIdByLabel(db, parsedComment?.label ?? ""));
 
       if (!pairId) {
         continue;
@@ -1225,9 +1238,11 @@ async function syncOnchainPredictionTransactions(
 
       const amount = parsedContractPayload
         ? extractMessageTonValue(incomingMessage)
-        : parsedComment?.amount ?? 0;
-      const direction = parsedContractPayload?.direction ?? parsedComment?.direction;
-      const label = parsedContractPayload?.label ?? parsedComment?.label ?? pairId;
+        : (parsedComment?.amount ?? 0);
+      const direction =
+        parsedContractPayload?.direction ?? parsedComment?.direction;
+      const label =
+        parsedContractPayload?.label ?? parsedComment?.label ?? pairId;
 
       if (!direction || !Number.isFinite(amount) || amount <= 0) {
         continue;

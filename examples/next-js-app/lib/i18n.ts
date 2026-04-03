@@ -12,7 +12,8 @@ export const messages = {
     "language.ru": "RU",
     "header.communityLayer": "Community Layer",
     "header.language": "Language",
-    "header.productHint": "Swap, pools, streaks, and community signal in one app.",
+    "header.productHint":
+      "Swap, pools, streaks, and community signal in one app.",
     "nav.swap": "Swap",
     "nav.pools": "Pools",
     "nav.liquidityProvide": "Liquidity provide",
@@ -127,8 +128,7 @@ export const messages = {
     "swap.chart.structureLow": "Structure low",
     "swap.chart.routeImpact": "Route impact",
     "swap.chart.tradeLens": "Trade lens",
-    "swap.chart.tradeLensTitle":
-      "Read momentum before the next move",
+    "swap.chart.tradeLensTitle": "Read momentum before the next move",
     "swap.chart.tradeLensBodyLive":
       "Candles, live token pulse, and community bias now sit in one panel.",
     "swap.chart.tradeLensBodyPreview":
@@ -141,10 +141,9 @@ export const messages = {
     "swap.prediction.selectorEyebrow": "Prediction token",
     "swap.prediction.selectorTitle": "Choose a token for the forecast round",
     "swap.prediction.selectorBody":
-      "If you have not selected a swap pair yet, you can still open a prediction round by choosing a token directly here.",
+      "If you have not selected a swap pair yet, choose a token, set the forecast horizon, and then place the stake from this panel.",
     "prediction.title": "Community price outlook",
-    "prediction.subtitle":
-      "Vote where the market moves next for {label}.",
+    "prediction.subtitle": "Vote where the market moves next for {label}.",
     "prediction.roundStatus": "Round status",
     "prediction.timeLeft": "Time left",
     "prediction.winner": "Winner",
@@ -163,8 +162,13 @@ export const messages = {
     "prediction.previewPayoutSplit": "Up {up} TON · Down {down} TON",
     "prediction.stakeAmount": "Stake amount",
     "prediction.tokenLabel": "Token",
+    "prediction.timeframeLabel": "Forecast horizon",
+    "prediction.timeframeBody":
+      "Each timeframe opens a separate round, so the market and payout are tied to the exact horizon you choose.",
     "prediction.stakePlaceholder": "Enter stake in TON",
     "prediction.selectTokenFirst": "Choose a token first",
+    "prediction.selectTimeframeFirst": "Choose a horizon first",
+    "prediction.pendingSelectionLabel": "the selected market",
     "prediction.payoutHint":
       "Your TON stake is sent through the wallet. Payout preview is calculated from the current pool split on each side.",
     "prediction.bullish": "Bullish",
@@ -187,8 +191,7 @@ export const messages = {
     "prediction.roundStatusOpen": "open",
     "prediction.roundStatusClosed": "closed",
     "prediction.roundStatusSettled": "settled",
-    "prediction.openRoundEnded":
-      "This round is no longer accepting new bets.",
+    "prediction.openRoundEnded": "This round is no longer accepting new bets.",
     "prediction.connectToVote":
       "Connect your wallet to vote with your profile.",
     "prediction.validStakeHint":
@@ -205,9 +208,11 @@ export const messages = {
     "prediction.stakeLine": "Stake {amount} TON",
     "prediction.disclaimer":
       "This is a sentiment widget, not financial advice. Open rounds accept bets, closed rounds await settlement, and settled rounds show payout previews.",
-    "prediction.txInProgress": "Confirm the transaction in your wallet to place the bet.",
+    "prediction.txInProgress":
+      "Confirm the transaction in your wallet to place the bet.",
     "prediction.txSent": "Prediction transaction sent",
-    "prediction.txSentBody": "{amount} TON has been sent and your bet is now recorded in the round.",
+    "prediction.txSentBody":
+      "{amount} TON has been sent and your bet is now recorded in the round.",
     "prediction.txSentPending": "Prediction transaction sent, UI sync pending",
     "prediction.txSentPendingBody":
       "{amount} TON has already been sent on-chain. The bet is shown locally while the app sync catches up.",
@@ -228,8 +233,7 @@ export const messages = {
     "profile.activePredictions.title": "Active predictions",
     "profile.activePredictions.subtitle":
       "Your current open views and rounds awaiting settlement.",
-    "profile.activePredictions.empty":
-      "No active prediction positions yet.",
+    "profile.activePredictions.empty": "No active prediction positions yet.",
     "profile.summary.identity": "Profile Identity",
     "profile.summary.connected":
       "Connected through TON Connect. This profile powers comments, predictions, check-ins, and achievement progress.",
@@ -290,12 +294,14 @@ export const messages = {
     "checkin.nextGoal": "Next goal: {goal}",
     "checkin.started": "Started",
     "checkin.activeSeries": "{count} day series active",
-    "checkin.footer": "Return daily to stack momentum and climb the leaderboard faster.",
+    "checkin.footer":
+      "Return daily to stack momentum and climb the leaderboard faster.",
     "checkin.claim": "Confirm check-in for 0.001 TON",
     "checkin.claimed": "Check-in confirmed today",
     "checkin.processing": "Confirming in wallet...",
     "checkin.messageDefault": "Come back every day to grow your streak.",
-    "checkin.messageSuccess": "Check-in saved. +{points} points added to your profile.",
+    "checkin.messageSuccess":
+      "Check-in saved. +{points} points added to your profile.",
     "checkin.messageAlready": "You already checked in today.",
     "checkin.messageWalletCancelled":
       "The confirmation transaction was cancelled in the wallet or did not complete.",
@@ -313,8 +319,7 @@ export const messages = {
     "pools.hero.coverageValue": "Live",
     "pools.hero.signalValue": "Social",
     "pools.hero.goalValue": "Actionable",
-    "pools.hero.coverageBody":
-      "Built from current STON asset and pair data.",
+    "pools.hero.coverageBody": "Built from current STON asset and pair data.",
     "pools.hero.signalBody":
       "Watchlist-ready with community-driven pool context.",
     "pools.hero.goalBody":
@@ -383,8 +388,7 @@ export const messages = {
       "Share context about spread, volatility, rewards, or strategy.",
     "comments.post": "Post comment",
     "comments.empty": "No comments yet for this pool.",
-    "comments.connectHint":
-      "Connect your wallet to post through your profile.",
+    "comments.connectHint": "Connect your wallet to post through your profile.",
     "comments.commentFor": "Comment for {label}",
     "comments.selectPoolFirst": "Select a pool first to unlock comments",
     "landing.hero.eyebrow": "Guided entry",
@@ -434,7 +438,8 @@ export const messages = {
     "language.ru": "RU",
     "header.communityLayer": "Комьюнити слой",
     "header.language": "Язык",
-    "header.productHint": "Обмен, пулы, серия чек-инов и сигнал комьюнити в одном приложении.",
+    "header.productHint":
+      "Обмен, пулы, серия чек-инов и сигнал комьюнити в одном приложении.",
     "nav.swap": "Обмен",
     "nav.pools": "Пулы",
     "nav.liquidityProvide": "Добавить ликвидность",
@@ -514,11 +519,11 @@ export const messages = {
     "swap.chart.selectTokenDescription":
       "Выбери токен, чтобы открыть график и активировать интервалы.",
     "swap.chart.selectTokenEyebrow": "Нужен токен",
-    "swap.chart.selectTokenPrompt": "Сначала выбери токен, который хочешь отслеживать",
+    "swap.chart.selectTokenPrompt":
+      "Сначала выбери токен, который хочешь отслеживать",
     "swap.chart.selectTokenBody":
       "После выбора токена включатся график, ценовой импульс и интервалы именно для этого актива.",
-    "swap.chart.liveDescription":
-      "Живой график выбранного тобой токена.",
+    "swap.chart.liveDescription": "Живой график выбранного тобой токена.",
     "swap.chart.liveValue": "Live {value}",
     "swap.chart.live": "Live",
     "swap.chart.preview": "Превью",
@@ -549,8 +554,7 @@ export const messages = {
     "swap.chart.structureLow": "Нижняя зона",
     "swap.chart.routeImpact": "Влияние маршрута",
     "swap.chart.tradeLens": "Рыночный фокус",
-    "swap.chart.tradeLensTitle":
-      "Смотри импульс перед следующим действием",
+    "swap.chart.tradeLensTitle": "Смотри импульс перед следующим действием",
     "swap.chart.tradeLensBodyLive":
       "Свечи, живой импульс токена и сигнал комьюнити собраны в одной панели.",
     "swap.chart.tradeLensBodyPreview":
@@ -563,10 +567,9 @@ export const messages = {
     "swap.prediction.selectorEyebrow": "Токен прогноза",
     "swap.prediction.selectorTitle": "Выбери токен для раунда прогноза",
     "swap.prediction.selectorBody":
-      "Если ты еще не выбрал пару в swap-форме, можно открыть раунд прогноза прямо отсюда, выбрав токен.",
+      "Если пара в swap-форме еще не выбрана, выбери токен, срок прогноза и затем сразу поставь ставку из этого блока.",
     "prediction.title": "Прогноз движения цены",
-    "prediction.subtitle":
-      "Голосуй, куда двинется рынок для {label}.",
+    "prediction.subtitle": "Голосуй, куда двинется рынок для {label}.",
     "prediction.roundStatus": "Статус раунда",
     "prediction.timeLeft": "Осталось времени",
     "prediction.winner": "Победитель",
@@ -585,8 +588,13 @@ export const messages = {
     "prediction.previewPayoutSplit": "Вверх {up} TON · Вниз {down} TON",
     "prediction.stakeAmount": "Размер ставки",
     "prediction.tokenLabel": "Токен",
+    "prediction.timeframeLabel": "Срок прогноза",
+    "prediction.timeframeBody":
+      "Каждый срок открывает отдельный раунд, поэтому рынок и выплата привязаны именно к выбранному горизонту.",
     "prediction.stakePlaceholder": "Введи ставку в TON",
     "prediction.selectTokenFirst": "Сначала выбери токен",
+    "prediction.selectTimeframeFirst": "Сначала выбери срок",
+    "prediction.pendingSelectionLabel": "выбранного рынка",
     "prediction.payoutHint":
       "Ставка в TON отправляется через кошелек. Предпросмотр выплаты считается по текущему распределению пула на каждой стороне.",
     "prediction.bullish": "Вверх",
@@ -609,8 +617,7 @@ export const messages = {
     "prediction.roundStatusOpen": "открыт",
     "prediction.roundStatusClosed": "закрыт",
     "prediction.roundStatusSettled": "завершен",
-    "prediction.openRoundEnded":
-      "Этот раунд больше не принимает новые ставки.",
+    "prediction.openRoundEnded": "Этот раунд больше не принимает новые ставки.",
     "prediction.connectToVote":
       "Подключи кошелек, чтобы голосовать от своего профиля.",
     "prediction.validStakeHint":
@@ -627,10 +634,13 @@ export const messages = {
     "prediction.stakeLine": "Ставка {amount} TON",
     "prediction.disclaimer":
       "Это виджет рыночного настроения, а не финансовый совет. Открытые раунды принимают ставки, закрытые ждут завершения, а завершенные показывают выплаты.",
-    "prediction.txInProgress": "Подтверди транзакцию в кошельке, чтобы сделать ставку.",
+    "prediction.txInProgress":
+      "Подтверди транзакцию в кошельке, чтобы сделать ставку.",
     "prediction.txSent": "Транзакция прогноза отправлена",
-    "prediction.txSentBody": "{amount} TON отправлено, и ставка записана в текущий раунд.",
-    "prediction.txSentPending": "Транзакция отправлена, синхронизация UI ожидается",
+    "prediction.txSentBody":
+      "{amount} TON отправлено, и ставка записана в текущий раунд.",
+    "prediction.txSentPending":
+      "Транзакция отправлена, синхронизация UI ожидается",
     "prediction.txSentPendingBody":
       "{amount} TON уже отправлено в сеть. Пока приложение догоняет синхронизацию, ставка будет показана локально.",
     "prediction.txFailed": "Не удалось отправить транзакцию прогноза",
@@ -650,8 +660,7 @@ export const messages = {
     "profile.activePredictions.title": "Активные прогнозы",
     "profile.activePredictions.subtitle":
       "Твои текущие открытые позиции и раунды в ожидании завершения.",
-    "profile.activePredictions.empty":
-      "Активных прогнозов пока нет.",
+    "profile.activePredictions.empty": "Активных прогнозов пока нет.",
     "profile.summary.identity": "Идентичность профиля",
     "profile.summary.connected":
       "Профиль подключен через TON Connect. Он используется для комментариев, прогнозов, чек-инов и прогресса достижений.",
@@ -680,7 +689,8 @@ export const messages = {
     "profile.progression.next": "Следующий",
     "profile.progression.target": "Цель",
     "profile.progression.maxReached": "Достигнут Legend",
-    "profile.progression.maxUnlocked": "Открыт максимальный уровень пользователя",
+    "profile.progression.maxUnlocked":
+      "Открыт максимальный уровень пользователя",
     "profile.progression.powerLeft": "Осталось {count} силы",
     "profile.progression.progress": "Прогресс уровня",
     "profile.achievements.eyebrow": "Коллекция значков",
@@ -712,12 +722,14 @@ export const messages = {
     "checkin.nextGoal": "Следующая цель: {goal}",
     "checkin.started": "Старт",
     "checkin.activeSeries": "Серия активна уже {count} дней",
-    "checkin.footer": "Заходи каждый день, чтобы накапливать импульс и быстрее расти в рейтинге.",
+    "checkin.footer":
+      "Заходи каждый день, чтобы накапливать импульс и быстрее расти в рейтинге.",
     "checkin.claim": "Подтвердить чек-ин за 0.001 TON",
     "checkin.claimed": "Чек-ин уже подтвержден",
     "checkin.processing": "Подтверждаем в кошельке...",
     "checkin.messageDefault": "Заходи каждый день, чтобы увеличивать серию.",
-    "checkin.messageSuccess": "Чек-ин сохранен. +{points} points зачислено в профиль.",
+    "checkin.messageSuccess":
+      "Чек-ин сохранен. +{points} points зачислено в профиль.",
     "checkin.messageAlready": "Сегодня ты уже делал чек-ин.",
     "checkin.messageWalletCancelled":
       "Транзакция подтверждения была отменена в кошельке или завершилась ошибкой.",
@@ -737,8 +749,7 @@ export const messages = {
     "pools.hero.goalValue": "Практичный",
     "pools.hero.coverageBody":
       "Построено на актуальных STON asset и pair данных.",
-    "pools.hero.signalBody":
-      "Готово для watchlist и community-driven анализа.",
+    "pools.hero.signalBody": "Готово для watchlist и community-driven анализа.",
     "pools.hero.goalBody":
       "Переходи от discovery к добавлению ликвидности в один поток.",
     "pools.stats.shortlist": "Живой shortlist",
@@ -795,7 +806,8 @@ export const messages = {
       "Переходи в LP flow, когда маршрут и глубина выглядят достаточно сильными.",
     "pools.discovery.stepLabel": "Шаг {step}",
     "pools.why.eyebrow": "Почему это важно",
-    "pools.why.title": "Пулы должны исследоваться легко, а не прятаться за формами.",
+    "pools.why.title":
+      "Пулы должны исследоваться легко, а не прятаться за формами.",
     "pools.why.body":
       "Этот экран превращает сырой поиск пар в наглядный shortlist, чтобы пользователь понимал, куда идти еще до добавления ликвидности.",
     "comments.title": "Комментарии к пулу",
@@ -810,7 +822,8 @@ export const messages = {
     "comments.commentFor": "Комментарий для {label}",
     "comments.selectPoolFirst": "Сначала выбери пул, чтобы открыть комментарии",
     "landing.hero.eyebrow": "Понятный старт",
-    "landing.hero.title": "Начни с понятного сценария, а не с перегруженного DeFi-экрана.",
+    "landing.hero.title":
+      "Начни с понятного сценария, а не с перегруженного DeFi-экрана.",
     "landing.hero.subtitle":
       "STON Pulse помогает обменивать токены, изучать пулы, держать серию чек-инов и использовать сигнал комьюнити без ощущения, что тебя сразу бросили в сложный интерфейс.",
     "landing.hero.primaryCta": "Начать с обмена",
@@ -860,8 +873,7 @@ export function translate(
 ) {
   const localeMessages = messages[language] as Record<string, string>;
   const fallbackMessages = messages[DEFAULT_LANGUAGE] as Record<string, string>;
-  const template =
-    localeMessages[key] ?? fallbackMessages[key] ?? key;
+  const template = localeMessages[key] ?? fallbackMessages[key] ?? key;
 
   if (!variables) {
     return template;
