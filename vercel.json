@@ -2,9 +2,9 @@
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm turbo run build --filter=@ston-fi/sdk-example-next-js-app",
-  "outputDirectory": "examples/next-js-app/.next",
+  "outputDirectory": ".next",
   "functions": {
-    "examples/next-js-app/app/api/**/*.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 30
     }
   }
