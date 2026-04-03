@@ -102,12 +102,16 @@ PROGRAM{
     }>
   }>
   $PulsePredictionMarket$_store PROCINLINE:<{
-    s12 s13 XCHG2
+    s13 s14 XCHG2
     STSLICE
-    s1 s10 XCHG
+    s1 s11 XCHG
     257 PUSHINT
     STIX
-    s1 s8 XCHG
+    s1 s9 XCHG
+    257 PUSHINT
+    STIX
+    s0 s7 XCHG
+    NEWC
     257 PUSHINT
     STIX
     s0 s6 XCHG
@@ -115,21 +119,21 @@ PROGRAM{
     STSLICE
     s1 s6 XCHG
     STBREFR
-    NEWC
-    s0 s5 XCHG
+    s0 s4 XCHG
     NEWC
     STSLICE
-    s1 s5 XCHG
+    s1 s4 XCHG
     STBREFR
-    s1 s3 XCHG
+    s1 s2 XCHG
     257 PUSHINT
     STIX
     257 PUSHINT
     STIX
-    257 PUSHINT
-    STIX
-    s0 s2 XCHG
+    SWAP
     NEWC
+    257 PUSHINT
+    STIX
+    s1 s2 XCHG
     257 PUSHINT
     STIX
     s0 s3 XCHG2
@@ -141,7 +145,6 @@ PROGRAM{
     STIX
     s1 s3 XCHG
     STDICT
-    s1 s2 XCHG
     STBREFR
     STBREFR
   }>
@@ -154,16 +157,16 @@ PROGRAM{
     LDREF
     SWAP
     CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    LDREF
-    SWAP
-    CTOS
-    SWAP
     257 PUSHINT
     LDIX
+    LDREF
+    SWAP
+    CTOS
+    SWAP
+    LDREF
+    SWAP
+    CTOS
+    SWAP
     257 PUSHINT
     LDIX
     257 PUSHINT
@@ -171,6 +174,8 @@ PROGRAM{
     LDREF
     DROP
     CTOS
+    257 PUSHINT
+    LDIX
     257 PUSHINT
     LDIX
     LDVARUINT16
@@ -179,10 +184,9 @@ PROGRAM{
     LDIX
     LDDICT
     DROP
-    s9 s13 XCHG
-    s9 s12 XCHG
-    s9 s11 XCHG
-    s9 s10 XCHG
+    s11 s14 XCHG
+    s11 s13 XCHG
+    s11 s12 XCHG
   }>
   $Context$_get_value PROCINLINE:<{
     s1 s3 XCHG
@@ -210,7 +214,14 @@ PROGRAM{
     LDIX
     257 PUSHINT
     LDIX
-    3 -ROLL
+    LDREF
+    SWAP
+    CTOS
+    257 PUSHINT
+    LDIX
+    DROP
+    s1 s4 XCHG
+    s3 s3 s0 XCHG3
   }>
   $PulsePredictionMarket$_contract_init PROCINLINE:<{
         B{b5ee9c724101010100020000004cacb9cd} B>boc <s PUSHSLICE
@@ -229,12 +240,12 @@ PROGRAM{
     SWAP
     IF:<{
       $PulsePredictionMarket$_load INLINECALLDICT
-      1 13 BLKDROP2
+      1 14 BLKDROP2
     }>ELSE<{
       $PulsePredictionMarket$init$_load INLINECALLDICT
-      s0 s3 XCHG
+      s0 s4 XCHG
       ENDS
-      ROT
+      3 ROLL
       $PulsePredictionMarket$_contract_init INLINECALLDICT
     }>
   }>
@@ -243,7 +254,7 @@ PROGRAM{
     TRUE
     SWAP
     1 STI
-    13 -ROLL
+    14 -ROLL
     $PulsePredictionMarket$_store INLINECALLDICT
     ENDC
     c4 POP
@@ -252,7 +263,7 @@ PROGRAM{
     9 3 BLKDROP2
     s3 POP
     0 PUSHINT
-    s3 s5 PUSH2
+    s3 s6 PUSH2
     ADD
     s1 s1 s1 PUSH3
     s6 s7 XCHG
@@ -263,7 +274,7 @@ PROGRAM{
   }>
   $PulsePredictionMarket$_fun_requireAdmin PROCREF:<{
     47541 PUSHINT
-    s1 s14 XCPU
+    s1 s15 XCPU
     SDEQ
     THROWANYIFNOT
   }>
@@ -293,11 +304,11 @@ PROGRAM{
     s0 s2 XCHG
     __tact_context_sender SETGLOB
     $PulsePredictionMarket$_contract_load INLINECALLDICT
-    s0 s14 XCHG
+    s0 s15 XCHG
     IFJMP:<{
-      14 BLKDROP
+      15 BLKDROP
     }>
-    s0 s12 XCHG
+    s0 s13 XCHG
     32 LDUQ 130 THROWIFNOT
     OVER
     1347764785 PUSHINT
@@ -324,24 +335,27 @@ PROGRAM{
         2 EQINT
       }>
       IF:<{
-        s13 s14 XCHG
-        s12 s14 XCHG
-        s11 s14 XCHG
-        s10 s14 XCHG
-        s9 s14 XCHG
-        s8 s14 XCHG
-        s7 s14 XCHG
-        s6 s14 XCHG
-        s5 s14 XCHG
-        s4 s14 XCHG
-        s3 s14 XCHG
-        s2 s15 XCHG
-        s1 16 s() XCHG
-        s14 s(-1) PUXC
-        s0 16 s() XCHG
-        16 s() PUSH
+        s14 s15 XCHG
+        s13 s15 XCHG
+        s12 s15 XCHG
+        s11 s15 XCHG
+        s10 s15 XCHG
+        s9 s15 XCHG
+        s8 s15 XCHG
+        s7 s15 XCHG
+        s6 s15 XCHG
+        s5 s15 XCHG
+        s4 s15 XCHG
+        s3 s15 XCHG
+        s2 16 s() XCHG
+        s1 17 s() XCHG
+        s15 s(-1) PUXC
+        s0 17 s() XCHG
+        17 s() PUSH
         $PulsePredictionMarket$_fun_startRound INLINECALLDICT
-        s14 s15 XCHG2
+        s0 16 s() XCHG
+        s1 s15 XCHG
+        s13 s14 XCHG
         s12 s13 XCHG
         s11 s12 XCHG
         s10 s11 XCHG
@@ -391,7 +405,7 @@ PROGRAM{
       }>
       267 PUSHINT
       __tact_context_get_sender INLINECALLDICT
-      s15 PUSH
+      16 s() PUSH
       -ROT
       __tact_dict_get_slice_cell INLINECALLDICT
       $Position$_load_opt INLINECALLDICT
@@ -424,9 +438,10 @@ PROGRAM{
       s3 s6 XCHG2
       NEWC
       $Position$_store_cell INLINECALLDICT
-      s3 s15 XCHG
+      s3 16 s() XCHG
       s1 s4 s0 XCHG3
       __tact_dict_set_slice_cell INLINECALLDICT
+      s11 s13 XCHG
       s10 s12 XCHG
       s9 s11 XCHG
       s8 s10 XCHG
@@ -436,6 +451,7 @@ PROGRAM{
       s4 s6 XCHG
       s3 s5 XCHG
       s4 s3 s0 XCHG3
+      s1 s2 XCHG
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
     OVER
@@ -447,6 +463,7 @@ PROGRAM{
       DROP
       CTOS
       __tact_context_get_sender INLINECALLDICT
+      s13 s14 XCHG
       s12 s13 XCHG
       s11 s12 XCHG
       s10 s11 XCHG
@@ -457,19 +474,20 @@ PROGRAM{
       s5 s6 XCHG
       s4 s5 XCHG
       s3 s4 XCHG
-      s3 s14 s0 XCHG3
+      s3 s15 s0 XCHG3
       $PulsePredictionMarket$_fun_requireAdmin INLINECALLDICT
       s9 PUSH
       35659 PUSHINT
-      s0 s15 XCHG
+      s0 16 s() XCHG
       __tact_slice_eq INLINECALLDICT
-      s1 s14 XCHG
+      s1 s15 XCHG
       THROWANYIFNOT
       32385 PUSHINT
       s0 s7 XCHG
       0 EQINT
       s1 s7 XCHG
       THROWANYIFNOT
+      s11 s12 XCHG
       s10 s11 XCHG
       s9 s10 XCHG
       s8 s9 XCHG
@@ -495,15 +513,16 @@ PROGRAM{
       8 LDU
       DROP
       __tact_context_get_sender INLINECALLDICT
-      s14 s15 s0 XCHG3
+      s2 s15 XCHG
+      s1 16 s() XCHG
       $PulsePredictionMarket$_fun_requireAdmin INLINECALLDICT
       NIP
       s3 POP
       s7 PUSH
       35659 PUSHINT
-      s0 s13 XCHG
+      s0 s14 XCHG
       __tact_slice_eq INLINECALLDICT
-      s1 s12 XCHG
+      s1 s13 XCHG
       THROWANYIFNOT
       59719 PUSHINT
       s0 s5 XCHG
@@ -512,6 +531,7 @@ PROGRAM{
       THROWANYIFNOT
       2 PUSHINT
           NOW
+      s11 s13 XCHG
       s10 s12 XCHG
       s9 s11 XCHG
       s8 s10 XCHG
@@ -520,7 +540,7 @@ PROGRAM{
       s1 s7 XCHG
       s4 s6 XCHG
       s3 s5 XCHG
-      s1 s4 s4 XCHG3
+      s4 s1 s4 XCHG3
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
     SWAP
@@ -541,7 +561,7 @@ PROGRAM{
       THROWANYIFNOT
       267 PUSHINT
       __tact_context_get_sender INLINECALLDICT
-      s14 PUSH
+      s15 PUSH
       -ROT
       __tact_dict_get_slice_cell INLINECALLDICT
       $Position$_load_opt INLINECALLDICT
@@ -556,7 +576,7 @@ PROGRAM{
       $Position$_get_claimed INLINECALLDICT
       NOT
       THROWANYIFNOT
-      s12 PUSH
+      s13 PUSH
       1 EQINT
       IF:<{
         DUP
@@ -573,7 +593,7 @@ PROGRAM{
       THROWANYIFNOT
       2OVER
       ADD
-      s14 PUSH
+      s15 PUSH
       1 EQINT
       IF:<{
         s4 PUSH
@@ -588,7 +608,7 @@ PROGRAM{
       MUL
       SWAP
       DIV
-      s0 s10 PUSH2
+      s0 s11 PUSH2
       MUL
       10000 PUSHINT
       DIV
@@ -602,11 +622,11 @@ PROGRAM{
       s4 s3 s4 XCHG3
       NEWC
       $Position$_store_cell INLINECALLDICT
-      s3 16 s() XCHG
+      s3 17 s() XCHG
       s1 s2 XCHG
       __tact_dict_set_slice_cell INLINECALLDICT
       __tact_context_get_sender INLINECALLDICT
-      s0 s14 XCHG2
+      s0 s15 XCHG2
       2 PUSHINT
       $SendParameters$_constructor_to_value_mode INLINECALLDICT
           NEWC
@@ -675,11 +695,11 @@ PROGRAM{
           // Group 5: Sending the message, with `mode` on top
           SWAP
           SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-      s10 s12 XCHG
-      2 10 BLKSWAP
+      s11 s13 XCHG
+      2 11 BLKSWAP
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
-    14 BLKDROP
+    15 BLKDROP
     130 THROW
   }>
   __tact_selector_hack PROC:<{

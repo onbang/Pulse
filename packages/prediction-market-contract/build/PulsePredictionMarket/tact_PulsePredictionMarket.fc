@@ -39,10 +39,10 @@ tuple $Position$_as_optional((int, int, int) v) inline;
 tuple $Position$_load_opt(cell cl) inline;
 
 ;; $PulsePredictionMarket$_store
-builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline;
+builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline;
 
 ;; $PulsePredictionMarket$_load
-(slice, ((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline;
+(slice, ((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline;
 
 ;; $Context$_get_value
 _ $Context$_get_value((int, slice, int, slice) v) inline;
@@ -60,22 +60,22 @@ _ $Position$_get_claimed((int, int, int) v) inline;
 ((int, int, int)) $Position$_not_null(tuple v) inline;
 
 ;; $PulsePredictionMarket$init$_load
-(slice, ((slice, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline;
+(slice, ((slice, int, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline;
 
 ;; $PulsePredictionMarket$_contract_init
-(slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps) impure inline;
+(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) impure inline;
 
 ;; $PulsePredictionMarket$_contract_load
-(slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline;
+(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline;
 
 ;; $PulsePredictionMarket$_contract_store
-() $PulsePredictionMarket$_contract_store((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline;
+() $PulsePredictionMarket$_contract_store((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline;
 
 ;; $PulsePredictionMarket$_fun_startRound
-((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref;
+((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref;
 
 ;; $PulsePredictionMarket$_fun_requireAdmin
-((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref;
+((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref;
 
 ;; $Position$_constructor_upStake_downStake_claimed
 ((int, int, int)) $Position$_constructor_upStake_downStake_claimed(int $upStake, int $downStake, int $claimed) inline;
@@ -309,21 +309,22 @@ _ $Position$_get_claimed((int, int, int) v) inline {
 
 ;;
 ;; Type: PulsePredictionMarket
-;; TLB: _ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket
+;; TLB: _ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 deploymentNonce:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket
 ;;
 
-builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline {
-    var (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions) = v;
+builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline {
+    var (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions) = v;
     build_0 = build_0.store_slice(v'admin);
     build_0 = build_0.store_int(v'roundDurationSeconds, 257);
     build_0 = build_0.store_int(v'protocolFeeBps, 257);
-    build_0 = build_0.store_builder_ref(begin_cell().store_slice(v'marketId));
     var build_1 = begin_cell();
+    build_1 = build_1.store_int(v'deploymentNonce, 257);
+    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketId));
     build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketLabel));
     build_1 = build_1.store_int(v'status, 257);
     build_1 = build_1.store_int(v'openedAt, 257);
-    build_1 = build_1.store_int(v'closesAt, 257);
     var build_2 = begin_cell();
+    build_2 = build_2.store_int(v'closesAt, 257);
     build_2 = build_2.store_int(v'settledAt, 257);
     build_2 = build_2.store_varuint16(v'totalUp);
     build_2 = build_2.store_varuint16(v'totalDown);
@@ -334,46 +335,49 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
     return build_0;
 }
 
-(slice, ((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline {
+(slice, ((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline {
     var v'admin = sc_0~load_msg_addr();
     var v'roundDurationSeconds = sc_0~load_int(257);
     var v'protocolFeeBps = sc_0~load_int(257);
-    var v'marketId = sc_0~load_ref().begin_parse();
     slice sc_1 = sc_0~load_ref().begin_parse();
+    var v'deploymentNonce = sc_1~load_int(257);
+    var v'marketId = sc_1~load_ref().begin_parse();
     var v'marketLabel = sc_1~load_ref().begin_parse();
     var v'status = sc_1~load_int(257);
     var v'openedAt = sc_1~load_int(257);
-    var v'closesAt = sc_1~load_int(257);
     slice sc_2 = sc_1~load_ref().begin_parse();
+    var v'closesAt = sc_2~load_int(257);
     var v'settledAt = sc_2~load_int(257);
     var v'totalUp = sc_2~load_varuint16();
     var v'totalDown = sc_2~load_varuint16();
     var v'result = sc_2~load_int(257);
     var v'positions = sc_2~load_dict();
-    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions));
+    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions));
 }
 
-(slice, ((slice, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline {
+(slice, ((slice, int, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline {
     var v'admin = sc_0~load_msg_addr();
     var v'roundDurationSeconds = sc_0~load_int(257);
     var v'protocolFeeBps = sc_0~load_int(257);
-    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps));
+    slice sc_1 = sc_0~load_ref().begin_parse();
+    var v'deploymentNonce = sc_1~load_int(257);
+    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce));
 }
 
-(slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline {
+(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline {
     slice $sc = get_data().begin_parse();
     int $loaded = $sc~load_int(1);
     if ($loaded) {
         return $sc~$PulsePredictionMarket$_load();
     }
     else {
-        (slice $admin, int $roundDurationSeconds, int $protocolFeeBps) = $sc~$PulsePredictionMarket$init$_load();
+        (slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) = $sc~$PulsePredictionMarket$init$_load();
         $sc.end_parse();
-        return $PulsePredictionMarket$_contract_init($admin, $roundDurationSeconds, $protocolFeeBps);
+        return $PulsePredictionMarket$_contract_init($admin, $roundDurationSeconds, $protocolFeeBps, $deploymentNonce);
     }
 }
 
-() $PulsePredictionMarket$_contract_store((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline {
+() $PulsePredictionMarket$_contract_store((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline {
     builder b = begin_cell();
     b = b.store_int(true, 1);
     b = $PulsePredictionMarket$_store(b, v);
@@ -384,11 +388,12 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
 ;; Contract PulsePredictionMarket functions
 ;;
 
-(slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps) impure inline {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
+(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) impure inline {
+    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
     $self'admin = $admin;
     $self'roundDurationSeconds = $roundDurationSeconds;
     $self'protocolFeeBps = $protocolFeeBps;
+    $self'deploymentNonce = $deploymentNonce;
     $self'marketId = __gen_slice_string_96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7();
     $self'marketLabel = __gen_slice_string_96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7();
     $self'status = 3;
@@ -399,11 +404,11 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
     $self'totalDown = 0;
     $self'result = 2;
     $self'positions = null();
-    return ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions);
+    return ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions);
 }
 
-((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
+((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref {
+    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
     $self'marketId = $nextMarketId;
     $self'marketLabel = $nextMarketLabel;
     $self'status = 0;
@@ -414,13 +419,13 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
     $self'totalDown = 0;
     $self'result = 2;
     $self'positions = null();
-    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
+    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
 }
 
-((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
+((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref {
+    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
     throw_unless(47541, ( equal_slices_bits($candidate, $self'admin) ));
-    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
+    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
 }
 
 ;;
@@ -447,7 +452,7 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
     __tact_context_sender = msg_sender_addr;
     
     ;; Load contract data
-    var ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions) = $PulsePredictionMarket$_contract_load();
+    var ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions) = $PulsePredictionMarket$_contract_load();
     
     ;; Handle bounced messages
     if (msg_bounced) { return (); }
@@ -459,7 +464,7 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
         var $msg'direction = in_msg~load_uint(8);
         int $nowTs = $global_now();
         if (( (($self'status == 3)) ? (true) : (($self'status == 2)) )) {
-            ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_startRound($msg'marketId, $msg'marketLabel, $nowTs);
+            ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_startRound($msg'marketId, $msg'marketLabel, $nowTs);
         }
         throw_unless(36840, __tact_slice_eq($self'marketId, $msg'marketId));
         throw_unless(15520, ($self'status == 0));
@@ -478,18 +483,18 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
             $position'downStake = ($position'downStake + $Context$_get_value(__tact_context_get()));
         }
         $self'positions~__tact_dict_set_slice_cell(267, __tact_context_get_sender(), $Position$_store_cell(($position'upStake, $position'downStake, $position'claimed), begin_cell()));
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
         return ();
     }
     
     ;; Receive CloseRound message
     if (op == 0x50554331) {
         var $msg'marketId = in_msg~load_ref().begin_parse();
-        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
+        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
         throw_unless(35659, __tact_slice_eq($self'marketId, $msg'marketId));
         throw_unless(32385, ($self'status == 0));
         $self'status = 1;
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
         return ();
     }
     
@@ -497,13 +502,13 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
     if (op == 0x50555331) {
         var $msg'marketId = in_msg~load_ref().begin_parse();
         var $msg'result = in_msg~load_uint(8);
-        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
+        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
         throw_unless(35659, __tact_slice_eq($self'marketId, $msg'marketId));
         throw_unless(59719, ($self'status == 1));
         $self'status = 2;
         $self'result = $msg'result;
         $self'settledAt = $global_now();
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
         return ();
     }
     
@@ -527,7 +532,7 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, slice, 
         $updatedPosition'claimed = true;
         $self'positions~__tact_dict_set_slice_cell(267, __tact_context_get_sender(), $Position$_store_cell(($updatedPosition'upStake, $updatedPosition'downStake, $updatedPosition'claimed), begin_cell()));
         $global_send($SendParameters$_constructor_to_value_mode(__tact_context_get_sender(), $netPayout, 2));
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
         return ();
     }
     

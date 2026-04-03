@@ -27,6 +27,7 @@ contract PulsePredictionMarket {
     admin: Address;
     roundDurationSeconds: Int;
     protocolFeeBps: Int;
+    deploymentNonce: Int;
     marketId: String;
     marketLabel: String;
     status: Int;
@@ -38,10 +39,11 @@ contract PulsePredictionMarket {
     result: Int;
     positions: map<Address, Position>;
 
-    init(admin: Address, roundDurationSeconds: Int, protocolFeeBps: Int) {
+    init(admin: Address, roundDurationSeconds: Int, protocolFeeBps: Int, deploymentNonce: Int) {
         self.admin = admin;
         self.roundDurationSeconds = roundDurationSeconds;
         self.protocolFeeBps = protocolFeeBps;
+        self.deploymentNonce = deploymentNonce;
         self.marketId = "";
         self.marketLabel = "";
         self.status = 3;

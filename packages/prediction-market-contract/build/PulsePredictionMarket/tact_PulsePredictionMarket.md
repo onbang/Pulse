@@ -1,6 +1,6 @@
 # Tact compilation report
 Contract: PulsePredictionMarket
-BoC Size: 1135 bytes
+BoC Size: 1101 bytes
 
 ## Structures (Structs and Messages)
 Total structures: 16
@@ -66,8 +66,8 @@ TL-B: `_ upStake:coins downStake:coins claimed:bool = Position`
 Signature: `Position{upStake:coins,downStake:coins,claimed:bool}`
 
 ### PulsePredictionMarket$Data
-TL-B: `_ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket`
-Signature: `PulsePredictionMarket{admin:address,roundDurationSeconds:int257,protocolFeeBps:int257,marketId:^string,marketLabel:^string,status:int257,openedAt:int257,closesAt:int257,settledAt:int257,totalUp:coins,totalDown:coins,result:int257,positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}>}`
+TL-B: `_ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 deploymentNonce:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket`
+Signature: `PulsePredictionMarket{admin:address,roundDurationSeconds:int257,protocolFeeBps:int257,deploymentNonce:int257,marketId:^string,marketLabel:^string,status:int257,openedAt:int257,closesAt:int257,settledAt:int257,totalUp:coins,totalDown:coins,result:int257,positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}>}`
 
 ## Get methods
 Total get methods: 0

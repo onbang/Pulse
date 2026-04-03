@@ -1,7 +1,7 @@
 import { resolvePredictionTreasuryAddress } from "@ston-pulse/prediction-sdk";
 
 const DEFAULT_PREDICTION_MARKET_ADDRESS =
-  "EQAGSUKo3TiF8i_TBvBbSgvmkyUgL7-RWSG72ggUszcql-y2";
+  "EQB61HnN5s6wjruc7vvo7WsGBWWvNKaawTWnzFFDkB-6Fe4G";
 
 export function getPredictionMarketAddress() {
   return (

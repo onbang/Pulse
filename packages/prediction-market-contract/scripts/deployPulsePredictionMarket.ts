@@ -27,22 +27,34 @@ export async function run(provider: NetworkProvider) {
     300n,
   );
 
+  const deploymentNonce = await resolveBigIntInput(
+    ui,
+    "Deployment nonce",
+    process.env.PREDICTION_DEPLOYMENT_NONCE,
+    BigInt(Date.now()),
+  );
+
   const contract = provider.open(
     await PulsePredictionMarket.fromInit(
       senderAddress,
       roundDurationSeconds,
       protocolFeeBps,
+      deploymentNonce,
     ),
   );
 
   ui.write(`Prediction market address: ${contract.address.toString()}`);
 
-  if (await provider.isContractDeployed(contract.address)) {
-    ui.write("Contract is already deployed at this address.");
-    ui.write(
-      `Set NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS=${contract.address.toString()}`,
-    );
-    return;
+  try {
+    if (await provider.isContractDeployed(contract.address)) {
+      ui.write("Contract is already deployed at this address.");
+      ui.write(
+        `Set NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS=${contract.address.toString()}`,
+      );
+      return;
+    }
+  } catch {
+    ui.write("RPC preflight check failed, continuing with deploy attempt.");
   }
 
   ui.setActionPrompt("Sending deploy transaction...");

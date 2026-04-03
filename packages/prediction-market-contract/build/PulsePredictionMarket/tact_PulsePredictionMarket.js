@@ -961,13 +961,14 @@ function storePulsePredictionMarket$Data(src) {
     b_0.storeAddress(src.admin);
     b_0.storeInt(src.roundDurationSeconds, 257);
     b_0.storeInt(src.protocolFeeBps, 257);
-    b_0.storeStringRefTail(src.marketId);
-    b_0.storeStringRefTail(src.marketLabel);
     const b_1 = new core_1.Builder();
+    b_1.storeInt(src.deploymentNonce, 257);
+    b_1.storeStringRefTail(src.marketId);
+    b_1.storeStringRefTail(src.marketLabel);
     b_1.storeInt(src.status, 257);
     b_1.storeInt(src.openedAt, 257);
-    b_1.storeInt(src.closesAt, 257);
     const b_2 = new core_1.Builder();
+    b_2.storeInt(src.closesAt, 257);
     b_2.storeInt(src.settledAt, 257);
     b_2.storeCoins(src.totalUp);
     b_2.storeCoins(src.totalDown);
@@ -986,13 +987,14 @@ function loadPulsePredictionMarket$Data(slice) {
   const _admin = sc_0.loadAddress();
   const _roundDurationSeconds = sc_0.loadIntBig(257);
   const _protocolFeeBps = sc_0.loadIntBig(257);
-  const _marketId = sc_0.loadStringRefTail();
-  const _marketLabel = sc_0.loadStringRefTail();
   const sc_1 = sc_0.loadRef().beginParse();
+  const _deploymentNonce = sc_1.loadIntBig(257);
+  const _marketId = sc_1.loadStringRefTail();
+  const _marketLabel = sc_1.loadStringRefTail();
   const _status = sc_1.loadIntBig(257);
   const _openedAt = sc_1.loadIntBig(257);
-  const _closesAt = sc_1.loadIntBig(257);
   const sc_2 = sc_1.loadRef().beginParse();
+  const _closesAt = sc_2.loadIntBig(257);
   const _settledAt = sc_2.loadIntBig(257);
   const _totalUp = sc_2.loadCoins();
   const _totalDown = sc_2.loadCoins();
@@ -1007,6 +1009,7 @@ function loadPulsePredictionMarket$Data(slice) {
     admin: _admin,
     roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
+    deploymentNonce: _deploymentNonce,
     marketId: _marketId,
     marketLabel: _marketLabel,
     status: _status,
@@ -1023,6 +1026,7 @@ function loadTuplePulsePredictionMarket$Data(source) {
   const _admin = source.readAddress();
   const _roundDurationSeconds = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
+  const _deploymentNonce = source.readBigNumber();
   const _marketId = source.readString();
   const _marketLabel = source.readString();
   const _status = source.readBigNumber();
@@ -1042,6 +1046,7 @@ function loadTuplePulsePredictionMarket$Data(source) {
     admin: _admin,
     roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
+    deploymentNonce: _deploymentNonce,
     marketId: _marketId,
     marketLabel: _marketLabel,
     status: _status,
@@ -1058,6 +1063,7 @@ function loadGetterTuplePulsePredictionMarket$Data(source) {
   const _admin = source.readAddress();
   const _roundDurationSeconds = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
+  const _deploymentNonce = source.readBigNumber();
   const _marketId = source.readString();
   const _marketLabel = source.readString();
   const _status = source.readBigNumber();
@@ -1077,6 +1083,7 @@ function loadGetterTuplePulsePredictionMarket$Data(source) {
     admin: _admin,
     roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
+    deploymentNonce: _deploymentNonce,
     marketId: _marketId,
     marketLabel: _marketLabel,
     status: _status,
@@ -1094,6 +1101,7 @@ function storeTuplePulsePredictionMarket$Data(source) {
   builder.writeAddress(source.admin);
   builder.writeNumber(source.roundDurationSeconds);
   builder.writeNumber(source.protocolFeeBps);
+  builder.writeNumber(source.deploymentNonce);
   builder.writeString(source.marketId);
   builder.writeString(source.marketLabel);
   builder.writeNumber(source.status);
@@ -1136,15 +1144,19 @@ function initPulsePredictionMarket_init_args(src) {
     b_0.storeAddress(src.admin);
     b_0.storeInt(src.roundDurationSeconds, 257);
     b_0.storeInt(src.protocolFeeBps, 257);
+    const b_1 = new core_1.Builder();
+    b_1.storeInt(src.deploymentNonce, 257);
+    b_0.storeRef(b_1.endCell());
   };
 }
 async function PulsePredictionMarket_init(
   admin,
   roundDurationSeconds,
   protocolFeeBps,
+  deploymentNonce,
 ) {
   const __code = core_1.Cell.fromHex(
-    "b5ee9c7241020d01000463000142ff00208e983001d072d721d200d200fa4021103450666f04f86102f862e1f2c80b0101feed44d0d200018e44fa40810101d700810101d700d401d001d401d0d401d001810101d700810101d700810101d700d430d0810101d700fa00fa00810101d700f40430109d109c109b109a6c1d8e1dfa40810101d700810101d700552003d1588b088b08737054700020726de20e925f0ee00cd70d1ff2e082218210505542310204c2bae30221821050554331ba8f4b31d430d0f84210cd10bc10ab109a10891078106710561045103443e0db3c2982008b4b0f01f90101f901ba1ef2f4817e8107c00017f2f410ab109a10891078106771071056104510344130e021821050555331ba03080c0702fa31d401d001d401d001d30730f82329c003917f9329c002e28ebc10de10ce10be10ae109e108e107e106e105e104e103e102f0111100152e011105610db3c50ef10cd10bc10ab109a10891078106710561045103410239132e22a82008fe80401f90101f901ba13f2f4813ca028c000f2f48200d7685116bbf2f4817f76040500246c9333705335a0547111106710561045726d01f0f8416f24135f03c200f2f420c00199f8416f24135f0313a09af8416f24135f0312a058e281010bf8422f5959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e205c00199f8416f24135f0312a099f8416f24135f03a001e281010bf8425036c80600fc55205afa0258fa02ca00c9103f4140206e953059f45930944133f413e210ac109b108a107910681057104610354430c87f01ca0055c050cdce1a810101cf0018810101cf0006c8ce16cdc805c8ce15cd13810101cf00810101cf00810101cf0002c8810101cf005003fa025003fa0213810101cf0013f40012cdcdc9ed5403a08f3e31d401d001d30730f8424ef0db3c31332782008b4b0d01f90101f901ba1cf2f48200e94705c00115f2f472f82310ac109b108a1079106817104610354144e001821050555031bae3025f0ef2c082080c0900148200b9b5511ec705f2f401fed430d02882008b4b0201f90101f901baf2f48200f17e26c002f2f481010bf8422e5959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f42cc0019920206ef2d0806f235b9a20206ef2d0806f233031e28200b2cf21c200f2f45da02ec0010a02fe91249123e28200f62a21c200f2f459a801a904530aa8812710a904a101206ef2d0806f23307f81010bf8424434c855205afa0258fa02ca00c90311100312206e953059f45930944133f413e2f842500e726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf818ae2f400c901fb0010ac55190b0c001a58cf8680cf8480f400f400cf81009ec87f01ca0055c050cdce1a810101cf0018810101cf0006c8ce16cdc805c8ce15cd13810101cf00810101cf00810101cf0002c8810101cf005003fa025003fa0213810101cf0013f40012cdcdc9ed54504f8337",
+    "b5ee9c7241020d01000441000142ff00208e983001d072d721d200d200fa4021103450666f04f86102f862e1f2c80b0101feed44d0d200018e47fa40810101d700810101d700d401d0810101d700d401d001d401d001810101d700810101d700d430d0810101d700810101d700fa00fa00810101d700f4043010be10bd10bc6c1e8e28fa40810101d700810101d700d401d0810101d7003014433004d155028b088b08737054700020726de20f925f0fe00204e80dd70d1ff2e08221821050554231bae30221821050554331ba8f5031d430d0f84210de10cd10bc10ab109a10891078106710561045103443f0db3c2982008b4b111001f90101f901ba1ff2f4817e8107c00017f2f410bc10ab109a10891078106771071056104510344130e021821050555331ba03080c0702fe31d401d001d401d001d30730f82329c003917f9329c002e28ec310ef10df10cf10bf10af109f108f107f106f105f104f103f021110020111110152f011115611db3c11101f10de10cd10bc10ab109a10891078106710561045103410239132e22a82008fe80401f90101f901ba13f2f4813ca028c000f2f48200d7685116bb040500246c9333705336a0547111106710561045726d01fcf2f4817f76f8416f24135f03c200f2f420c00199f8416f24135f0313a09af8416f24135f0312a058e281010bf84256105959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e205c00199f8416f24135f0312a099f8416f24135f03a001e281010bf8425036c806016855205afa0258fa02ca00c9031110034140206e953059f45930944133f413e210bd10ac109b108a107910681057104610354430120c03ac8f4431d401d001d30730f842102f01111001db3c31332782008b4b0e01f90101f901ba1df2f48200e94705c00115f2f472f82310bd10ac109b108a1079106817104610354414e001821050555031bae3025f0ff2c082080c0900148200b9b5511fc705f2f401fed430d02882008b4b0201f90101f901baf2f48200f17e26c002f2f481010bf8422f5959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f42dc0019920206ef2d0806f235b9a20206ef2d0806f233031e28200b2cf21c200f2f45da02fc0010a02fe91249123e28200f62a21c200f2f459a801a904530ba8812710a904a101206ef2d0806f23307f81010bf8424434c855205afa0258fa02ca00c90311110312206e953059f45930944133f413e2f842500f726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf818ae2f400c901fb0010bd551a0b0c001a58cf8680cf8480f400f400cf8100aac87f01ca0055d050dece1b810101cf0019810101cf0007c8810101cf0006c8ce16cd04c8ce14cd12810101cf00810101cf0001c8810101cf0012810101cf005003fa025003fa0213810101cf0013f400cdcdc9ed5440e5f0be",
   );
   const builder = (0, core_1.beginCell)();
   builder.storeUint(0, 1);
@@ -1153,6 +1165,7 @@ async function PulsePredictionMarket_init(
     admin,
     roundDurationSeconds,
     protocolFeeBps,
+    deploymentNonce,
   })(builder);
   const __data = builder.endCell();
   return { code: __code, data: __data };
@@ -1538,6 +1551,10 @@ const PulsePredictionMarket_types = [
         type: { kind: "simple", type: "int", optional: false, format: 257 },
       },
       {
+        name: "deploymentNonce",
+        type: { kind: "simple", type: "int", optional: false, format: 257 },
+      },
+      {
         name: "marketId",
         type: { kind: "simple", type: "string", optional: false },
       },
@@ -1613,18 +1630,30 @@ class PulsePredictionMarket {
   static storageReserve = 0n;
   static errors = exports.PulsePredictionMarket_errors_backward;
   static opcodes = PulsePredictionMarket_opcodes;
-  static async init(admin, roundDurationSeconds, protocolFeeBps) {
+  static async init(
+    admin,
+    roundDurationSeconds,
+    protocolFeeBps,
+    deploymentNonce,
+  ) {
     return await PulsePredictionMarket_init(
       admin,
       roundDurationSeconds,
       protocolFeeBps,
+      deploymentNonce,
     );
   }
-  static async fromInit(admin, roundDurationSeconds, protocolFeeBps) {
+  static async fromInit(
+    admin,
+    roundDurationSeconds,
+    protocolFeeBps,
+    deploymentNonce,
+  ) {
     const __gen_init = await PulsePredictionMarket_init(
       admin,
       roundDurationSeconds,
       protocolFeeBps,
+      deploymentNonce,
     );
     const address = (0, core_1.contractAddress)(0, __gen_init);
     return new PulsePredictionMarket(address, __gen_init);
