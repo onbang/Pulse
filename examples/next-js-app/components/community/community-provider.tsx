@@ -166,6 +166,9 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const latestRequestRef = useRef(0);
+  const normalizedConnectedWallet = normalizeTonAddress(walletAddress);
+  const resolvedWalletAddress =
+    profile?.walletAddress || normalizedConnectedWallet || walletAddress;
 
   const resetTransientState = () => {
     setStore(defaultCommunityStore);
@@ -646,9 +649,12 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const getComments = (poolId: string) => store.comments[poolId] ?? [];
   const getPrediction = (pairId: string) => store.predictions[pairId] ?? null;
-  const userBets = walletAddress
+  const userBets = resolvedWalletAddress
     ? store.predictionHistory
-        .filter((bet) => bet.walletAddress === walletAddress)
+        .filter(
+          (bet) =>
+            normalizeTonAddress(bet.walletAddress) === resolvedWalletAddress,
+        )
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
 
@@ -657,7 +663,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       value={{
         isLoaded,
         isSyncing,
-        walletAddress,
+        walletAddress: resolvedWalletAddress,
         profile,
         achievements:
           profile && achievements.length === 0
