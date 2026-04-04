@@ -34,10 +34,9 @@ import {
   isPredictionTimeframeId,
   type PredictionTimeframeId,
 } from "@/lib/prediction-timeframes";
+import { resolveCommunityDatabaseFile } from "@/lib/server/runtime-storage";
 
-const databaseFile =
-  process.env.STON_PULSE_DB_FILE ??
-  join(process.cwd(), ".data/community.sqlite");
+const databaseFile = resolveCommunityDatabaseFile();
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
 
 let database: DatabaseSync | null = null;

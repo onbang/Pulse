@@ -54,13 +54,13 @@ import {
   resolvePredictionRoundStartTimestamp,
 } from "@/lib/prediction-timeframes";
 import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
+import {
+  resolveCommunityDatabaseFile,
+  resolveLegacyCommunityJsonFile,
+} from "@/lib/server/runtime-storage";
 
-const databaseFile =
-  process.env.STON_PULSE_DB_FILE ??
-  join(process.cwd(), ".data/community.sqlite");
-const legacyJsonFile =
-  process.env.STON_PULSE_DATA_FILE ??
-  join(process.cwd(), ".data/community.json");
+const databaseFile = resolveCommunityDatabaseFile();
+const legacyJsonFile = resolveLegacyCommunityJsonFile();
 
 let database: DatabaseSync | null = null;
 let initialized = false;

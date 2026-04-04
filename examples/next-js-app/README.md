@@ -68,5 +68,7 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 
 - Default TON Connect manifest is now served from `/api/tonconnect-manifest`
 - The app uses SQLite storage through `node:sqlite`
-- For production deployment, persist `.data/community.sqlite` or provide a custom `STON_PULSE_DB_FILE`
+- In local development the default storage path is `.data/community.sqlite`
+- In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
+- For durable production persistence, provide a custom `STON_PULSE_DB_FILE` backed by writable storage instead of relying on ephemeral `/tmp`
 - `GET /api/health` can be used as a lightweight health endpoint
