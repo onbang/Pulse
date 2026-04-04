@@ -1,4 +1,4 @@
-import { beginCell, Cell, toNano } from "@ton/core";
+import { Address, beginCell, Cell, toNano } from "@ton/core";
 
 import {
   DEFAULT_PREDICTION_TREASURY_ADDRESS,
@@ -28,6 +28,7 @@ export function buildPredictionBetComment(input: PredictionBetTransferInput) {
   return [
     PREDICTION_COMMENT_PREFIX,
     input.marketId,
+    input.roundId ?? "",
     encodeURIComponent(input.label),
     input.direction,
     input.amount.toFixed(2),
@@ -44,7 +45,7 @@ export function parsePredictionBetComment(
   const trimmed = value.trim();
 
   if (trimmed.startsWith(`${PREDICTION_COMMENT_PREFIX}|`)) {
-    const [, marketId, encodedLabel, direction, amount] = trimmed.split("|");
+    const [, marketId, , encodedLabel, direction, amount] = trimmed.split("|");
 
     if (
       !marketId ||
@@ -129,14 +130,26 @@ export function buildPredictionBetTransferMessage(input: {
 }
 
 export function buildPredictionPlaceBetPayloadBase64(input: {
+  roundId: string;
   marketId: string;
   label: string;
+  tokenAddress: string;
+  timeframeId: string;
+  timeframeCode: number;
+  roundDurationSeconds: number;
+  roundStartTimestamp: number;
   direction: PredictionDirection;
 }) {
   return beginCell()
     .storeUint(PREDICTION_OP_PLACE_BET, 32)
+    .storeStringRefTail(input.roundId)
     .storeStringRefTail(input.marketId)
     .storeStringRefTail(input.label)
+    .storeAddress(Address.parse(input.tokenAddress))
+    .storeStringRefTail(input.timeframeId)
+    .storeUint(input.timeframeCode, 8)
+    .storeUint(input.roundDurationSeconds, 32)
+    .storeUint(input.roundStartTimestamp, 32)
     .storeUint(input.direction === "up" ? 1 : 0, 8)
     .endCell()
     .toBoc()
@@ -145,8 +158,14 @@ export function buildPredictionPlaceBetPayloadBase64(input: {
 
 export function buildPredictionPlaceBetTransferMessage(input: {
   contractAddress: string;
+  roundId: string;
   marketId: string;
   label: string;
+  tokenAddress: string;
+  timeframeId: string;
+  timeframeCode: number;
+  roundDurationSeconds: number;
+  roundStartTimestamp: number;
   direction: PredictionDirection;
   amountTon: number | string;
 }) {
@@ -163,8 +182,14 @@ export function buildPredictionPlaceBetTransferMessage(input: {
     address: input.contractAddress,
     amount: toNano(numericAmount).toString(),
     payload: buildPredictionPlaceBetPayloadBase64({
+      roundId: input.roundId,
       marketId: input.marketId,
       label: input.label,
+      tokenAddress: input.tokenAddress,
+      timeframeId: input.timeframeId,
+      timeframeCode: input.timeframeCode,
+      roundDurationSeconds: input.roundDurationSeconds,
+      roundStartTimestamp: input.roundStartTimestamp,
       direction: input.direction,
     }),
   };
@@ -175,7 +200,7 @@ export function buildPredictionCloseRoundPayloadBase64(
 ) {
   return beginCell()
     .storeUint(PREDICTION_OP_CLOSE_ROUND, 32)
-    .storeStringRefTail(input.marketId)
+    .storeStringRefTail(input.roundId)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -186,7 +211,7 @@ export function buildPredictionSettleRoundPayloadBase64(
 ) {
   return beginCell()
     .storeUint(PREDICTION_OP_SETTLE_ROUND, 32)
-    .storeStringRefTail(input.marketId)
+    .storeStringRefTail(input.roundId)
     .storeUint(input.result === "up" ? 1 : 0, 8)
     .endCell()
     .toBoc()
@@ -196,7 +221,7 @@ export function buildPredictionSettleRoundPayloadBase64(
 export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
   return beginCell()
     .storeUint(PREDICTION_OP_CLAIM, 32)
-    .storeStringRefTail(input.marketId)
+    .storeStringRefTail(input.roundId)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -214,53 +239,74 @@ export function parsePredictionContractPayloadBase64(
     const opcode = slice.loadUint(32);
 
     if (opcode === PREDICTION_OP_PLACE_BET) {
+      const roundId = slice.loadStringRefTail();
       const marketId = slice.loadStringRefTail();
       const label = slice.loadStringRefTail();
+      const tokenAddress = slice.loadAddress().toString();
+      const timeframeId = slice.loadStringRefTail();
+      const timeframeCode = Number(slice.loadUint(8));
+      const roundDurationSeconds = Number(slice.loadUint(32));
+      const roundStartTimestamp = Number(slice.loadUint(32));
       const direction = slice.loadUint(8) === 1 ? "up" : "down";
 
-      if (!marketId || !label) {
+      if (
+        !roundId ||
+        !marketId ||
+        !label ||
+        !tokenAddress ||
+        !timeframeId ||
+        !Number.isFinite(timeframeCode) ||
+        !Number.isFinite(roundDurationSeconds) ||
+        !Number.isFinite(roundStartTimestamp)
+      ) {
         return null;
       }
 
       return {
         type: "place_bet",
+        roundId,
         marketId,
         label,
+        tokenAddress,
+        timeframeId,
+        timeframeCode,
+        roundDurationSeconds,
+        roundStartTimestamp,
         direction,
       };
     }
 
     if (opcode === PREDICTION_OP_CLOSE_ROUND) {
-      const marketId = slice.loadStringRefTail();
+      const roundId = slice.loadStringRefTail();
 
-      return marketId
+      return roundId
         ? {
             type: "close_round",
-            marketId,
+            roundId,
           }
         : null;
     }
 
     if (opcode === PREDICTION_OP_SETTLE_ROUND) {
-      const marketId = slice.loadStringRefTail();
+      const roundId = slice.loadStringRefTail();
       const result = slice.loadUint(8) === 1 ? "up" : "down";
 
-      return marketId
+      return roundId
         ? {
             type: "settle_round",
-            marketId,
+            roundId,
             result,
           }
         : null;
     }
 
     if (opcode === PREDICTION_OP_CLAIM) {
-      const marketId = slice.loadStringRefTail();
+      const roundId = slice.loadStringRefTail();
 
-      return marketId
+      return roundId
         ? {
             type: "claim",
-            marketId,
+            roundId,
           }
         : null;
     }

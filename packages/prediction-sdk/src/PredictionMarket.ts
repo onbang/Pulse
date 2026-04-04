@@ -22,15 +22,27 @@ export class PredictionMarket {
   }
 
   createBetTransfer(input: {
+    roundId: string;
     marketId: string;
     label: string;
+    tokenAddress: string;
+    timeframeId: string;
+    timeframeCode: number;
+    roundDurationSeconds: number;
+    roundStartTimestamp: number;
     direction: PredictionDirection;
     amountTon: number | string;
   }) {
     return buildPredictionPlaceBetTransferMessage({
       contractAddress: this.address.toString(),
+      roundId: input.roundId,
       marketId: input.marketId,
       label: input.label,
+      tokenAddress: input.tokenAddress,
+      timeframeId: input.timeframeId,
+      timeframeCode: input.timeframeCode,
+      roundDurationSeconds: input.roundDurationSeconds,
+      roundStartTimestamp: input.roundStartTimestamp,
       direction: input.direction,
       amountTon: input.amountTon,
     });

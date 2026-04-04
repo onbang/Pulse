@@ -1,20 +1,52 @@
 message(0x50554231) PlaceBet {
+    roundId: String;
     marketId: String;
     marketLabel: String;
+    token: Address;
+    timeframeId: String;
+    timeframeCode: Int as uint8;
+    roundDurationSeconds: Int as uint32;
+    roundStartTimestamp: Int as uint32;
     direction: Int as uint8;
 }
 
 message(0x50554331) CloseRound {
-    marketId: String;
+    roundId: String;
+    token: Address;
+    timeframeCode: Int as uint8;
+    roundStartTimestamp: Int as uint32;
 }
 
 message(0x50555331) SettleRound {
-    marketId: String;
+    roundId: String;
+    token: Address;
+    timeframeCode: Int as uint8;
+    roundStartTimestamp: Int as uint32;
     result: Int as uint8;
 }
 
 message(0x50555031) Claim {
+    roundId: String;
+    token: Address;
+    timeframeCode: Int as uint8;
+    roundStartTimestamp: Int as uint32;
+}
+
+struct Round {
+    roundId: String;
     marketId: String;
+    marketLabel: String;
+    token: Address;
+    timeframeId: String;
+    timeframeCode: Int as uint8;
+    roundDurationSeconds: Int as uint32;
+    status: Int as uint8;
+    openedAt: Int as uint32;
+    closesAt: Int as uint32;
+    settledAt: Int as uint32;
+    totalUp: Int as coins;
+    totalDown: Int as coins;
+    result: Int as uint8;
 }
 
 struct Position {
@@ -25,56 +57,69 @@ struct Position {
 
 contract PulsePredictionMarket {
     admin: Address;
-    roundDurationSeconds: Int;
-    protocolFeeBps: Int;
+    protocolFeeBps: Int as uint16;
     deploymentNonce: Int;
-    marketId: String;
-    marketLabel: String;
-    status: Int;
-    openedAt: Int;
-    closesAt: Int;
-    settledAt: Int;
-    totalUp: Int as coins;
-    totalDown: Int as coins;
-    result: Int;
-    positions: map<Address, Position>;
+    rounds: map<Int as uint256, Round>;
+    positions: map<Int as uint256, Position>;
 
-    init(admin: Address, roundDurationSeconds: Int, protocolFeeBps: Int, deploymentNonce: Int) {
+    init(admin: Address, protocolFeeBps: Int, deploymentNonce: Int) {
         self.admin = admin;
-        self.roundDurationSeconds = roundDurationSeconds;
         self.protocolFeeBps = protocolFeeBps;
         self.deploymentNonce = deploymentNonce;
-        self.marketId = "";
-        self.marketLabel = "";
-        self.status = 3;
-        self.openedAt = 0;
-        self.closesAt = 0;
-        self.settledAt = 0;
-        self.totalUp = 0;
-        self.totalDown = 0;
-        self.result = 2;
+        self.rounds = emptyMap();
         self.positions = emptyMap();
     }
 
     receive(msg: PlaceBet) {
         let nowTs = now();
+        let expectedCloseAt = msg.roundStartTimestamp + msg.roundDurationSeconds;
+        let roundKey = self.deriveRoundKey(msg.token, msg.timeframeCode, msg.roundStartTimestamp);
+        let positionKey = self.derivePositionKey(sender(), msg.token, msg.timeframeCode, msg.roundStartTimestamp);
 
-        if (self.status == 3 || self.status == 2) {
-            self.startRound(msg.marketId, msg.marketLabel, nowTs);
+        require(context().value > 0, "stake_required");
+        require(msg.roundStartTimestamp > 0, "round_start_required");
+        require(self.isSupportedTimeframe(msg.timeframeId, msg.timeframeCode, msg.roundDurationSeconds), "invalid_timeframe");
+        require(nowTs >= msg.roundStartTimestamp, "round_not_started");
+        require(nowTs <= expectedCloseAt, "round_expired");
+
+        let round = self.rounds.get(roundKey);
+
+        if (round == null) {
+            round = Round {
+                roundId: msg.roundId,
+                marketId: msg.marketId,
+                marketLabel: msg.marketLabel,
+                token: msg.token,
+                timeframeId: msg.timeframeId,
+                timeframeCode: msg.timeframeCode,
+                roundDurationSeconds: msg.roundDurationSeconds,
+                status: 0,
+                openedAt: msg.roundStartTimestamp,
+                closesAt: expectedCloseAt,
+                settledAt: 0,
+                totalUp: 0,
+                totalDown: 0,
+                result: 2
+            };
         }
 
-        require(self.marketId == msg.marketId, "another_round_active");
-        require(self.status == 0, "round_closed");
-        require(nowTs <= self.closesAt, "round_expired");
-        require(context().value > 0, "stake_required");
+        require(round!!.marketId == msg.marketId, "market_mismatch");
+        require(round!!.timeframeId == msg.timeframeId, "timeframe_mismatch");
+        require(round!!.timeframeCode == msg.timeframeCode, "timeframe_code_mismatch");
+        require(round!!.token == msg.token, "token_mismatch");
+        require(round!!.openedAt == msg.roundStartTimestamp, "round_mismatch");
+        require(round!!.closesAt == expectedCloseAt, "round_duration_mismatch");
+        require(round!!.status == 0, "round_closed");
+
+        let updatedRound = round!!;
 
         if (msg.direction == 1) {
-            self.totalUp = self.totalUp + context().value;
+            updatedRound.totalUp = updatedRound.totalUp + context().value;
         } else {
-            self.totalDown = self.totalDown + context().value;
+            updatedRound.totalDown = updatedRound.totalDown + context().value;
         }
 
-        let existingPosition = self.positions.get(sender());
+        let existingPosition = self.positions.get(positionKey);
         let position = existingPosition == null
             ? Position { upStake: 0, downStake: 0, claimed: false }
             : existingPosition!!;
@@ -85,40 +130,66 @@ contract PulsePredictionMarket {
             position.downStake = position.downStake + context().value;
         }
 
-        self.positions.set(sender(), position);
+        self.positions.set(positionKey, position);
+        self.rounds.set(roundKey, updatedRound);
     }
 
     receive(msg: CloseRound) {
         self.requireAdmin(sender());
-        require(self.marketId == msg.marketId, "round_not_found");
-        require(self.status == 0, "round_not_open");
+        let roundKey = self.deriveRoundKey(msg.token, msg.timeframeCode, msg.roundStartTimestamp);
 
-        self.status = 1;
+        let round = self.rounds.get(roundKey);
+        require(round != null, "round_not_found");
+        require(round!!.roundId == msg.roundId, "round_id_mismatch");
+        require(round!!.token == msg.token, "token_mismatch");
+        require(round!!.timeframeCode == msg.timeframeCode, "timeframe_code_mismatch");
+        require(round!!.openedAt == msg.roundStartTimestamp, "round_start_mismatch");
+        require(round!!.status == 0, "round_not_open");
+
+        let updated = round!!;
+        updated.status = 1;
+        self.rounds.set(roundKey, updated);
     }
 
     receive(msg: SettleRound) {
         self.requireAdmin(sender());
-        require(self.marketId == msg.marketId, "round_not_found");
-        require(self.status == 1, "round_not_closed");
+        let roundKey = self.deriveRoundKey(msg.token, msg.timeframeCode, msg.roundStartTimestamp);
 
-        self.status = 2;
-        self.result = msg.result;
-        self.settledAt = now();
+        let round = self.rounds.get(roundKey);
+        require(round != null, "round_not_found");
+        require(round!!.roundId == msg.roundId, "round_id_mismatch");
+        require(round!!.token == msg.token, "token_mismatch");
+        require(round!!.timeframeCode == msg.timeframeCode, "timeframe_code_mismatch");
+        require(round!!.openedAt == msg.roundStartTimestamp, "round_start_mismatch");
+        require(round!!.status == 1, "round_not_closed");
+
+        let updated = round!!;
+        updated.status = 2;
+        updated.result = msg.result;
+        updated.settledAt = now();
+        self.rounds.set(roundKey, updated);
     }
 
     receive(msg: Claim) {
-        require(self.marketId == msg.marketId, "round_not_found");
-        require(self.status == 2, "round_not_settled");
+        let roundKey = self.deriveRoundKey(msg.token, msg.timeframeCode, msg.roundStartTimestamp);
+        let positionKey = self.derivePositionKey(sender(), msg.token, msg.timeframeCode, msg.roundStartTimestamp);
+        let round = self.rounds.get(roundKey);
+        require(round != null, "round_not_found");
+        require(round!!.roundId == msg.roundId, "round_id_mismatch");
+        require(round!!.token == msg.token, "token_mismatch");
+        require(round!!.timeframeCode == msg.timeframeCode, "timeframe_code_mismatch");
+        require(round!!.openedAt == msg.roundStartTimestamp, "round_start_mismatch");
+        require(round!!.status == 2, "round_not_settled");
 
-        let position = self.positions.get(sender());
+        let position = self.positions.get(positionKey);
         require(position != null, "position_not_found");
         require(!position!!.claimed, "already_claimed");
 
-        let winningStake = self.result == 1 ? position!!.upStake : position!!.downStake;
+        let winningStake = round!!.result == 1 ? position!!.upStake : position!!.downStake;
         require(winningStake > 0, "no_winning_position");
 
-        let totalPool = self.totalUp + self.totalDown;
-        let winnerPool = self.result == 1 ? self.totalUp : self.totalDown;
+        let totalPool = round!!.totalUp + round!!.totalDown;
+        let winnerPool = round!!.result == 1 ? round!!.totalUp : round!!.totalDown;
         require(winnerPool > 0, "invalid_winner_pool");
 
         let payout = (winningStake * totalPool) / winnerPool;
@@ -127,7 +198,7 @@ contract PulsePredictionMarket {
 
         let updatedPosition = position!!;
         updatedPosition.claimed = true;
-        self.positions.set(sender(), updatedPosition);
+        self.positions.set(positionKey, updatedPosition);
 
         send(SendParameters {
             to: sender(),
@@ -136,17 +207,47 @@ contract PulsePredictionMarket {
         });
     }
 
-    fun startRound(nextMarketId: String, nextMarketLabel: String, nowTs: Int) {
-        self.marketId = nextMarketId;
-        self.marketLabel = nextMarketLabel;
-        self.status = 0;
-        self.openedAt = nowTs;
-        self.closesAt = nowTs + self.roundDurationSeconds;
-        self.settledAt = 0;
-        self.totalUp = 0;
-        self.totalDown = 0;
-        self.result = 2;
-        self.positions = emptyMap();
+    fun isSupportedTimeframe(timeframeId: String, timeframeCode: Int, durationSeconds: Int): Bool {
+        if (timeframeId == "5M") {
+            return timeframeCode == 1 && durationSeconds == 300;
+        }
+
+        if (timeframeId == "15M") {
+            return timeframeCode == 2 && durationSeconds == 900;
+        }
+
+        if (timeframeId == "1H") {
+            return timeframeCode == 3 && durationSeconds == 3600;
+        }
+
+        if (timeframeId == "4H") {
+            return timeframeCode == 4 && durationSeconds == 14400;
+        }
+
+        if (timeframeId == "1D") {
+            return timeframeCode == 5 && durationSeconds == 86400;
+        }
+
+        return false;
+    }
+
+    fun deriveRoundKey(token: Address, timeframeCode: Int, roundStartTimestamp: Int): Int {
+        return beginCell()
+            .storeAddress(token)
+            .storeUint(timeframeCode, 8)
+            .storeUint(roundStartTimestamp, 32)
+            .endCell()
+            .hash();
+    }
+
+    fun derivePositionKey(wallet: Address, token: Address, timeframeCode: Int, roundStartTimestamp: Int): Int {
+        return beginCell()
+            .storeAddress(wallet)
+            .storeAddress(token)
+            .storeUint(timeframeCode, 8)
+            .storeUint(roundStartTimestamp, 32)
+            .endCell()
+            .hash();
     }
 
     fun requireAdmin(candidate: Address) {

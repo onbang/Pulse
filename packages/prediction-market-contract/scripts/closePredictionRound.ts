@@ -2,7 +2,11 @@ import type { NetworkProvider } from "@ton/blueprint";
 import { toNano } from "@ton/core";
 
 import { PulsePredictionMarket } from "../build/PulsePredictionMarket/tact_PulsePredictionMarket.js";
-import { resolveContractAddress, resolveMarketId } from "./_helpers.js";
+import {
+  parsePredictionRoundId,
+  resolveContractAddress,
+  resolveRoundId,
+} from "./_helpers.js";
 
 export async function run(provider: NetworkProvider) {
   const ui = provider.ui();
@@ -10,22 +14,26 @@ export async function run(provider: NetworkProvider) {
     ui,
     process.env.NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS,
   );
-  const marketId = await resolveMarketId(ui, process.env.PREDICTION_MARKET_ID);
+  const roundId = await resolveRoundId(ui, process.env.PREDICTION_ROUND_ID);
+  const round = parsePredictionRoundId(roundId);
 
   const contract = provider.open(
     PulsePredictionMarket.fromAddress(contractAddress),
   );
 
-  ui.setActionPrompt(`Closing round ${marketId}...`);
+  ui.setActionPrompt(`Closing round ${roundId}...`);
   await contract.send(
     provider.sender(),
     { value: toNano("0.03") },
     {
       $$type: "CloseRound",
-      marketId,
+      roundId,
+      token: round.token,
+      timeframeCode: round.timeframeCode,
+      roundStartTimestamp: round.roundStartTimestamp,
     },
   );
   ui.clearActionPrompt();
 
-  ui.write(`CloseRound sent for ${marketId}.`);
+  ui.write(`CloseRound sent for ${roundId}.`);
 }

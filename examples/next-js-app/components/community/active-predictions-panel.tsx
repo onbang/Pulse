@@ -17,7 +17,13 @@ export function ActivePredictionsPanel() {
 
   const activeBets = userBets.filter((bet) => {
     const prediction = getPrediction(bet.pairId);
-    return prediction?.round?.status === "open" || prediction?.round?.status === "closed";
+    const round = prediction?.round;
+
+    if (!round || round.id !== bet.roundId) {
+      return false;
+    }
+
+    return round.status === "open" || round.status === "closed";
   });
 
   return (
@@ -45,7 +51,9 @@ export function ActivePredictionsPanel() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-900">{bet.pairLabel}</p>
+                    <p className="font-semibold text-slate-900">
+                      {bet.pairLabel}
+                    </p>
                     <p className="mt-1 text-sm text-slate-600">
                       {bet.direction === "up"
                         ? t("prediction.bullish")

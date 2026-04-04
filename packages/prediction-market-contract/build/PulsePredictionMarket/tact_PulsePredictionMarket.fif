@@ -3,8 +3,13 @@ PROGRAM{
   DECLPROC __tact_context_get
   DECLPROC __tact_context_get_sender
   DECLPROC __tact_slice_eq
-  DECLPROC __tact_dict_get_slice_cell
-  DECLPROC __tact_dict_set_slice_cell
+  DECLPROC __tact_dict_get_uint_cell
+  DECLPROC __tact_dict_set_uint_cell
+  DECLPROC $Round$_store
+  DECLPROC $Round$_store_cell
+  DECLPROC $Round$_load
+  DECLPROC $Round$_as_optional
+  DECLPROC $Round$_load_opt
   DECLPROC $Position$_store
   DECLPROC $Position$_store_cell
   DECLPROC $Position$_load
@@ -13,6 +18,18 @@ PROGRAM{
   DECLPROC $PulsePredictionMarket$_store
   DECLPROC $PulsePredictionMarket$_load
   DECLPROC $Context$_get_value
+  DECLPROC $Round$_get_roundId
+  DECLPROC $Round$_get_marketId
+  DECLPROC $Round$_get_token
+  DECLPROC $Round$_get_timeframeId
+  DECLPROC $Round$_get_timeframeCode
+  DECLPROC $Round$_get_status
+  DECLPROC $Round$_get_openedAt
+  DECLPROC $Round$_get_closesAt
+  DECLPROC $Round$_get_totalUp
+  DECLPROC $Round$_get_totalDown
+  DECLPROC $Round$_get_result
+  DECLPROC $Round$_not_null
   DECLPROC $Position$_get_upStake
   DECLPROC $Position$_get_downStake
   DECLPROC $Position$_get_claimed
@@ -21,8 +38,11 @@ PROGRAM{
   DECLPROC $PulsePredictionMarket$_contract_init
   DECLPROC $PulsePredictionMarket$_contract_load
   DECLPROC $PulsePredictionMarket$_contract_store
-  DECLPROC $PulsePredictionMarket$_fun_startRound
+  DECLPROC $PulsePredictionMarket$_fun_isSupportedTimeframe
+  DECLPROC $PulsePredictionMarket$_fun_deriveRoundKey
+  DECLPROC $PulsePredictionMarket$_fun_derivePositionKey
   DECLPROC $PulsePredictionMarket$_fun_requireAdmin
+  DECLPROC $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result
   DECLPROC $Position$_constructor_upStake_downStake_claimed
   DECLPROC $SendParameters$_constructor_to_value_mode
   DECLPROC recv_internal
@@ -45,26 +65,121 @@ PROGRAM{
     HASHSU
     EQUAL
   }>
-  __tact_dict_get_slice_cell PROCINLINE:<{
+  __tact_dict_get_uint_cell PROCINLINE:<{
     -ROT
-        DICTGETREF NULLSWAPIFNOT
+    DICTUGETREF
+    NULLSWAPIFNOT
     IF:<{
     }>ELSE<{
       DROP
       PUSHNULL
     }>
   }>
-  __tact_dict_set_slice_cell PROCINLINE:<{
+  __tact_dict_set_uint_cell PROCINLINE:<{
     DUP
     ISNULL
     IF:<{
       DROP
       -ROT
-          DICTDEL
+      DICTUDEL
       DROP
     }>ELSE<{
       s1 s3 s3 XCHG3
-          DICTSETREF
+      DICTUSETREF
+    }>
+  }>
+  $Round$_store PROCREF:<{
+    s0 s13 XCHG
+    NEWC
+    STSLICE
+    s1 s14 XCHG
+    STBREFR
+    s0 s11 XCHG
+    NEWC
+    STSLICE
+    s1 s11 XCHG
+    STBREFR
+    NEWC
+    s0 s10 XCHG
+    NEWC
+    STSLICE
+    s1 s10 XCHG
+    STBREFR
+    s1 s8 XCHG
+    STSLICE
+    s0 s6 XCHG
+    NEWC
+    STSLICE
+    s1 s6 XCHG
+    STBREFR
+    s1 s4 XCHG
+    8 STU
+    s1 s2 XCHG
+    32 STU
+    8 STU
+    32 STU
+    32 STU
+    32 STU
+    ROT
+    STVARUINT16
+    s0 s3 XCHG2
+    STVARUINT16
+    8 STU
+    STBREFR
+  }>
+  $Round$_store_cell PROCINLINE:<{
+    14 -ROLL
+    $Round$_store INLINECALLDICT
+    ENDC
+  }>
+  $Round$_load PROCREF:<{
+    LDREF
+    SWAP
+    CTOS
+    SWAP
+    LDREF
+    SWAP
+    CTOS
+    SWAP
+    LDREF
+    SWAP
+    CTOS
+    LDREF
+    SWAP
+    CTOS
+    SWAP
+    LDMSGADDR
+    LDREF
+    SWAP
+    CTOS
+    SWAP
+    8 LDU
+    32 LDU
+    8 LDU
+    32 LDU
+    32 LDU
+    32 LDU
+    LDVARUINT16
+    LDVARUINT16
+    8 LDU
+    DROP
+    s12 s14 XCHG
+    s12 s13 XCHG
+  }>
+  $Round$_as_optional PROCINLINE:<{
+        14 TUPLE
+  }>
+  $Round$_load_opt PROCINLINE:<{
+    DUP
+    ISNULL
+    IF:<{
+      DROP
+      PUSHNULL
+    }>ELSE<{
+      CTOS
+      $Round$_load INLINECALLDICT
+      1 14 BLKDROP2
+      $Round$_as_optional INLINECALLDICT
     }>
   }>
   $Position$_store PROCINLINE:<{
@@ -102,95 +217,75 @@ PROGRAM{
     }>
   }>
   $PulsePredictionMarket$_store PROCINLINE:<{
-    s13 s14 XCHG2
+    s4 s5 XCHG2
     STSLICE
-    s1 s11 XCHG
-    257 PUSHINT
-    STIX
-    s1 s9 XCHG
-    257 PUSHINT
-    STIX
-    s0 s7 XCHG
-    NEWC
-    257 PUSHINT
-    STIX
-    s0 s6 XCHG
-    NEWC
-    STSLICE
-    s1 s6 XCHG
-    STBREFR
-    s0 s4 XCHG
-    NEWC
-    STSLICE
-    s1 s4 XCHG
-    STBREFR
     s1 s2 XCHG
+    16 STU
     257 PUSHINT
     STIX
-    257 PUSHINT
-    STIX
-    SWAP
-    NEWC
-    257 PUSHINT
-    STIX
-    s1 s2 XCHG
-    257 PUSHINT
-    STIX
-    s0 s3 XCHG2
-    STVARUINT16
-    s0 s3 XCHG2
-    STVARUINT16
-    s1 s3 XCHG
-    257 PUSHINT
-    STIX
-    s1 s3 XCHG
     STDICT
-    STBREFR
-    STBREFR
+    STDICT
   }>
   $PulsePredictionMarket$_load PROCINLINE:<{
     LDMSGADDR
-    257 PUSHINT
-    LDIX
-    257 PUSHINT
-    LDIX
-    LDREF
-    SWAP
-    CTOS
-    257 PUSHINT
-    LDIX
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    257 PUSHINT
-    LDIX
-    257 PUSHINT
-    LDIX
-    LDREF
-    DROP
-    CTOS
-    257 PUSHINT
-    LDIX
-    257 PUSHINT
-    LDIX
-    LDVARUINT16
-    LDVARUINT16
+    16 LDU
     257 PUSHINT
     LDIX
     LDDICT
-    DROP
-    s11 s14 XCHG
-    s11 s13 XCHG
-    s11 s12 XCHG
+    LDDICT
+    5 -ROLL
   }>
   $Context$_get_value PROCINLINE:<{
     s1 s3 XCHG
     3 BLKDROP
+  }>
+  $Round$_get_roundId PROCINLINE:<{
+    13 BLKDROP
+  }>
+  $Round$_get_marketId PROCINLINE:<{
+    s12 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_token PROCINLINE:<{
+    s10 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_timeframeId PROCINLINE:<{
+    s9 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_timeframeCode PROCINLINE:<{
+    s8 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_status PROCINLINE:<{
+    s6 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_openedAt PROCINLINE:<{
+    s5 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_closesAt PROCINLINE:<{
+    s4 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_totalUp PROCINLINE:<{
+    s2 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_totalDown PROCINLINE:<{
+    s1 s13 XCHG
+    13 BLKDROP
+  }>
+  $Round$_get_result PROCINLINE:<{
+    13 1 BLKDROP2
+  }>
+  $Round$_not_null PROCINLINE:<{
+    DUP
+    ISNULL
+    128 THROWIF
+        14 UNTUPLE
   }>
   $Position$_get_upStake PROCINLINE:<{
     2DROP
@@ -214,23 +309,10 @@ PROGRAM{
     LDIX
     257 PUSHINT
     LDIX
-    LDREF
-    SWAP
-    CTOS
-    257 PUSHINT
-    LDIX
-    DROP
-    s1 s4 XCHG
-    s3 s3 s0 XCHG3
+    3 -ROLL
   }>
   $PulsePredictionMarket$_contract_init PROCINLINE:<{
-        B{b5ee9c724101010100020000004cacb9cd} B>boc <s PUSHSLICE
-        B{b5ee9c724101010100020000004cacb9cd} B>boc <s PUSHSLICE
-    3 PUSHINT
-    0 PUSHINT
-    s0 s0 s0 PUSH3
-    DUP
-    2 PUSHINT
+    PUSHNULL
     PUSHNULL
   }>
   $PulsePredictionMarket$_contract_load PROCINLINE:<{
@@ -240,12 +322,12 @@ PROGRAM{
     SWAP
     IF:<{
       $PulsePredictionMarket$_load INLINECALLDICT
-      1 14 BLKDROP2
+      1 5 BLKDROP2
     }>ELSE<{
       $PulsePredictionMarket$init$_load INLINECALLDICT
-      s0 s4 XCHG
+      s0 s3 XCHG
       ENDS
-      3 ROLL
+      ROT
       $PulsePredictionMarket$_contract_init INLINECALLDICT
     }>
   }>
@@ -254,29 +336,111 @@ PROGRAM{
     TRUE
     SWAP
     1 STI
-    14 -ROLL
+    5 -ROLL
     $PulsePredictionMarket$_store INLINECALLDICT
     ENDC
     c4 POP
   }>
-  $PulsePredictionMarket$_fun_startRound PROCREF:<{
-    9 3 BLKDROP2
-    s3 POP
-    0 PUSHINT
-    s3 s6 PUSH2
-    ADD
-    s1 s1 s1 PUSH3
-    s6 s7 XCHG
-    s5 s6 XCHG
-    s4 s5 XCHG
-    2 PUSHINT
-    PUSHNULL
+  $PulsePredictionMarket$_fun_isSupportedTimeframe PROCREF:<{
+        B{b5ee9c72410101010004000004354d942d7226} B>boc <s PUSHSLICE
+    s3 s(-1) PUXC
+    __tact_slice_eq INLINECALLDICT
+    IFJMP:<{
+      s2 POP
+      1 EQINT
+      IF:<{
+        300 PUSHINT
+        EQUAL
+      }>ELSE<{
+        DROP
+        FALSE
+      }>
+    }>
+        B{b5ee9c7241010101000500000631354d77a7cd92} B>boc <s PUSHSLICE
+    s3 s(-1) PUXC
+    __tact_slice_eq INLINECALLDICT
+    IFJMP:<{
+      s2 POP
+      2 EQINT
+      IF:<{
+        900 PUSHINT
+        EQUAL
+      }>ELSE<{
+        DROP
+        FALSE
+      }>
+    }>
+        B{b5ee9c7241010101000400000431485458095d} B>boc <s PUSHSLICE
+    s3 s(-1) PUXC
+    __tact_slice_eq INLINECALLDICT
+    IFJMP:<{
+      s2 POP
+      3 EQINT
+      IF:<{
+        3600 PUSHINT
+        EQUAL
+      }>ELSE<{
+        DROP
+        FALSE
+      }>
+    }>
+        B{b5ee9c724101010100040000043448ffa12100} B>boc <s PUSHSLICE
+    s3 s(-1) PUXC
+    __tact_slice_eq INLINECALLDICT
+    IFJMP:<{
+      s2 POP
+      4 EQINT
+      IF:<{
+        14400 PUSHINT
+        EQUAL
+      }>ELSE<{
+        DROP
+        FALSE
+      }>
+    }>
+        B{b5ee9c72410101010004000004314484974a10} B>boc <s PUSHSLICE
+    s1 s3 XCHG
+    __tact_slice_eq INLINECALLDICT
+    IFJMP:<{
+      5 EQINT
+      IF:<{
+        86400 PUSHINT
+        EQUAL
+      }>ELSE<{
+        DROP
+        FALSE
+      }>
+    }>
+    2DROP
+    FALSE
+  }>
+  $PulsePredictionMarket$_fun_deriveRoundKey PROCREF:<{
+        NEWC
+    s0 s3 XCHG2
+        STSLICER
+    8 STU
+    32 STU
+        ENDC
+        HASHCU
+  }>
+  $PulsePredictionMarket$_fun_derivePositionKey PROCREF:<{
+        NEWC
+    s0 s4 XCHG2
+        STSLICER
+    ROT
+        STSLICER
+    8 STU
+    32 STU
+        ENDC
+        HASHCU
   }>
   $PulsePredictionMarket$_fun_requireAdmin PROCREF:<{
     47541 PUSHINT
-    s1 s15 XCPU
+    s1 s6 XCPU
     SDEQ
     THROWANYIFNOT
+  }>
+  $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result PROCINLINE:<{
   }>
   $Position$_constructor_upStake_downStake_claimed PROCINLINE:<{
   }>
@@ -304,11 +468,11 @@ PROGRAM{
     s0 s2 XCHG
     __tact_context_sender SETGLOB
     $PulsePredictionMarket$_contract_load INLINECALLDICT
-    s0 s15 XCHG
+    s0 s6 XCHG
     IFJMP:<{
-      15 BLKDROP
+      6 BLKDROP
     }>
-    s0 s13 XCHG
+    s0 s4 XCHG
     32 LDUQ 130 THROWIFNOT
     OVER
     1347764785 PUSHINT
@@ -323,73 +487,159 @@ PROGRAM{
       SWAP
       CTOS
       SWAP
+      LDREF
+      DROP
+      CTOS
+      LDREF
+      SWAP
+      CTOS
+      SWAP
+      LDMSGADDR
+      LDREF
+      SWAP
+      CTOS
+      SWAP
+      8 LDU
+      32 LDU
+      32 LDU
       8 LDU
       DROP
           NOW
-      s9 PUSH
-      3 EQINT
-      IF:<{
-        TRUE
-      }>ELSE<{
-        s9 PUSH
-        2 EQINT
-      }>
-      IF:<{
-        s14 s15 XCHG
-        s13 s15 XCHG
-        s12 s15 XCHG
-        s11 s15 XCHG
-        s10 s15 XCHG
-        s9 s15 XCHG
-        s8 s15 XCHG
-        s7 s15 XCHG
-        s6 s15 XCHG
-        s5 s15 XCHG
-        s4 s15 XCHG
-        s3 s15 XCHG
-        s2 16 s() XCHG
-        s1 17 s() XCHG
-        s15 s(-1) PUXC
-        s0 17 s() XCHG
-        17 s() PUSH
-        $PulsePredictionMarket$_fun_startRound INLINECALLDICT
-        s0 16 s() XCHG
-        s1 s15 XCHG
-        s13 s14 XCHG
-        s12 s13 XCHG
-        s11 s12 XCHG
-        s10 s11 XCHG
-        s9 s10 XCHG
-        s8 s9 XCHG
-        s7 s8 XCHG
-        s6 s7 XCHG
-        s5 s6 XCHG
-        s4 s5 XCHG
-        s3 s4 XCHG
-        s2 s3 XCHG
-      }>ELSE<{
-        s2 POP
-      }>
-      s10 PUSH
-      36840 PUSHINT
-      s0 s4 XCHG
-      __tact_slice_eq INLINECALLDICT
-      s1 s3 XCHG
-      THROWANYIFNOT
-      15520 PUSHINT
-      s8 PUSH
-      0 EQINT
-      THROWANYIFNOT
-      55144 PUSHINT
-      s1 s6 XCPU
-      LEQ
-      THROWANYIFNOT
+      s2 s3 PUSH2
+      ADD
+      s4 s13 XCHG
+      s3 s12 XCHG
+      s11 s14 s15 XCHG3
+      s7 s5 s12 PUSH3
+      $PulsePredictionMarket$_fun_deriveRoundKey INLINECALLDICT
+      __tact_context_get_sender INLINECALLDICT
+      s1 s6 XCHG
+      s1 s5 XCHG
+      s1 s4 XCHG
+      s3 s3 s0 XCHG3
+      s9 s7 s14 PUSH3
+      $PulsePredictionMarket$_fun_derivePositionKey INLINECALLDICT
       32630 PUSHINT
       __tact_context_get INLINECALLDICT
       $Context$_get_value INLINECALLDICT
       0 GTINT
       THROWANYIFNOT
+      32540 PUSHINT
+      s15 PUSH
+      0 GTINT
+      THROWANYIFNOT
+      4 2 BLKSWAP
+      41035 PUSHINT
+      s6 s9 s8 XCPU2
+      18 s() PUSH
+      $PulsePredictionMarket$_fun_isSupportedTimeframe INLINECALLDICT
+      s1 s7 XCHG
+      THROWANYIFNOT
+      50155 PUSHINT
+      17 s() PUSH
+      16 s() PUSH
+      GEQ
+      THROWANYIFNOT
+      55144 PUSHINT
+      s0 17 s() XCHG
+      18 s() PUSH
+      LEQ
+      s1 17 s() XCHG
+      THROWANYIFNOT
+      s15 PUSH
+      8 PUSHPOW2
+      s7 PUSH
+      __tact_dict_get_uint_cell INLINECALLDICT
+      $Round$_load_opt INLINECALLDICT
       DUP
+      ISNULL
+      IF:<{
+        DROP
+        0 PUSHINT
+        s0 s0 s0 PUSH3
+        s6 s15 XCHG
+        2 PUSHINT
+        s15 PUSH
+        s0 s7 XCHG
+        s6 s15 XCHG
+        s14 PUSH
+        s6 s14 XCPU
+        s6 s14 XCPU
+        s0 s6 XCHG
+        s5 23 s() XCHG
+        s2 s4 XCHG
+        22 s() PUSH
+        s0 s4 XCHG
+        26 s() PUSH
+        s0 s4 XCHG
+        s1 25 s() XCHG
+        $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result INLINECALLDICT
+        $Round$_as_optional INLINECALLDICT
+        s0 s7 XCHG
+        s0 s9 XCHG
+      }>ELSE<{
+        s2 s15 XCHG
+        s10 POP
+        s11 POP
+        DROP
+      }>
+      29972 PUSHINT
+      s8 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_marketId INLINECALLDICT
+      s0 s10 XCHG2
+      __tact_slice_eq INLINECALLDICT
+      s1 s9 XCHG
+      THROWANYIFNOT
+      55591 PUSHINT
+      s7 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_timeframeId INLINECALLDICT
+      s0 s6 XCHG2
+      __tact_slice_eq INLINECALLDICT
+      s1 s5 XCHG
+      THROWANYIFNOT
+      22522 PUSHINT
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_timeframeCode INLINECALLDICT
+      s0 s4 XCHG2
+      EQUAL
+      s1 s3 XCHG
+      THROWANYIFNOT
+      23269 PUSHINT
+      s5 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_token INLINECALLDICT
+      s0 s5 XCHG2
+      SDEQ
+      s1 s4 XCHG
+      THROWANYIFNOT
+      12897 PUSHINT
+      s4 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_openedAt INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
+      THROWANYIFNOT
+      24418 PUSHINT
+      s3 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_closesAt INLINECALLDICT
+      s0 s11 XCHG2
+      EQUAL
+      s1 s10 XCHG
+      THROWANYIFNOT
+      15520 PUSHINT
+      s2 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_status INLINECALLDICT
+      0 EQINT
+      THROWANYIFNOT
+      SWAP
+      $Round$_not_null INLINECALLDICT
+      17 s() PUSH
       1 EQINT
       IF:<{
         __tact_context_get INLINECALLDICT
@@ -403,11 +653,10 @@ PROGRAM{
         ADD
         ROT
       }>
-      267 PUSHINT
-      __tact_context_get_sender INLINECALLDICT
-      16 s() PUSH
-      -ROT
-      __tact_dict_get_slice_cell INLINECALLDICT
+      18 s() PUSH
+      8 PUSHPOW2
+      23 s() PUSH
+      __tact_dict_get_uint_cell INLINECALLDICT
       $Position$_load_opt INLINECALLDICT
       DUP
       ISNULL
@@ -420,7 +669,7 @@ PROGRAM{
       }>ELSE<{
         $Position$_not_null INLINECALLDICT
       }>
-      s0 s5 XCHG
+      s0 20 s() XCHG
       1 EQINT
       IF:<{
         __tact_context_get INLINECALLDICT
@@ -433,25 +682,35 @@ PROGRAM{
         ADD
         SWAP
       }>
-      267 PUSHINT
-      __tact_context_get_sender INLINECALLDICT
-      s3 s6 XCHG2
+      8 PUSHPOW2
+      s0 20 s() XCHG
+      s1 s2 XCHG
       NEWC
       $Position$_store_cell INLINECALLDICT
-      s3 16 s() XCHG
-      s1 s4 s0 XCHG3
-      __tact_dict_set_slice_cell INLINECALLDICT
-      s11 s13 XCHG
-      s10 s12 XCHG
-      s9 s11 XCHG
-      s8 s10 XCHG
-      s7 s9 XCHG
-      s6 s8 XCHG
-      s5 s7 XCHG
-      s4 s6 XCHG
-      s3 s5 XCHG
-      s4 s3 s0 XCHG3
-      s1 s2 XCHG
+      s3 19 s() XCHG
+      s2 18 s() XCHG
+      s1 22 s() XCHG
+      __tact_dict_set_uint_cell INLINECALLDICT
+      s11 s12 XCHG
+      s10 s11 XCHG
+      s9 s10 XCHG
+      s8 s9 XCHG
+      s7 s8 XCHG
+      s6 s7 XCHG
+      s5 s6 XCHG
+      s4 s5 XCHG
+      s3 s4 XCHG
+      s1 s3 s0 XCHG3
+      s1 19 s() XCHG
+      s0 s15 XCHG
+      8 PUSHPOW2
+      s0 17 s() XCHG
+      NEWC
+      $Round$_store_cell INLINECALLDICT
+      s3 s6 XCHG
+      s4 s7 s0 XCHG3
+      __tact_dict_set_uint_cell INLINECALLDICT
+      3 ROLL
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
     OVER
@@ -460,45 +719,89 @@ PROGRAM{
     IFJMP:<{
       NIP
       LDREF
-      DROP
+      SWAP
       CTOS
+      SWAP
+      LDMSGADDR
+      8 LDU
+      32 LDU
+      DROP
       __tact_context_get_sender INLINECALLDICT
-      s13 s14 XCHG
-      s12 s13 XCHG
-      s11 s12 XCHG
-      s10 s11 XCHG
-      s9 s10 XCHG
-      s8 s9 XCHG
-      s7 s8 XCHG
-      s6 s7 XCHG
-      s5 s6 XCHG
-      s4 s5 XCHG
-      s3 s4 XCHG
-      s3 s15 s0 XCHG3
+      s5 s7 XCHG
+      9 1 REVERSE
       $PulsePredictionMarket$_fun_requireAdmin INLINECALLDICT
-      s9 PUSH
+      s6 s7 s8 PUSH3
+      $PulsePredictionMarket$_fun_deriveRoundKey INLINECALLDICT
+      s2 PUSH
+      8 PUSHPOW2
+      s2 PUSH
+      __tact_dict_get_uint_cell INLINECALLDICT
+      $Round$_load_opt INLINECALLDICT
       35659 PUSHINT
-      s0 16 s() XCHG
+      OVER
+      ISNULL
+      NOT
+      THROWANYIFNOT
+      5068 PUSHINT
+      OVER
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_roundId INLINECALLDICT
+      s0 s9 XCHG2
       __tact_slice_eq INLINECALLDICT
-      s1 s15 XCHG
+      s1 s8 XCHG
+      THROWANYIFNOT
+      23269 PUSHINT
+      s7 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_token INLINECALLDICT
+      s0 s9 XCHG2
+      SDEQ
+      s1 s8 XCHG
+      THROWANYIFNOT
+      22522 PUSHINT
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_timeframeCode INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
+      THROWANYIFNOT
+      52356 PUSHINT
+      s5 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_openedAt INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
       THROWANYIFNOT
       32385 PUSHINT
-      s0 s7 XCHG
+      s4 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_status INLINECALLDICT
       0 EQINT
-      s1 s7 XCHG
       THROWANYIFNOT
+      s0 s3 XCHG
+      $Round$_not_null INLINECALLDICT
+      s6 POP
       s11 s12 XCHG
-      s10 s11 XCHG
-      s9 s10 XCHG
-      s8 s9 XCHG
-      s7 s8 XCHG
-      s6 s7 XCHG
+      s10 s12 XCHG
+      s9 s12 XCHG
+      s8 s12 XCHG
+      s7 s12 XCHG
+      s6 s12 XCHG
+      s5 s12 XCHG
       1 PUSHINT
-      s0 s7 XCHG
-      s5 s6 XCHG
-      s4 s5 XCHG
-      s3 s4 XCHG
-      s1 s3 s0 XCHG3
+      s0 s5 XCHG
+      s0 s4 XCHG
+      s3 s1 s3 XCHG3
+      8 PUSHPOW2
+      s2 s14 XCHG2
+      NEWC
+      $Round$_store_cell INLINECALLDICT
+      s3 s7 XCHG
+      s1 s5 s0 XCHG3
+      __tact_dict_set_uint_cell INLINECALLDICT
+      3 ROLL
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
     OVER
@@ -510,37 +813,84 @@ PROGRAM{
       SWAP
       CTOS
       SWAP
+      LDMSGADDR
+      8 LDU
+      32 LDU
       8 LDU
       DROP
       __tact_context_get_sender INLINECALLDICT
-      s2 s15 XCHG
-      s1 16 s() XCHG
+      s5 s8 XCHG
+      s4 s7 XCHG
+      s3 s6 XCHG
+      s9 s10 s0 XCHG3
       $PulsePredictionMarket$_fun_requireAdmin INLINECALLDICT
-      NIP
-      s3 POP
-      s7 PUSH
+      s6 s5 s8 PUSH3
+      $PulsePredictionMarket$_fun_deriveRoundKey INLINECALLDICT
+      s2 PUSH
+      8 PUSHPOW2
+      s2 PUSH
+      __tact_dict_get_uint_cell INLINECALLDICT
+      $Round$_load_opt INLINECALLDICT
       35659 PUSHINT
-      s0 s14 XCHG
+      OVER
+      ISNULL
+      NOT
+      THROWANYIFNOT
+      5068 PUSHINT
+      OVER
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_roundId INLINECALLDICT
+      s0 s11 XCHG2
       __tact_slice_eq INLINECALLDICT
-      s1 s13 XCHG
+      s1 s10 XCHG
+      THROWANYIFNOT
+      23269 PUSHINT
+      s9 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_token INLINECALLDICT
+      s0 s9 XCHG2
+      SDEQ
+      s1 s8 XCHG
+      THROWANYIFNOT
+      22522 PUSHINT
+      s8 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_timeframeCode INLINECALLDICT
+      s0 s7 XCHG2
+      EQUAL
+      s1 s6 XCHG
+      THROWANYIFNOT
+      52356 PUSHINT
+      s7 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_openedAt INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
       THROWANYIFNOT
       59719 PUSHINT
-      s0 s5 XCHG
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_status INLINECALLDICT
       1 EQINT
-      s1 s5 XCHG
       THROWANYIFNOT
+      s0 s5 XCHG
+      $Round$_not_null INLINECALLDICT
+      DROP
+      s2 POP
+      s4 POP
       2 PUSHINT
           NOW
-      s11 s13 XCHG
-      s10 s12 XCHG
-      s9 s11 XCHG
-      s8 s10 XCHG
-      s7 s9 XCHG
-      s6 s8 XCHG
-      s1 s7 XCHG
-      s4 s6 XCHG
-      s3 s5 XCHG
-      s4 s1 s4 XCHG3
+      s1 s5 XCHG
+      8 PUSHPOW2
+      s0 20 s() XCHG
+      s1 s3 XCHG
+      NEWC
+      $Round$_store_cell INLINECALLDICT
+      s3 s6 XCHG
+      s7 s4 s0 XCHG3
+      __tact_dict_set_uint_cell INLINECALLDICT
+      s0 s3 XCHG2
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
     SWAP
@@ -548,22 +898,75 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       LDREF
-      DROP
+      SWAP
       CTOS
-      s8 PUSH
+      SWAP
+      LDMSGADDR
+      8 LDU
+      32 LDU
+      DROP
+      s4 s6 XCHG
+      9 0 REVERSE
+      s6 s7 s8 PUSH3
+      $PulsePredictionMarket$_fun_deriveRoundKey INLINECALLDICT
+      __tact_context_get_sender INLINECALLDICT
+      s1 s6 XCHG
+      s1 s5 XCHG
+      s1 s4 XCHG
+      s3 s3 s0 XCHG3
+      s8 s9 s10 PUSH3
+      $PulsePredictionMarket$_fun_derivePositionKey INLINECALLDICT
+      8 PUSHPOW2
+      s3 s0 s7 PUXC2
+      __tact_dict_get_uint_cell INLINECALLDICT
+      $Round$_load_opt INLINECALLDICT
       35659 PUSHINT
-      s0 s2 XCHG
+      OVER
+      ISNULL
+      NOT
+      THROWANYIFNOT
+      5068 PUSHINT
+      OVER
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_roundId INLINECALLDICT
+      s0 s9 XCHG2
       __tact_slice_eq INLINECALLDICT
+      s1 s8 XCHG
+      THROWANYIFNOT
+      23269 PUSHINT
+      s7 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_token INLINECALLDICT
+      s0 s9 XCHG2
+      SDEQ
+      s1 s8 XCHG
+      THROWANYIFNOT
+      22522 PUSHINT
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_timeframeCode INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
+      THROWANYIFNOT
+      52356 PUSHINT
+      s5 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_openedAt INLINECALLDICT
+      s0 s9 XCHG2
+      EQUAL
+      s1 s8 XCHG
       THROWANYIFNOT
       61822 PUSHINT
-      s6 PUSH
+      s4 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_status INLINECALLDICT
       2 EQINT
       THROWANYIFNOT
-      267 PUSHINT
-      __tact_context_get_sender INLINECALLDICT
-      s15 PUSH
-      -ROT
-      __tact_dict_get_slice_cell INLINECALLDICT
+      s4 PUSH
+      8 PUSHPOW2
+      s4 PUSH
+      __tact_dict_get_uint_cell INLINECALLDICT
       $Position$_load_opt INLINECALLDICT
       19900 PUSHINT
       OVER
@@ -576,7 +979,9 @@ PROGRAM{
       $Position$_get_claimed INLINECALLDICT
       NOT
       THROWANYIFNOT
-      s13 PUSH
+      s4 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_result INLINECALLDICT
       1 EQINT
       IF:<{
         DUP
@@ -591,42 +996,53 @@ PROGRAM{
       OVER
       0 GTINT
       THROWANYIFNOT
-      2OVER
+      s5 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_totalUp INLINECALLDICT
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_totalDown INLINECALLDICT
       ADD
-      s15 PUSH
+      s6 PUSH
+      $Round$_not_null INLINECALLDICT
+      $Round$_get_result INLINECALLDICT
       1 EQINT
       IF:<{
-        s4 PUSH
+        s0 s6 XCHG
+        $Round$_not_null INLINECALLDICT
+        $Round$_get_totalUp INLINECALLDICT
       }>ELSE<{
-        s3 PUSH
+        s0 s6 XCHG
+        $Round$_not_null INLINECALLDICT
+        $Round$_get_totalDown INLINECALLDICT
       }>
       63018 PUSHINT
       OVER
       0 GTINT
       THROWANYIFNOT
-      -ROT
+      s0 s6 XCHG
       MUL
-      SWAP
+      s0 s5 XCHG2
       DIV
-      s0 s11 PUSH2
+      s0 s1 PUSH2
       MUL
       10000 PUSHINT
       DIV
       SUB
-      SWAP
+      s0 s4 XCHG
       $Position$_not_null INLINECALLDICT
       DROP
       TRUE
-      267 PUSHINT
-      __tact_context_get_sender INLINECALLDICT
-      s4 s3 s4 XCHG3
+      s0 s2 XCHG
+      8 PUSHPOW2
+      s2 s3 XCHG2
       NEWC
       $Position$_store_cell INLINECALLDICT
-      s3 17 s() XCHG
-      s1 s2 XCHG
-      __tact_dict_set_slice_cell INLINECALLDICT
+      s3 s6 XCHG
+      s1 s4 s0 XCHG3
+      __tact_dict_set_uint_cell INLINECALLDICT
       __tact_context_get_sender INLINECALLDICT
-      s0 s15 XCHG2
+      s0 s3 XCHG2
       2 PUSHINT
       $SendParameters$_constructor_to_value_mode INLINECALLDICT
           NEWC
@@ -695,11 +1111,10 @@ PROGRAM{
           // Group 5: Sending the message, with `mode` on top
           SWAP
           SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-      s11 s13 XCHG
-      2 11 BLKSWAP
+      s4 s3 s3 XCHG3
       $PulsePredictionMarket$_contract_store INLINECALLDICT
     }>
-    15 BLKDROP
+    6 BLKDROP
     130 THROW
   }>
   __tact_selector_hack PROC:<{

@@ -11,6 +11,13 @@ import {
   getPredictionTreasuryAddress,
   isPredictionContractModeEnabled,
 } from "@/lib/prediction-config";
+import {
+  buildPredictionTokenRoundId,
+  getPredictionTimeframeCode,
+  getPredictionTimeframeSeconds,
+  parsePredictionTokenMarketId,
+  resolvePredictionRoundStartTimestamp,
+} from "@/lib/prediction-timeframes";
 
 export function buildPredictionTransferComment(input: {
   pairId: string;
@@ -48,11 +55,28 @@ export function buildPredictionTransferMessage(input: {
   direction: PredictionDirection;
   amountTon: number | string;
 }) {
-  if (isPredictionContractModeEnabled()) {
+  const parsedMarket = parsePredictionTokenMarketId(input.pairId);
+
+  if (isPredictionContractModeEnabled() && parsedMarket) {
+    const roundStartTimestamp = resolvePredictionRoundStartTimestamp(
+      parsedMarket.timeframe,
+    );
+
     return buildPredictionPlaceBetTransferMessage({
       contractAddress: getPredictionMarketAddress(),
+      roundId: buildPredictionTokenRoundId(
+        parsedMarket.contractAddress,
+        parsedMarket.timeframe,
+      ),
       marketId: input.pairId,
       label: input.label,
+      tokenAddress: parsedMarket.contractAddress,
+      timeframeId: parsedMarket.timeframe,
+      timeframeCode: getPredictionTimeframeCode(parsedMarket.timeframe),
+      roundDurationSeconds: getPredictionTimeframeSeconds(
+        parsedMarket.timeframe,
+      ),
+      roundStartTimestamp,
       direction: input.direction,
       amountTon: input.amountTon,
     });

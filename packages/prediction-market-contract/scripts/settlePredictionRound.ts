@@ -2,7 +2,11 @@ import type { NetworkProvider } from "@ton/blueprint";
 import { toNano } from "@ton/core";
 
 import { PulsePredictionMarket } from "../build/PulsePredictionMarket/tact_PulsePredictionMarket.js";
-import { resolveContractAddress, resolveMarketId } from "./_helpers.js";
+import {
+  parsePredictionRoundId,
+  resolveContractAddress,
+  resolveRoundId,
+} from "./_helpers.js";
 
 export async function run(provider: NetworkProvider) {
   const ui = provider.ui();
@@ -10,7 +14,8 @@ export async function run(provider: NetworkProvider) {
     ui,
     process.env.NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS,
   );
-  const marketId = await resolveMarketId(ui, process.env.PREDICTION_MARKET_ID);
+  const roundId = await resolveRoundId(ui, process.env.PREDICTION_ROUND_ID);
+  const round = parsePredictionRoundId(roundId);
   const result = await ui.choose(
     "Settlement result",
     ["up", "down"] as const,
@@ -21,17 +26,20 @@ export async function run(provider: NetworkProvider) {
     PulsePredictionMarket.fromAddress(contractAddress),
   );
 
-  ui.setActionPrompt(`Settling round ${marketId} as ${result}...`);
+  ui.setActionPrompt(`Settling round ${roundId} as ${result}...`);
   await contract.send(
     provider.sender(),
     { value: toNano("0.03") },
     {
       $$type: "SettleRound",
-      marketId,
+      roundId,
+      token: round.token,
+      timeframeCode: round.timeframeCode,
+      roundStartTimestamp: round.roundStartTimestamp,
       result: result === "up" ? 1n : 0n,
     },
   );
   ui.clearActionPrompt();
 
-  ui.write(`SettleRound sent for ${marketId} with result ${result}.`);
+  ui.write(`SettleRound sent for ${roundId} with result ${result}.`);
 }

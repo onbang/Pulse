@@ -570,16 +570,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const getComments = (poolId: string) => store.comments[poolId] ?? [];
   const getPrediction = (pairId: string) => store.predictions[pairId] ?? null;
   const userBets = walletAddress
-    ? Object.entries(store.predictions)
-        .flatMap(([pairId, prediction]) =>
-          prediction.bets
-            .filter((bet) => bet.walletAddress === walletAddress)
-            .map((bet) => ({
-              ...bet,
-              pairId,
-              pairLabel: prediction.label,
-            })),
-        )
+    ? store.predictionHistory
+        .filter((bet) => bet.walletAddress === walletAddress)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
 

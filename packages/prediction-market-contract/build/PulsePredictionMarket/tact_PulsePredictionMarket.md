@@ -1,9 +1,9 @@
 # Tact compilation report
 Contract: PulsePredictionMarket
-BoC Size: 1101 bytes
+BoC Size: 2094 bytes
 
 ## Structures (Structs and Messages)
-Total structures: 16
+Total structures: 17
 
 ### DataSize
 TL-B: `_ cells:int257 bits:int257 refs:int257 = DataSize`
@@ -46,28 +46,32 @@ TL-B: `_ hash:Maybe int257 = BasechainAddress`
 Signature: `BasechainAddress{hash:Maybe int257}`
 
 ### PlaceBet
-TL-B: `place_bet#50554231 marketId:^string marketLabel:^string direction:uint8 = PlaceBet`
-Signature: `PlaceBet{marketId:^string,marketLabel:^string,direction:uint8}`
+TL-B: `place_bet#50554231 roundId:^string marketId:^string marketLabel:^string token:address timeframeId:^string timeframeCode:uint8 roundDurationSeconds:uint32 roundStartTimestamp:uint32 direction:uint8 = PlaceBet`
+Signature: `PlaceBet{roundId:^string,marketId:^string,marketLabel:^string,token:address,timeframeId:^string,timeframeCode:uint8,roundDurationSeconds:uint32,roundStartTimestamp:uint32,direction:uint8}`
 
 ### CloseRound
-TL-B: `close_round#50554331 marketId:^string = CloseRound`
-Signature: `CloseRound{marketId:^string}`
+TL-B: `close_round#50554331 roundId:^string token:address timeframeCode:uint8 roundStartTimestamp:uint32 = CloseRound`
+Signature: `CloseRound{roundId:^string,token:address,timeframeCode:uint8,roundStartTimestamp:uint32}`
 
 ### SettleRound
-TL-B: `settle_round#50555331 marketId:^string result:uint8 = SettleRound`
-Signature: `SettleRound{marketId:^string,result:uint8}`
+TL-B: `settle_round#50555331 roundId:^string token:address timeframeCode:uint8 roundStartTimestamp:uint32 result:uint8 = SettleRound`
+Signature: `SettleRound{roundId:^string,token:address,timeframeCode:uint8,roundStartTimestamp:uint32,result:uint8}`
 
 ### Claim
-TL-B: `claim#50555031 marketId:^string = Claim`
-Signature: `Claim{marketId:^string}`
+TL-B: `claim#50555031 roundId:^string token:address timeframeCode:uint8 roundStartTimestamp:uint32 = Claim`
+Signature: `Claim{roundId:^string,token:address,timeframeCode:uint8,roundStartTimestamp:uint32}`
+
+### Round
+TL-B: `_ roundId:^string marketId:^string marketLabel:^string token:address timeframeId:^string timeframeCode:uint8 roundDurationSeconds:uint32 status:uint8 openedAt:uint32 closesAt:uint32 settledAt:uint32 totalUp:coins totalDown:coins result:uint8 = Round`
+Signature: `Round{roundId:^string,marketId:^string,marketLabel:^string,token:address,timeframeId:^string,timeframeCode:uint8,roundDurationSeconds:uint32,status:uint8,openedAt:uint32,closesAt:uint32,settledAt:uint32,totalUp:coins,totalDown:coins,result:uint8}`
 
 ### Position
 TL-B: `_ upStake:coins downStake:coins claimed:bool = Position`
 Signature: `Position{upStake:coins,downStake:coins,claimed:bool}`
 
 ### PulsePredictionMarket$Data
-TL-B: `_ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 deploymentNonce:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket`
-Signature: `PulsePredictionMarket{admin:address,roundDurationSeconds:int257,protocolFeeBps:int257,deploymentNonce:int257,marketId:^string,marketLabel:^string,status:int257,openedAt:int257,closesAt:int257,settledAt:int257,totalUp:coins,totalDown:coins,result:int257,positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}>}`
+TL-B: `_ admin:address protocolFeeBps:uint16 deploymentNonce:int257 rounds:dict<uint256, ^Round{roundId:^string,marketId:^string,marketLabel:^string,token:address,timeframeId:^string,timeframeCode:uint8,roundDurationSeconds:uint32,status:uint8,openedAt:uint32,closesAt:uint32,settledAt:uint32,totalUp:coins,totalDown:coins,result:uint8}> positions:dict<uint256, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket`
+Signature: `PulsePredictionMarket{admin:address,protocolFeeBps:uint16,deploymentNonce:int257,rounds:dict<uint256, ^Round{roundId:^string,marketId:^string,marketLabel:^string,token:address,timeframeId:^string,timeframeCode:uint8,roundDurationSeconds:uint32,status:uint8,openedAt:uint32,closesAt:uint32,settledAt:uint32,totalUp:coins,totalDown:coins,result:uint8}>,positions:dict<uint256, ^Position{upStake:coins,downStake:coins,claimed:bool}>}`
 
 ## Get methods
 Total get methods: 0
@@ -109,16 +113,26 @@ Total get methods: 0
 * 135: Code of a contract was not found
 * 136: Invalid standard address
 * 138: Not a basechain address
+* 5068: round_id_mismatch
+* 12897: round_mismatch
 * 15520: round_closed
 * 19900: position_not_found
+* 22522: timeframe_code_mismatch
+* 23269: token_mismatch
+* 24418: round_duration_mismatch
+* 29972: market_mismatch
 * 32385: round_not_open
+* 32540: round_start_required
 * 32630: stake_required
 * 35659: round_not_found
-* 36840: another_round_active
+* 41035: invalid_timeframe
 * 45634: already_claimed
 * 45775: no_winning_position
 * 47541: admin_only
+* 50155: round_not_started
+* 52356: round_start_mismatch
 * 55144: round_expired
+* 55591: timeframe_mismatch
 * 59719: round_not_closed
 * 61822: round_not_settled
 * 63018: invalid_winner_pool

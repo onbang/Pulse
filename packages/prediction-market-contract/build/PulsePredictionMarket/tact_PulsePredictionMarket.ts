@@ -775,8 +775,14 @@ export function dictValueParserBasechainAddress(): DictionaryValue<BasechainAddr
 
 export type PlaceBet = {
   $$type: "PlaceBet";
+  roundId: string;
   marketId: string;
   marketLabel: string;
+  token: Address;
+  timeframeId: string;
+  timeframeCode: bigint;
+  roundDurationSeconds: bigint;
+  roundStartTimestamp: bigint;
   direction: bigint;
 };
 
@@ -784,9 +790,17 @@ export function storePlaceBet(src: PlaceBet) {
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeUint(1347764785, 32);
+    b_0.storeStringRefTail(src.roundId);
     b_0.storeStringRefTail(src.marketId);
-    b_0.storeStringRefTail(src.marketLabel);
-    b_0.storeUint(src.direction, 8);
+    const b_1 = new Builder();
+    b_1.storeStringRefTail(src.marketLabel);
+    b_1.storeAddress(src.token);
+    b_1.storeStringRefTail(src.timeframeId);
+    b_1.storeUint(src.timeframeCode, 8);
+    b_1.storeUint(src.roundDurationSeconds, 32);
+    b_1.storeUint(src.roundStartTimestamp, 32);
+    b_1.storeUint(src.direction, 8);
+    b_0.storeRef(b_1.endCell());
   };
 }
 
@@ -795,45 +809,88 @@ export function loadPlaceBet(slice: Slice) {
   if (sc_0.loadUint(32) !== 1347764785) {
     throw Error("Invalid prefix");
   }
+  const _roundId = sc_0.loadStringRefTail();
   const _marketId = sc_0.loadStringRefTail();
-  const _marketLabel = sc_0.loadStringRefTail();
-  const _direction = sc_0.loadUintBig(8);
+  const sc_1 = sc_0.loadRef().beginParse();
+  const _marketLabel = sc_1.loadStringRefTail();
+  const _token = sc_1.loadAddress();
+  const _timeframeId = sc_1.loadStringRefTail();
+  const _timeframeCode = sc_1.loadUintBig(8);
+  const _roundDurationSeconds = sc_1.loadUintBig(32);
+  const _roundStartTimestamp = sc_1.loadUintBig(32);
+  const _direction = sc_1.loadUintBig(8);
   return {
     $$type: "PlaceBet" as const,
+    roundId: _roundId,
     marketId: _marketId,
     marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    roundStartTimestamp: _roundStartTimestamp,
     direction: _direction,
   };
 }
 
 export function loadTuplePlaceBet(source: TupleReader) {
+  const _roundId = source.readString();
   const _marketId = source.readString();
   const _marketLabel = source.readString();
+  const _token = source.readAddress();
+  const _timeframeId = source.readString();
+  const _timeframeCode = source.readBigNumber();
+  const _roundDurationSeconds = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
   const _direction = source.readBigNumber();
   return {
     $$type: "PlaceBet" as const,
+    roundId: _roundId,
     marketId: _marketId,
     marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    roundStartTimestamp: _roundStartTimestamp,
     direction: _direction,
   };
 }
 
 export function loadGetterTuplePlaceBet(source: TupleReader) {
+  const _roundId = source.readString();
   const _marketId = source.readString();
   const _marketLabel = source.readString();
+  const _token = source.readAddress();
+  const _timeframeId = source.readString();
+  const _timeframeCode = source.readBigNumber();
+  const _roundDurationSeconds = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
   const _direction = source.readBigNumber();
   return {
     $$type: "PlaceBet" as const,
+    roundId: _roundId,
     marketId: _marketId,
     marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    roundStartTimestamp: _roundStartTimestamp,
     direction: _direction,
   };
 }
 
 export function storeTuplePlaceBet(source: PlaceBet) {
   const builder = new TupleBuilder();
+  builder.writeString(source.roundId);
   builder.writeString(source.marketId);
   builder.writeString(source.marketLabel);
+  builder.writeAddress(source.token);
+  builder.writeString(source.timeframeId);
+  builder.writeNumber(source.timeframeCode);
+  builder.writeNumber(source.roundDurationSeconds);
+  builder.writeNumber(source.roundStartTimestamp);
   builder.writeNumber(source.direction);
   return builder.build();
 }
@@ -851,14 +908,20 @@ export function dictValueParserPlaceBet(): DictionaryValue<PlaceBet> {
 
 export type CloseRound = {
   $$type: "CloseRound";
-  marketId: string;
+  roundId: string;
+  token: Address;
+  timeframeCode: bigint;
+  roundStartTimestamp: bigint;
 };
 
 export function storeCloseRound(src: CloseRound) {
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeUint(1347765041, 32);
-    b_0.storeStringRefTail(src.marketId);
+    b_0.storeStringRefTail(src.roundId);
+    b_0.storeAddress(src.token);
+    b_0.storeUint(src.timeframeCode, 8);
+    b_0.storeUint(src.roundStartTimestamp, 32);
   };
 }
 
@@ -867,23 +930,53 @@ export function loadCloseRound(slice: Slice) {
   if (sc_0.loadUint(32) !== 1347765041) {
     throw Error("Invalid prefix");
   }
-  const _marketId = sc_0.loadStringRefTail();
-  return { $$type: "CloseRound" as const, marketId: _marketId };
+  const _roundId = sc_0.loadStringRefTail();
+  const _token = sc_0.loadAddress();
+  const _timeframeCode = sc_0.loadUintBig(8);
+  const _roundStartTimestamp = sc_0.loadUintBig(32);
+  return {
+    $$type: "CloseRound" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function loadTupleCloseRound(source: TupleReader) {
-  const _marketId = source.readString();
-  return { $$type: "CloseRound" as const, marketId: _marketId };
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
+  return {
+    $$type: "CloseRound" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function loadGetterTupleCloseRound(source: TupleReader) {
-  const _marketId = source.readString();
-  return { $$type: "CloseRound" as const, marketId: _marketId };
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
+  return {
+    $$type: "CloseRound" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function storeTupleCloseRound(source: CloseRound) {
   const builder = new TupleBuilder();
-  builder.writeString(source.marketId);
+  builder.writeString(source.roundId);
+  builder.writeAddress(source.token);
+  builder.writeNumber(source.timeframeCode);
+  builder.writeNumber(source.roundStartTimestamp);
   return builder.build();
 }
 
@@ -900,7 +993,10 @@ export function dictValueParserCloseRound(): DictionaryValue<CloseRound> {
 
 export type SettleRound = {
   $$type: "SettleRound";
-  marketId: string;
+  roundId: string;
+  token: Address;
+  timeframeCode: bigint;
+  roundStartTimestamp: bigint;
   result: bigint;
 };
 
@@ -908,7 +1004,10 @@ export function storeSettleRound(src: SettleRound) {
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeUint(1347769137, 32);
-    b_0.storeStringRefTail(src.marketId);
+    b_0.storeStringRefTail(src.roundId);
+    b_0.storeAddress(src.token);
+    b_0.storeUint(src.timeframeCode, 8);
+    b_0.storeUint(src.roundStartTimestamp, 32);
     b_0.storeUint(src.result, 8);
   };
 }
@@ -918,38 +1017,59 @@ export function loadSettleRound(slice: Slice) {
   if (sc_0.loadUint(32) !== 1347769137) {
     throw Error("Invalid prefix");
   }
-  const _marketId = sc_0.loadStringRefTail();
+  const _roundId = sc_0.loadStringRefTail();
+  const _token = sc_0.loadAddress();
+  const _timeframeCode = sc_0.loadUintBig(8);
+  const _roundStartTimestamp = sc_0.loadUintBig(32);
   const _result = sc_0.loadUintBig(8);
   return {
     $$type: "SettleRound" as const,
-    marketId: _marketId,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
     result: _result,
   };
 }
 
 export function loadTupleSettleRound(source: TupleReader) {
-  const _marketId = source.readString();
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
   const _result = source.readBigNumber();
   return {
     $$type: "SettleRound" as const,
-    marketId: _marketId,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
     result: _result,
   };
 }
 
 export function loadGetterTupleSettleRound(source: TupleReader) {
-  const _marketId = source.readString();
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
   const _result = source.readBigNumber();
   return {
     $$type: "SettleRound" as const,
-    marketId: _marketId,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
     result: _result,
   };
 }
 
 export function storeTupleSettleRound(source: SettleRound) {
   const builder = new TupleBuilder();
-  builder.writeString(source.marketId);
+  builder.writeString(source.roundId);
+  builder.writeAddress(source.token);
+  builder.writeNumber(source.timeframeCode);
+  builder.writeNumber(source.roundStartTimestamp);
   builder.writeNumber(source.result);
   return builder.build();
 }
@@ -967,14 +1087,20 @@ export function dictValueParserSettleRound(): DictionaryValue<SettleRound> {
 
 export type Claim = {
   $$type: "Claim";
-  marketId: string;
+  roundId: string;
+  token: Address;
+  timeframeCode: bigint;
+  roundStartTimestamp: bigint;
 };
 
 export function storeClaim(src: Claim) {
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeUint(1347768369, 32);
-    b_0.storeStringRefTail(src.marketId);
+    b_0.storeStringRefTail(src.roundId);
+    b_0.storeAddress(src.token);
+    b_0.storeUint(src.timeframeCode, 8);
+    b_0.storeUint(src.roundStartTimestamp, 32);
   };
 }
 
@@ -983,23 +1109,53 @@ export function loadClaim(slice: Slice) {
   if (sc_0.loadUint(32) !== 1347768369) {
     throw Error("Invalid prefix");
   }
-  const _marketId = sc_0.loadStringRefTail();
-  return { $$type: "Claim" as const, marketId: _marketId };
+  const _roundId = sc_0.loadStringRefTail();
+  const _token = sc_0.loadAddress();
+  const _timeframeCode = sc_0.loadUintBig(8);
+  const _roundStartTimestamp = sc_0.loadUintBig(32);
+  return {
+    $$type: "Claim" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function loadTupleClaim(source: TupleReader) {
-  const _marketId = source.readString();
-  return { $$type: "Claim" as const, marketId: _marketId };
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
+  return {
+    $$type: "Claim" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function loadGetterTupleClaim(source: TupleReader) {
-  const _marketId = source.readString();
-  return { $$type: "Claim" as const, marketId: _marketId };
+  const _roundId = source.readString();
+  const _token = source.readAddress();
+  const _timeframeCode = source.readBigNumber();
+  const _roundStartTimestamp = source.readBigNumber();
+  return {
+    $$type: "Claim" as const,
+    roundId: _roundId,
+    token: _token,
+    timeframeCode: _timeframeCode,
+    roundStartTimestamp: _roundStartTimestamp,
+  };
 }
 
 export function storeTupleClaim(source: Claim) {
   const builder = new TupleBuilder();
-  builder.writeString(source.marketId);
+  builder.writeString(source.roundId);
+  builder.writeAddress(source.token);
+  builder.writeNumber(source.timeframeCode);
+  builder.writeNumber(source.roundStartTimestamp);
   return builder.build();
 }
 
@@ -1010,6 +1166,180 @@ export function dictValueParserClaim(): DictionaryValue<Claim> {
     },
     parse: (src) => {
       return loadClaim(src.loadRef().beginParse());
+    },
+  };
+}
+
+export type Round = {
+  $$type: "Round";
+  roundId: string;
+  marketId: string;
+  marketLabel: string;
+  token: Address;
+  timeframeId: string;
+  timeframeCode: bigint;
+  roundDurationSeconds: bigint;
+  status: bigint;
+  openedAt: bigint;
+  closesAt: bigint;
+  settledAt: bigint;
+  totalUp: bigint;
+  totalDown: bigint;
+  result: bigint;
+};
+
+export function storeRound(src: Round) {
+  return (builder: Builder) => {
+    const b_0 = builder;
+    b_0.storeStringRefTail(src.roundId);
+    b_0.storeStringRefTail(src.marketId);
+    const b_1 = new Builder();
+    b_1.storeStringRefTail(src.marketLabel);
+    b_1.storeAddress(src.token);
+    b_1.storeStringRefTail(src.timeframeId);
+    b_1.storeUint(src.timeframeCode, 8);
+    b_1.storeUint(src.roundDurationSeconds, 32);
+    b_1.storeUint(src.status, 8);
+    b_1.storeUint(src.openedAt, 32);
+    b_1.storeUint(src.closesAt, 32);
+    b_1.storeUint(src.settledAt, 32);
+    b_1.storeCoins(src.totalUp);
+    b_1.storeCoins(src.totalDown);
+    b_1.storeUint(src.result, 8);
+    b_0.storeRef(b_1.endCell());
+  };
+}
+
+export function loadRound(slice: Slice) {
+  const sc_0 = slice;
+  const _roundId = sc_0.loadStringRefTail();
+  const _marketId = sc_0.loadStringRefTail();
+  const sc_1 = sc_0.loadRef().beginParse();
+  const _marketLabel = sc_1.loadStringRefTail();
+  const _token = sc_1.loadAddress();
+  const _timeframeId = sc_1.loadStringRefTail();
+  const _timeframeCode = sc_1.loadUintBig(8);
+  const _roundDurationSeconds = sc_1.loadUintBig(32);
+  const _status = sc_1.loadUintBig(8);
+  const _openedAt = sc_1.loadUintBig(32);
+  const _closesAt = sc_1.loadUintBig(32);
+  const _settledAt = sc_1.loadUintBig(32);
+  const _totalUp = sc_1.loadCoins();
+  const _totalDown = sc_1.loadCoins();
+  const _result = sc_1.loadUintBig(8);
+  return {
+    $$type: "Round" as const,
+    roundId: _roundId,
+    marketId: _marketId,
+    marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    status: _status,
+    openedAt: _openedAt,
+    closesAt: _closesAt,
+    settledAt: _settledAt,
+    totalUp: _totalUp,
+    totalDown: _totalDown,
+    result: _result,
+  };
+}
+
+export function loadTupleRound(source: TupleReader) {
+  const _roundId = source.readString();
+  const _marketId = source.readString();
+  const _marketLabel = source.readString();
+  const _token = source.readAddress();
+  const _timeframeId = source.readString();
+  const _timeframeCode = source.readBigNumber();
+  const _roundDurationSeconds = source.readBigNumber();
+  const _status = source.readBigNumber();
+  const _openedAt = source.readBigNumber();
+  const _closesAt = source.readBigNumber();
+  const _settledAt = source.readBigNumber();
+  const _totalUp = source.readBigNumber();
+  const _totalDown = source.readBigNumber();
+  const _result = source.readBigNumber();
+  return {
+    $$type: "Round" as const,
+    roundId: _roundId,
+    marketId: _marketId,
+    marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    status: _status,
+    openedAt: _openedAt,
+    closesAt: _closesAt,
+    settledAt: _settledAt,
+    totalUp: _totalUp,
+    totalDown: _totalDown,
+    result: _result,
+  };
+}
+
+export function loadGetterTupleRound(source: TupleReader) {
+  const _roundId = source.readString();
+  const _marketId = source.readString();
+  const _marketLabel = source.readString();
+  const _token = source.readAddress();
+  const _timeframeId = source.readString();
+  const _timeframeCode = source.readBigNumber();
+  const _roundDurationSeconds = source.readBigNumber();
+  const _status = source.readBigNumber();
+  const _openedAt = source.readBigNumber();
+  const _closesAt = source.readBigNumber();
+  const _settledAt = source.readBigNumber();
+  const _totalUp = source.readBigNumber();
+  const _totalDown = source.readBigNumber();
+  const _result = source.readBigNumber();
+  return {
+    $$type: "Round" as const,
+    roundId: _roundId,
+    marketId: _marketId,
+    marketLabel: _marketLabel,
+    token: _token,
+    timeframeId: _timeframeId,
+    timeframeCode: _timeframeCode,
+    roundDurationSeconds: _roundDurationSeconds,
+    status: _status,
+    openedAt: _openedAt,
+    closesAt: _closesAt,
+    settledAt: _settledAt,
+    totalUp: _totalUp,
+    totalDown: _totalDown,
+    result: _result,
+  };
+}
+
+export function storeTupleRound(source: Round) {
+  const builder = new TupleBuilder();
+  builder.writeString(source.roundId);
+  builder.writeString(source.marketId);
+  builder.writeString(source.marketLabel);
+  builder.writeAddress(source.token);
+  builder.writeString(source.timeframeId);
+  builder.writeNumber(source.timeframeCode);
+  builder.writeNumber(source.roundDurationSeconds);
+  builder.writeNumber(source.status);
+  builder.writeNumber(source.openedAt);
+  builder.writeNumber(source.closesAt);
+  builder.writeNumber(source.settledAt);
+  builder.writeNumber(source.totalUp);
+  builder.writeNumber(source.totalDown);
+  builder.writeNumber(source.result);
+  return builder.build();
+}
+
+export function dictValueParserRound(): DictionaryValue<Round> {
+  return {
+    serialize: (src, builder) => {
+      builder.storeRef(beginCell().store(storeRound(src)).endCell());
+    },
+    parse: (src) => {
+      return loadRound(src.loadRef().beginParse());
     },
   };
 }
@@ -1089,19 +1419,10 @@ export function dictValueParserPosition(): DictionaryValue<Position> {
 export type PulsePredictionMarket$Data = {
   $$type: "PulsePredictionMarket$Data";
   admin: Address;
-  roundDurationSeconds: bigint;
   protocolFeeBps: bigint;
   deploymentNonce: bigint;
-  marketId: string;
-  marketLabel: string;
-  status: bigint;
-  openedAt: bigint;
-  closesAt: bigint;
-  settledAt: bigint;
-  totalUp: bigint;
-  totalDown: bigint;
-  result: bigint;
-  positions: Dictionary<Address, Position>;
+  rounds: Dictionary<bigint, Round>;
+  positions: Dictionary<bigint, Position>;
 };
 
 export function storePulsePredictionMarket$Data(
@@ -1110,143 +1431,90 @@ export function storePulsePredictionMarket$Data(
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeAddress(src.admin);
-    b_0.storeInt(src.roundDurationSeconds, 257);
-    b_0.storeInt(src.protocolFeeBps, 257);
-    const b_1 = new Builder();
-    b_1.storeInt(src.deploymentNonce, 257);
-    b_1.storeStringRefTail(src.marketId);
-    b_1.storeStringRefTail(src.marketLabel);
-    b_1.storeInt(src.status, 257);
-    b_1.storeInt(src.openedAt, 257);
-    const b_2 = new Builder();
-    b_2.storeInt(src.closesAt, 257);
-    b_2.storeInt(src.settledAt, 257);
-    b_2.storeCoins(src.totalUp);
-    b_2.storeCoins(src.totalDown);
-    b_2.storeInt(src.result, 257);
-    b_2.storeDict(
+    b_0.storeUint(src.protocolFeeBps, 16);
+    b_0.storeInt(src.deploymentNonce, 257);
+    b_0.storeDict(
+      src.rounds,
+      Dictionary.Keys.BigUint(256),
+      dictValueParserRound(),
+    );
+    b_0.storeDict(
       src.positions,
-      Dictionary.Keys.Address(),
+      Dictionary.Keys.BigUint(256),
       dictValueParserPosition(),
     );
-    b_1.storeRef(b_2.endCell());
-    b_0.storeRef(b_1.endCell());
   };
 }
 
 export function loadPulsePredictionMarket$Data(slice: Slice) {
   const sc_0 = slice;
   const _admin = sc_0.loadAddress();
-  const _roundDurationSeconds = sc_0.loadIntBig(257);
-  const _protocolFeeBps = sc_0.loadIntBig(257);
-  const sc_1 = sc_0.loadRef().beginParse();
-  const _deploymentNonce = sc_1.loadIntBig(257);
-  const _marketId = sc_1.loadStringRefTail();
-  const _marketLabel = sc_1.loadStringRefTail();
-  const _status = sc_1.loadIntBig(257);
-  const _openedAt = sc_1.loadIntBig(257);
-  const sc_2 = sc_1.loadRef().beginParse();
-  const _closesAt = sc_2.loadIntBig(257);
-  const _settledAt = sc_2.loadIntBig(257);
-  const _totalUp = sc_2.loadCoins();
-  const _totalDown = sc_2.loadCoins();
-  const _result = sc_2.loadIntBig(257);
+  const _protocolFeeBps = sc_0.loadUintBig(16);
+  const _deploymentNonce = sc_0.loadIntBig(257);
+  const _rounds = Dictionary.load(
+    Dictionary.Keys.BigUint(256),
+    dictValueParserRound(),
+    sc_0,
+  );
   const _positions = Dictionary.load(
-    Dictionary.Keys.Address(),
+    Dictionary.Keys.BigUint(256),
     dictValueParserPosition(),
-    sc_2,
+    sc_0,
   );
   return {
     $$type: "PulsePredictionMarket$Data" as const,
     admin: _admin,
-    roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
     deploymentNonce: _deploymentNonce,
-    marketId: _marketId,
-    marketLabel: _marketLabel,
-    status: _status,
-    openedAt: _openedAt,
-    closesAt: _closesAt,
-    settledAt: _settledAt,
-    totalUp: _totalUp,
-    totalDown: _totalDown,
-    result: _result,
+    rounds: _rounds,
     positions: _positions,
   };
 }
 
 export function loadTuplePulsePredictionMarket$Data(source: TupleReader) {
   const _admin = source.readAddress();
-  const _roundDurationSeconds = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
   const _deploymentNonce = source.readBigNumber();
-  const _marketId = source.readString();
-  const _marketLabel = source.readString();
-  const _status = source.readBigNumber();
-  const _openedAt = source.readBigNumber();
-  const _closesAt = source.readBigNumber();
-  const _settledAt = source.readBigNumber();
-  const _totalUp = source.readBigNumber();
-  const _totalDown = source.readBigNumber();
-  const _result = source.readBigNumber();
+  const _rounds = Dictionary.loadDirect(
+    Dictionary.Keys.BigUint(256),
+    dictValueParserRound(),
+    source.readCellOpt(),
+  );
   const _positions = Dictionary.loadDirect(
-    Dictionary.Keys.Address(),
+    Dictionary.Keys.BigUint(256),
     dictValueParserPosition(),
     source.readCellOpt(),
   );
   return {
     $$type: "PulsePredictionMarket$Data" as const,
     admin: _admin,
-    roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
     deploymentNonce: _deploymentNonce,
-    marketId: _marketId,
-    marketLabel: _marketLabel,
-    status: _status,
-    openedAt: _openedAt,
-    closesAt: _closesAt,
-    settledAt: _settledAt,
-    totalUp: _totalUp,
-    totalDown: _totalDown,
-    result: _result,
+    rounds: _rounds,
     positions: _positions,
   };
 }
 
 export function loadGetterTuplePulsePredictionMarket$Data(source: TupleReader) {
   const _admin = source.readAddress();
-  const _roundDurationSeconds = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
   const _deploymentNonce = source.readBigNumber();
-  const _marketId = source.readString();
-  const _marketLabel = source.readString();
-  const _status = source.readBigNumber();
-  const _openedAt = source.readBigNumber();
-  const _closesAt = source.readBigNumber();
-  const _settledAt = source.readBigNumber();
-  const _totalUp = source.readBigNumber();
-  const _totalDown = source.readBigNumber();
-  const _result = source.readBigNumber();
+  const _rounds = Dictionary.loadDirect(
+    Dictionary.Keys.BigUint(256),
+    dictValueParserRound(),
+    source.readCellOpt(),
+  );
   const _positions = Dictionary.loadDirect(
-    Dictionary.Keys.Address(),
+    Dictionary.Keys.BigUint(256),
     dictValueParserPosition(),
     source.readCellOpt(),
   );
   return {
     $$type: "PulsePredictionMarket$Data" as const,
     admin: _admin,
-    roundDurationSeconds: _roundDurationSeconds,
     protocolFeeBps: _protocolFeeBps,
     deploymentNonce: _deploymentNonce,
-    marketId: _marketId,
-    marketLabel: _marketLabel,
-    status: _status,
-    openedAt: _openedAt,
-    closesAt: _closesAt,
-    settledAt: _settledAt,
-    totalUp: _totalUp,
-    totalDown: _totalDown,
-    result: _result,
+    rounds: _rounds,
     positions: _positions,
   };
 }
@@ -1256,24 +1524,25 @@ export function storeTuplePulsePredictionMarket$Data(
 ) {
   const builder = new TupleBuilder();
   builder.writeAddress(source.admin);
-  builder.writeNumber(source.roundDurationSeconds);
   builder.writeNumber(source.protocolFeeBps);
   builder.writeNumber(source.deploymentNonce);
-  builder.writeString(source.marketId);
-  builder.writeString(source.marketLabel);
-  builder.writeNumber(source.status);
-  builder.writeNumber(source.openedAt);
-  builder.writeNumber(source.closesAt);
-  builder.writeNumber(source.settledAt);
-  builder.writeNumber(source.totalUp);
-  builder.writeNumber(source.totalDown);
-  builder.writeNumber(source.result);
+  builder.writeCell(
+    source.rounds.size > 0
+      ? beginCell()
+          .storeDictDirect(
+            source.rounds,
+            Dictionary.Keys.BigUint(256),
+            dictValueParserRound(),
+          )
+          .endCell()
+      : null,
+  );
   builder.writeCell(
     source.positions.size > 0
       ? beginCell()
           .storeDictDirect(
             source.positions,
-            Dictionary.Keys.Address(),
+            Dictionary.Keys.BigUint(256),
             dictValueParserPosition(),
           )
           .endCell()
@@ -1298,7 +1567,6 @@ export function dictValueParserPulsePredictionMarket$Data(): DictionaryValue<Pul
 type PulsePredictionMarket_init_args = {
   $$type: "PulsePredictionMarket_init_args";
   admin: Address;
-  roundDurationSeconds: bigint;
   protocolFeeBps: bigint;
   deploymentNonce: bigint;
 };
@@ -1309,29 +1577,24 @@ function initPulsePredictionMarket_init_args(
   return (builder: Builder) => {
     const b_0 = builder;
     b_0.storeAddress(src.admin);
-    b_0.storeInt(src.roundDurationSeconds, 257);
     b_0.storeInt(src.protocolFeeBps, 257);
-    const b_1 = new Builder();
-    b_1.storeInt(src.deploymentNonce, 257);
-    b_0.storeRef(b_1.endCell());
+    b_0.storeInt(src.deploymentNonce, 257);
   };
 }
 
 async function PulsePredictionMarket_init(
   admin: Address,
-  roundDurationSeconds: bigint,
   protocolFeeBps: bigint,
   deploymentNonce: bigint,
 ) {
   const __code = Cell.fromHex(
-    "b5ee9c7241020d01000441000142ff00208e983001d072d721d200d200fa4021103450666f04f86102f862e1f2c80b0101feed44d0d200018e47fa40810101d700810101d700d401d0810101d700d401d001d401d001810101d700810101d700d430d0810101d700810101d700fa00fa00810101d700f4043010be10bd10bc6c1e8e28fa40810101d700810101d700d401d0810101d7003014433004d155028b088b08737054700020726de20f925f0fe00204e80dd70d1ff2e08221821050554231bae30221821050554331ba8f5031d430d0f84210de10cd10bc10ab109a10891078106710561045103443f0db3c2982008b4b111001f90101f901ba1ff2f4817e8107c00017f2f410bc10ab109a10891078106771071056104510344130e021821050555331ba03080c0702fe31d401d001d401d001d30730f82329c003917f9329c002e28ec310ef10df10cf10bf10af109f108f107f106f105f104f103f021110020111110152f011115611db3c11101f10de10cd10bc10ab109a10891078106710561045103410239132e22a82008fe80401f90101f901ba13f2f4813ca028c000f2f48200d7685116bb040500246c9333705336a0547111106710561045726d01fcf2f4817f76f8416f24135f03c200f2f420c00199f8416f24135f0313a09af8416f24135f0312a058e281010bf84256105959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e205c00199f8416f24135f0312a099f8416f24135f03a001e281010bf8425036c806016855205afa0258fa02ca00c9031110034140206e953059f45930944133f413e210bd10ac109b108a107910681057104610354430120c03ac8f4431d401d001d30730f842102f01111001db3c31332782008b4b0e01f90101f901ba1df2f48200e94705c00115f2f472f82310bd10ac109b108a1079106817104610354414e001821050555031bae3025f0ff2c082080c0900148200b9b5511fc705f2f401fed430d02882008b4b0201f90101f901baf2f48200f17e26c002f2f481010bf8422f5959f40b6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f42dc0019920206ef2d0806f235b9a20206ef2d0806f233031e28200b2cf21c200f2f45da02fc0010a02fe91249123e28200f62a21c200f2f459a801a904530ba8812710a904a101206ef2d0806f23307f81010bf8424434c855205afa0258fa02ca00c90311110312206e953059f45930944133f413e2f842500f726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf818ae2f400c901fb0010bd551a0b0c001a58cf8680cf8480f400f400cf8100aac87f01ca0055d050dece1b810101cf0019810101cf0007c8810101cf0006c8ce16cd04c8ce14cd12810101cf00810101cf0001c8810101cf0012810101cf005003fa025003fa0213810101cf0013f400cdcdc9ed5440e5f0be",
+    "b5ee9c7241021a01000822000114ff00208e8130e1f2c80b0104f001d072d721d200d200fa4021103450666f04f86102f862ed44d0d200018e11fa40d30f810101d700f404f40455406c158e13fa40810101d700810101d700552003d1586d6de206925f06e004d70d1ff2e08221821050554231bae30221821050554331bae30221821050555331bae30201821050555031ba020c0e1204fe31d401d001d401d001d430d0d401d001fa40d401d001d307d31fd31fd30730f8235323a0104d103c4bef54775cdb3cf842161514433054797edb3c817f76f8416f24135f03c200f2f4817f1c2fc200f2f455318200a04b5436985612db3c17f2f48200c3eb56115610bef2f48200d76811115612bb01111101f2f42f8307271415030602f68b2354d8523001f90101f901ba9c32c0019481012cba923070e2e08b331354d8523001f90101f901ba9c32c00294810384ba923070e2e08b231488523001f90101f901ba9c32c00394810e10ba923070e2e08b234488523001f90101f901ba9c32c00494813840ba923070e2e08b2314481301f90101f901bae30204050018c0059582015180ba923070e200045b7002fc59f40f6fa192306ddf206e92306d8e87d0db3c6c1e6f0ee2206e8e263070547000106f722f07106f2e516e516e06051117051024561604561a04011119016f0e070995102f3a3b30e281751428206ef2d0806f2e10cd5f0d500a01f90101f901ba19f2f48200d92727206ef2d0806f2e109d5f0d500601f90101f901ba15160703fcf2f48157fa26206ef2d0806f2e108d5f0d5004ba13f2f4815ae525206ef2d0806f2e10ad5f0d5005c70514f2f481326124206ef2d0806f2e105d5f0d5009ba18f2f4815f6223206ef2d0806f2e104d5f0d500bba1af2f4813ca022206ef2d0806f2e106d5f0dc000f2f401206ef2d0806f2e5611c001e30f56128307561708090a0012f8416f24135f0313a00014f8416f24135f0312a05801fe59f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e21114c00199f8416f24135f0312a099f8416f24135f03a001e28307111412c855205afa0258fa02ca00c9031113030211120201111601206e953059f45b30944133f417e210bc10ab109a10891078106710560b0184104510344130011113010f83071111c855d0db3cc910364470206e953059f45b30944133f417e25502c87f01ca0055405045ce12cb0f810101cf00f400f400c9ed541104fe31d401d001fa40d307d31f30f84210575e71db3c547678db3c2283072259f40f6fa192306ddf206e92306d8e87d0db3c6c1e6f0ee282008b4b216eb3f2f48113cc21206ef2d0806f2e5f0d500901f90101f901ba18f2f4815ae527206ef2d0806f2e10ad5f0d5009c70518f2f48157fa26206ef2d0806f2e108d5f0d5009ba0f14160d01fe18f2f48200cc8425206ef2d0806f2e105d5f0d5009ba18f2f4817e8124206ef2d0806f2e106d5f0dc000f2f403206ef2d0806f2e3610bc10ac109c108c107c106c105c71050443138307502ec855d0db3cc910374150206e953059f45b30944133f417e25502c87f01ca0055405045ce12cb0f810101cf00f400f400c9ed541104fc31d401d001fa40d307d31fd30730f84210581047103649a0db3c547658db3c2283072259f40f6fa192306ddf206e92306d8e87d0db3c6c1e6f0ee282008b4b216eb3f2f48113cc21206ef2d0806f2e5f0d500b01f90101f901ba1af2f4815ae529206ef2d0806f2e10ad5f0d5009c70518f2f48157fa28206ef2d0806f2e0f14161000148200b9b55116c705f2f401f6108d5f0d5007ba16f2f48200cc8427206ef2d0806f2e105d5f0d5009ba18f2f48200e94726206ef2d0806f2e106d5f0dc001f2f405206ef2d0806f2e30323472f823158307111413c855d0db3cc910364740206e953059f45b30944133f417e25003c87f01ca0055405045ce12cb0f810101cf00f400f400c9ed5411005e0dc8ce1ecd0bc8ce1bcdc80ac8ce1acd18ce06c8ce16cd14cb0712cb1fcb07cb1fcb1fcb1f58fa025003fa02cb07cd010ee3025f06f2c0821304f2d401d001fa40d307d31f3010465e70547678db3cf842161514433054789adb3c830754431859f40f6fa192306ddf206e92306d8e87d0db3c6c1e6f0ee282008b4b216eb3f2f48113cc21206ef2d0806f2e5f0d500901f90101f901ba18f2f4815ae527206ef2d0806f2e10ad5f0d5009c70518f2f48157fa26141516170018c85003cf16cb07cb1fc9f900001ec85004cf1658cf16cb07cb1fc9f9000058d401d001d401d001d401d0d401d001fa40d401d001d307d31fd307d31fd31fd31ffa00fa00d3073010ce10cd01fe206ef2d0806f2e108d5f0d5009ba18f2f48200cc8425206ef2d0806f2e105d5f0d5009ba18f2f48200f17e24206ef2d0806f2e106d5f0dc002f2f42483072459f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f424206ef2d0806f2e6cd11801fec0019920206ef2d0806f235b9a20206ef2d0806f233031e28200b2cf21c200f2f425206ef2d0806f2e102d5f0d26206ef2d0806f2e1d5f0da026206ef2d0806f2e6cd1c0019c06206ef2d0806f2e102d5f0d9b06206ef2d0806f2e1d5f0de28200f62a21c200f2f406a85005a9045301a8812710a904a104206ef2d0806f231900f8307f0283075023c855205afa0258fa02ca00c910364140206e953059f45b30944133f417e2f8425003726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb004433c87f01ca0055405045ce12cb0f810101cf00f400f400c9ed540ec42cc8",
   );
   const builder = beginCell();
   builder.storeUint(0, 1);
   initPulsePredictionMarket_init_args({
     $$type: "PulsePredictionMarket_init_args",
     admin,
-    roundDurationSeconds,
     protocolFeeBps,
     deploymentNonce,
   })(builder);
@@ -1379,16 +1642,26 @@ export const PulsePredictionMarket_errors = {
   135: { message: "Code of a contract was not found" },
   136: { message: "Invalid standard address" },
   138: { message: "Not a basechain address" },
+  5068: { message: "round_id_mismatch" },
+  12897: { message: "round_mismatch" },
   15520: { message: "round_closed" },
   19900: { message: "position_not_found" },
+  22522: { message: "timeframe_code_mismatch" },
+  23269: { message: "token_mismatch" },
+  24418: { message: "round_duration_mismatch" },
+  29972: { message: "market_mismatch" },
   32385: { message: "round_not_open" },
+  32540: { message: "round_start_required" },
   32630: { message: "stake_required" },
   35659: { message: "round_not_found" },
-  36840: { message: "another_round_active" },
+  41035: { message: "invalid_timeframe" },
   45634: { message: "already_claimed" },
   45775: { message: "no_winning_position" },
   47541: { message: "admin_only" },
+  50155: { message: "round_not_started" },
+  52356: { message: "round_start_mismatch" },
   55144: { message: "round_expired" },
+  55591: { message: "timeframe_mismatch" },
   59719: { message: "round_not_closed" },
   61822: { message: "round_not_settled" },
   63018: { message: "invalid_winner_pool" },
@@ -1431,16 +1704,26 @@ export const PulsePredictionMarket_errors_backward = {
   "Code of a contract was not found": 135,
   "Invalid standard address": 136,
   "Not a basechain address": 138,
+  round_id_mismatch: 5068,
+  round_mismatch: 12897,
   round_closed: 15520,
   position_not_found: 19900,
+  timeframe_code_mismatch: 22522,
+  token_mismatch: 23269,
+  round_duration_mismatch: 24418,
+  market_mismatch: 29972,
   round_not_open: 32385,
+  round_start_required: 32540,
   stake_required: 32630,
   round_not_found: 35659,
-  another_round_active: 36840,
+  invalid_timeframe: 41035,
   already_claimed: 45634,
   no_winning_position: 45775,
   admin_only: 47541,
+  round_not_started: 50155,
+  round_start_mismatch: 52356,
   round_expired: 55144,
+  timeframe_mismatch: 55591,
   round_not_closed: 59719,
   round_not_settled: 61822,
   invalid_winner_pool: 63018,
@@ -1630,12 +1913,36 @@ const PulsePredictionMarket_types: ABIType[] = [
     header: 1347764785,
     fields: [
       {
+        name: "roundId",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
         name: "marketId",
         type: { kind: "simple", type: "string", optional: false },
       },
       {
         name: "marketLabel",
         type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "token",
+        type: { kind: "simple", type: "address", optional: false },
+      },
+      {
+        name: "timeframeId",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "timeframeCode",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "roundDurationSeconds",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+      {
+        name: "roundStartTimestamp",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
       },
       {
         name: "direction",
@@ -1648,8 +1955,20 @@ const PulsePredictionMarket_types: ABIType[] = [
     header: 1347765041,
     fields: [
       {
-        name: "marketId",
+        name: "roundId",
         type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "token",
+        type: { kind: "simple", type: "address", optional: false },
+      },
+      {
+        name: "timeframeCode",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "roundStartTimestamp",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
       },
     ],
   },
@@ -1658,8 +1977,20 @@ const PulsePredictionMarket_types: ABIType[] = [
     header: 1347769137,
     fields: [
       {
-        name: "marketId",
+        name: "roundId",
         type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "token",
+        type: { kind: "simple", type: "address", optional: false },
+      },
+      {
+        name: "timeframeCode",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "roundStartTimestamp",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
       },
       {
         name: "result",
@@ -1672,8 +2003,92 @@ const PulsePredictionMarket_types: ABIType[] = [
     header: 1347768369,
     fields: [
       {
+        name: "roundId",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "token",
+        type: { kind: "simple", type: "address", optional: false },
+      },
+      {
+        name: "timeframeCode",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "roundStartTimestamp",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+    ],
+  },
+  {
+    name: "Round",
+    header: null,
+    fields: [
+      {
+        name: "roundId",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
         name: "marketId",
         type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "marketLabel",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "token",
+        type: { kind: "simple", type: "address", optional: false },
+      },
+      {
+        name: "timeframeId",
+        type: { kind: "simple", type: "string", optional: false },
+      },
+      {
+        name: "timeframeCode",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "roundDurationSeconds",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+      {
+        name: "status",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
+      },
+      {
+        name: "openedAt",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+      {
+        name: "closesAt",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+      {
+        name: "settledAt",
+        type: { kind: "simple", type: "uint", optional: false, format: 32 },
+      },
+      {
+        name: "totalUp",
+        type: {
+          kind: "simple",
+          type: "uint",
+          optional: false,
+          format: "coins",
+        },
+      },
+      {
+        name: "totalDown",
+        type: {
+          kind: "simple",
+          type: "uint",
+          optional: false,
+          format: "coins",
+        },
+      },
+      {
+        name: "result",
+        type: { kind: "simple", type: "uint", optional: false, format: 8 },
       },
     ],
   },
@@ -1714,68 +2129,29 @@ const PulsePredictionMarket_types: ABIType[] = [
         type: { kind: "simple", type: "address", optional: false },
       },
       {
-        name: "roundDurationSeconds",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
-      },
-      {
         name: "protocolFeeBps",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
+        type: { kind: "simple", type: "uint", optional: false, format: 16 },
       },
       {
         name: "deploymentNonce",
         type: { kind: "simple", type: "int", optional: false, format: 257 },
       },
       {
-        name: "marketId",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "marketLabel",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "status",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
-      },
-      {
-        name: "openedAt",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
-      },
-      {
-        name: "closesAt",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
-      },
-      {
-        name: "settledAt",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
-      },
-      {
-        name: "totalUp",
+        name: "rounds",
         type: {
-          kind: "simple",
-          type: "uint",
-          optional: false,
-          format: "coins",
+          kind: "dict",
+          key: "uint",
+          keyFormat: 256,
+          value: "Round",
+          valueFormat: "ref",
         },
-      },
-      {
-        name: "totalDown",
-        type: {
-          kind: "simple",
-          type: "uint",
-          optional: false,
-          format: "coins",
-        },
-      },
-      {
-        name: "result",
-        type: { kind: "simple", type: "int", optional: false, format: 257 },
       },
       {
         name: "positions",
         type: {
           kind: "dict",
-          key: "address",
+          key: "uint",
+          keyFormat: 256,
           value: "Position",
           valueFormat: "ref",
         },
@@ -1810,13 +2186,11 @@ export class PulsePredictionMarket implements Contract {
 
   static async init(
     admin: Address,
-    roundDurationSeconds: bigint,
     protocolFeeBps: bigint,
     deploymentNonce: bigint,
   ) {
     return await PulsePredictionMarket_init(
       admin,
-      roundDurationSeconds,
       protocolFeeBps,
       deploymentNonce,
     );
@@ -1824,13 +2198,11 @@ export class PulsePredictionMarket implements Contract {
 
   static async fromInit(
     admin: Address,
-    roundDurationSeconds: bigint,
     protocolFeeBps: bigint,
     deploymentNonce: bigint,
   ) {
     const __gen_init = await PulsePredictionMarket_init(
       admin,
-      roundDurationSeconds,
       protocolFeeBps,
       deploymentNonce,
     );

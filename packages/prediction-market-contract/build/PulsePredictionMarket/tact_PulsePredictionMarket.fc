@@ -17,11 +17,26 @@ slice __tact_context_get_sender() inline;
 ;; __tact_slice_eq
 int __tact_slice_eq(slice a, slice b) inline;
 
-;; __tact_dict_get_slice_cell
-cell __tact_dict_get_slice_cell(cell d, int kl, slice k) inline;
+;; __tact_dict_get_uint_cell
+cell __tact_dict_get_uint_cell(cell d, int kl, int k) inline;
 
-;; __tact_dict_set_slice_cell
-(cell, ()) __tact_dict_set_slice_cell(cell d, int kl, slice k, cell v) inline;
+;; __tact_dict_set_uint_cell
+(cell, ()) __tact_dict_set_uint_cell(cell d, int kl, int k, cell v) inline;
+
+;; $Round$_store
+builder $Round$_store(builder build_0, (slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline_ref;
+
+;; $Round$_store_cell
+cell $Round$_store_cell((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v, builder b) inline;
+
+;; $Round$_load
+(slice, ((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int))) $Round$_load(slice sc_0) inline_ref;
+
+;; $Round$_as_optional
+tuple $Round$_as_optional((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_load_opt
+tuple $Round$_load_opt(cell cl) inline;
 
 ;; $Position$_store
 builder $Position$_store(builder build_0, (int, int, int) v) inline;
@@ -39,13 +54,49 @@ tuple $Position$_as_optional((int, int, int) v) inline;
 tuple $Position$_load_opt(cell cl) inline;
 
 ;; $PulsePredictionMarket$_store
-builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline;
+builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, cell, cell) v) inline;
 
 ;; $PulsePredictionMarket$_load
-(slice, ((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline;
+(slice, ((slice, int, int, cell, cell))) $PulsePredictionMarket$_load(slice sc_0) inline;
 
 ;; $Context$_get_value
 _ $Context$_get_value((int, slice, int, slice) v) inline;
+
+;; $Round$_get_roundId
+_ $Round$_get_roundId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_marketId
+_ $Round$_get_marketId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_token
+_ $Round$_get_token((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_timeframeId
+_ $Round$_get_timeframeId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_timeframeCode
+_ $Round$_get_timeframeCode((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_status
+_ $Round$_get_status((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_openedAt
+_ $Round$_get_openedAt((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_closesAt
+_ $Round$_get_closesAt((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_totalUp
+_ $Round$_get_totalUp((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_totalDown
+_ $Round$_get_totalDown((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_get_result
+_ $Round$_get_result((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline;
+
+;; $Round$_not_null
+((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int)) $Round$_not_null(tuple v) inline;
 
 ;; $Position$_get_upStake
 _ $Position$_get_upStake((int, int, int) v) inline;
@@ -60,22 +111,31 @@ _ $Position$_get_claimed((int, int, int) v) inline;
 ((int, int, int)) $Position$_not_null(tuple v) inline;
 
 ;; $PulsePredictionMarket$init$_load
-(slice, ((slice, int, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline;
+(slice, ((slice, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline;
 
 ;; $PulsePredictionMarket$_contract_init
-(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) impure inline;
+(slice, int, int, cell, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $protocolFeeBps, int $deploymentNonce) impure inline;
 
 ;; $PulsePredictionMarket$_contract_load
-(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline;
+(slice, int, int, cell, cell) $PulsePredictionMarket$_contract_load() impure inline;
 
 ;; $PulsePredictionMarket$_contract_store
-() $PulsePredictionMarket$_contract_store((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline;
+() $PulsePredictionMarket$_contract_store((slice, int, int, cell, cell) v) impure inline;
 
-;; $PulsePredictionMarket$_fun_startRound
-((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref;
+;; $PulsePredictionMarket$_fun_isSupportedTimeframe
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_isSupportedTimeframe((slice, int, int, cell, cell) $self, slice $timeframeId, int $timeframeCode, int $durationSeconds) impure inline_ref;
+
+;; $PulsePredictionMarket$_fun_deriveRoundKey
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_deriveRoundKey((slice, int, int, cell, cell) $self, slice $token, int $timeframeCode, int $roundStartTimestamp) impure inline_ref;
+
+;; $PulsePredictionMarket$_fun_derivePositionKey
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_derivePositionKey((slice, int, int, cell, cell) $self, slice $wallet, slice $token, int $timeframeCode, int $roundStartTimestamp) impure inline_ref;
 
 ;; $PulsePredictionMarket$_fun_requireAdmin
-((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref;
+((slice, int, int, cell, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, cell, cell) $self, slice $candidate) impure inline_ref;
+
+;; $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result
+((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int)) $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result(slice $roundId, slice $marketId, slice $marketLabel, slice $token, slice $timeframeId, int $timeframeCode, int $roundDurationSeconds, int $status, int $openedAt, int $closesAt, int $settledAt, int $totalUp, int $totalDown, int $result) inline;
 
 ;; $Position$_constructor_upStake_downStake_claimed
 ((int, int, int)) $Position$_constructor_upStake_downStake_claimed(int $upStake, int $downStake, int $claimed) inline;
@@ -89,18 +149,6 @@ global (int, slice, int, slice) __tact_context;
 global slice __tact_context_sender;
 global cell __tact_child_contract_codes;
 global int __tact_randomized;
-
-(cell, int) __tact_dict_delete(cell dict, int key_len, slice index) asm(index dict key_len) """
-    DICTDEL
-""";
-
-((cell), ()) __tact_dict_set_ref(cell dict, int key_len, slice index, cell value) asm(value index dict key_len) """
-    DICTSETREF
-""";
-
-(cell, int) __tact_dict_get_ref(cell dict, int key_len, slice index) asm(index dict key_len) """
-    DICTGETREF NULLSWAPIFNOT
-""";
 
 (int, slice, int, slice) __tact_context_get() inline {
     return __tact_context;
@@ -122,8 +170,16 @@ forall X0, X1, X2 -> (X0, X1, X2) __tact_tuple_destroy_3(tuple v) asm """
     3 UNTUPLE
 """;
 
-cell __tact_dict_get_slice_cell(cell d, int kl, slice k) inline {
-    var (r, ok) = __tact_dict_get_ref(d, kl, k);
+forall X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13 -> tuple __tact_tuple_create_14((X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13) v) asm """
+    14 TUPLE
+""";
+
+forall X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13 -> (X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13) __tact_tuple_destroy_14(tuple v) asm """
+    14 UNTUPLE
+""";
+
+cell __tact_dict_get_uint_cell(cell d, int kl, int k) inline {
+    var (r, ok) = udict_get_ref?(d, kl, k);
     if (ok) {
         return r;
     } else {
@@ -131,14 +187,18 @@ cell __tact_dict_get_slice_cell(cell d, int kl, slice k) inline {
     }
 }
 
-(cell, ()) __tact_dict_set_slice_cell(cell d, int kl, slice k, cell v) inline {
+(cell, ()) __tact_dict_set_uint_cell(cell d, int kl, int k, cell v) inline {
     if (null?(v)) {
-        var (r, ok) = __tact_dict_delete(d, kl, k);
+        var (r, ok) = udict_delete?(d, kl, k);
         return (r, ());
     } else {
-        return __tact_dict_set_ref(d, kl, k, v);
+        return (udict_set_ref(d, kl, k, v), ());
     }
 }
+
+builder $global_beginCell() impure asm """
+    NEWC
+""";
 
 () $global_send((int, cell, cell, cell, int, slice, int) $params) impure asm """
     NEWC
@@ -219,10 +279,42 @@ int $global_now() impure asm """
     NOW
 """;
 
+cell $Builder$_fun_endCell(builder $self) impure asm """
+    ENDC
+""";
+
+builder $Builder$_fun_storeAddress(builder $self, slice $address) impure asm """
+    STSLICER
+""";
+
+int $Cell$_fun_hash(cell $self) impure asm """
+    HASHCU
+""";
+
 ;; tact_PulsePredictionMarket.constants.fc
-;; String ""
-slice __gen_slice_string_96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7() asm """
-    B{b5ee9c724101010100020000004cacb9cd} B>boc <s PUSHSLICE
+;; String "5M"
+slice __gen_slice_string_ecedea7c702f634ac4476433677099b3359c7c971033e6c174d14495cae39016() asm """
+    B{b5ee9c72410101010004000004354d942d7226} B>boc <s PUSHSLICE
+""";
+
+;; String "15M"
+slice __gen_slice_string_56f6434aa5af7aa54cc9ec9ffaa3bd3c16be25f81d932fe560823ccdc4f162b3() asm """
+    B{b5ee9c7241010101000500000631354d77a7cd92} B>boc <s PUSHSLICE
+""";
+
+;; String "1H"
+slice __gen_slice_string_2560dc80e863ff578213ebe4c24a7e8c08b0466db80d362bbe536a77d8f3a412() asm """
+    B{b5ee9c7241010101000400000431485458095d} B>boc <s PUSHSLICE
+""";
+
+;; String "4H"
+slice __gen_slice_string_d0d38288bccaacf2806fa4ef803a3cbd7c400672497994790a65e531e5af93d6() asm """
+    B{b5ee9c724101010100040000043448ffa12100} B>boc <s PUSHSLICE
+""";
+
+;; String "1D"
+slice __gen_slice_string_8d5eba5b35682249391fffebe817f04dd16aa5ce2c95a09260707baf004519b6() asm """
+    B{b5ee9c72410101010004000004314484974a10} B>boc <s PUSHSLICE
 """;
 
 ;; tact_PulsePredictionMarket.storage.fc
@@ -243,6 +335,133 @@ _ $Context$_get_value((int, slice, int, slice) v) inline {
 
 ((int, cell, cell, cell, int, slice, int)) $SendParameters$_constructor_to_value_mode(slice $to, int $value, int $mode) inline {
     return ($mode, null(), null(), null(), $value, $to, true);
+}
+
+;;
+;; Type: Round
+;; TLB: _ roundId:^string marketId:^string marketLabel:^string token:address timeframeId:^string timeframeCode:uint8 roundDurationSeconds:uint32 status:uint8 openedAt:uint32 closesAt:uint32 settledAt:uint32 totalUp:coins totalDown:coins result:uint8 = Round
+;;
+
+builder $Round$_store(builder build_0, (slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline_ref {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    build_0 = build_0.store_builder_ref(begin_cell().store_slice(v'roundId));
+    build_0 = build_0.store_builder_ref(begin_cell().store_slice(v'marketId));
+    var build_1 = begin_cell();
+    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketLabel));
+    build_1 = build_1.store_slice(v'token);
+    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'timeframeId));
+    build_1 = build_1.store_uint(v'timeframeCode, 8);
+    build_1 = build_1.store_uint(v'roundDurationSeconds, 32);
+    build_1 = build_1.store_uint(v'status, 8);
+    build_1 = build_1.store_uint(v'openedAt, 32);
+    build_1 = build_1.store_uint(v'closesAt, 32);
+    build_1 = build_1.store_uint(v'settledAt, 32);
+    build_1 = build_1.store_varuint16(v'totalUp);
+    build_1 = build_1.store_varuint16(v'totalDown);
+    build_1 = build_1.store_uint(v'result, 8);
+    build_0 = store_builder_ref(build_0, build_1);
+    return build_0;
+}
+
+cell $Round$_store_cell((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v, builder b) inline {
+    return $Round$_store(b, v).end_cell();
+}
+
+(slice, ((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int))) $Round$_load(slice sc_0) inline_ref {
+    var v'roundId = sc_0~load_ref().begin_parse();
+    var v'marketId = sc_0~load_ref().begin_parse();
+    slice sc_1 = sc_0~load_ref().begin_parse();
+    var v'marketLabel = sc_1~load_ref().begin_parse();
+    var v'token = sc_1~load_msg_addr();
+    var v'timeframeId = sc_1~load_ref().begin_parse();
+    var v'timeframeCode = sc_1~load_uint(8);
+    var v'roundDurationSeconds = sc_1~load_uint(32);
+    var v'status = sc_1~load_uint(8);
+    var v'openedAt = sc_1~load_uint(32);
+    var v'closesAt = sc_1~load_uint(32);
+    var v'settledAt = sc_1~load_uint(32);
+    var v'totalUp = sc_1~load_varuint16();
+    var v'totalDown = sc_1~load_varuint16();
+    var v'result = sc_1~load_uint(8);
+    return (sc_0, (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result));
+}
+
+tuple $Round$_as_optional((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return __tact_tuple_create_14(v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result);
+}
+
+tuple $Round$_load_opt(cell cl) inline {
+    if (null?(cl)) {
+        return null();
+    }
+    var sc = cl.begin_parse();
+    return $Round$_as_optional(sc~$Round$_load());
+}
+
+_ $Round$_get_roundId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'roundId;
+}
+
+_ $Round$_get_marketId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'marketId;
+}
+
+_ $Round$_get_token((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'token;
+}
+
+_ $Round$_get_timeframeId((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'timeframeId;
+}
+
+_ $Round$_get_timeframeCode((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'timeframeCode;
+}
+
+_ $Round$_get_status((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'status;
+}
+
+_ $Round$_get_openedAt((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'openedAt;
+}
+
+_ $Round$_get_closesAt((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'closesAt;
+}
+
+_ $Round$_get_totalUp((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'totalUp;
+}
+
+_ $Round$_get_totalDown((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'totalDown;
+}
+
+_ $Round$_get_result((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int) v) inline {
+    var (v'roundId, v'marketId, v'marketLabel, v'token, v'timeframeId, v'timeframeCode, v'roundDurationSeconds, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result) = v;
+    return v'result;
+}
+
+((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int)) $Round$_not_null(tuple v) inline {
+    throw_if(128, null?(v));
+    var (slice vvv'roundId, slice vvv'marketId, slice vvv'marketLabel, slice vvv'token, slice vvv'timeframeId, int vvv'timeframeCode, int vvv'roundDurationSeconds, int vvv'status, int vvv'openedAt, int vvv'closesAt, int vvv'settledAt, int vvv'totalUp, int vvv'totalDown, int vvv'result) = __tact_tuple_destroy_14(v);
+    return (vvv'roundId, vvv'marketId, vvv'marketLabel, vvv'token, vvv'timeframeId, vvv'timeframeCode, vvv'roundDurationSeconds, vvv'status, vvv'openedAt, vvv'closesAt, vvv'settledAt, vvv'totalUp, vvv'totalDown, vvv'result);
+}
+
+((slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int)) $Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result(slice $roundId, slice $marketId, slice $marketLabel, slice $token, slice $timeframeId, int $timeframeCode, int $roundDurationSeconds, int $status, int $openedAt, int $closesAt, int $settledAt, int $totalUp, int $totalDown, int $result) inline {
+    return ($roundId, $marketId, $marketLabel, $token, $timeframeId, $timeframeCode, $roundDurationSeconds, $status, $openedAt, $closesAt, $settledAt, $totalUp, $totalDown, $result);
 }
 
 ;;
@@ -309,75 +528,49 @@ _ $Position$_get_claimed((int, int, int) v) inline {
 
 ;;
 ;; Type: PulsePredictionMarket
-;; TLB: _ admin:address roundDurationSeconds:int257 protocolFeeBps:int257 deploymentNonce:int257 marketId:^string marketLabel:^string status:int257 openedAt:int257 closesAt:int257 settledAt:int257 totalUp:coins totalDown:coins result:int257 positions:dict<address, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket
+;; TLB: _ admin:address protocolFeeBps:uint16 deploymentNonce:int257 rounds:dict<uint256, ^Round{roundId:^string,marketId:^string,marketLabel:^string,token:address,timeframeId:^string,timeframeCode:uint8,roundDurationSeconds:uint32,status:uint8,openedAt:uint32,closesAt:uint32,settledAt:uint32,totalUp:coins,totalDown:coins,result:uint8}> positions:dict<uint256, ^Position{upStake:coins,downStake:coins,claimed:bool}> = PulsePredictionMarket
 ;;
 
-builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) inline {
-    var (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions) = v;
+builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, cell, cell) v) inline {
+    var (v'admin, v'protocolFeeBps, v'deploymentNonce, v'rounds, v'positions) = v;
     build_0 = build_0.store_slice(v'admin);
-    build_0 = build_0.store_int(v'roundDurationSeconds, 257);
-    build_0 = build_0.store_int(v'protocolFeeBps, 257);
-    var build_1 = begin_cell();
-    build_1 = build_1.store_int(v'deploymentNonce, 257);
-    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketId));
-    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketLabel));
-    build_1 = build_1.store_int(v'status, 257);
-    build_1 = build_1.store_int(v'openedAt, 257);
-    var build_2 = begin_cell();
-    build_2 = build_2.store_int(v'closesAt, 257);
-    build_2 = build_2.store_int(v'settledAt, 257);
-    build_2 = build_2.store_varuint16(v'totalUp);
-    build_2 = build_2.store_varuint16(v'totalDown);
-    build_2 = build_2.store_int(v'result, 257);
-    build_2 = build_2.store_dict(v'positions);
-    build_1 = store_builder_ref(build_1, build_2);
-    build_0 = store_builder_ref(build_0, build_1);
+    build_0 = build_0.store_uint(v'protocolFeeBps, 16);
+    build_0 = build_0.store_int(v'deploymentNonce, 257);
+    build_0 = build_0.store_dict(v'rounds);
+    build_0 = build_0.store_dict(v'positions);
     return build_0;
 }
 
-(slice, ((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell))) $PulsePredictionMarket$_load(slice sc_0) inline {
+(slice, ((slice, int, int, cell, cell))) $PulsePredictionMarket$_load(slice sc_0) inline {
     var v'admin = sc_0~load_msg_addr();
-    var v'roundDurationSeconds = sc_0~load_int(257);
-    var v'protocolFeeBps = sc_0~load_int(257);
-    slice sc_1 = sc_0~load_ref().begin_parse();
-    var v'deploymentNonce = sc_1~load_int(257);
-    var v'marketId = sc_1~load_ref().begin_parse();
-    var v'marketLabel = sc_1~load_ref().begin_parse();
-    var v'status = sc_1~load_int(257);
-    var v'openedAt = sc_1~load_int(257);
-    slice sc_2 = sc_1~load_ref().begin_parse();
-    var v'closesAt = sc_2~load_int(257);
-    var v'settledAt = sc_2~load_int(257);
-    var v'totalUp = sc_2~load_varuint16();
-    var v'totalDown = sc_2~load_varuint16();
-    var v'result = sc_2~load_int(257);
-    var v'positions = sc_2~load_dict();
-    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce, v'marketId, v'marketLabel, v'status, v'openedAt, v'closesAt, v'settledAt, v'totalUp, v'totalDown, v'result, v'positions));
+    var v'protocolFeeBps = sc_0~load_uint(16);
+    var v'deploymentNonce = sc_0~load_int(257);
+    var v'rounds = sc_0~load_dict();
+    var v'positions = sc_0~load_dict();
+    return (sc_0, (v'admin, v'protocolFeeBps, v'deploymentNonce, v'rounds, v'positions));
 }
 
-(slice, ((slice, int, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline {
+(slice, ((slice, int, int))) $PulsePredictionMarket$init$_load(slice sc_0) inline {
     var v'admin = sc_0~load_msg_addr();
-    var v'roundDurationSeconds = sc_0~load_int(257);
     var v'protocolFeeBps = sc_0~load_int(257);
-    slice sc_1 = sc_0~load_ref().begin_parse();
-    var v'deploymentNonce = sc_1~load_int(257);
-    return (sc_0, (v'admin, v'roundDurationSeconds, v'protocolFeeBps, v'deploymentNonce));
+    var v'deploymentNonce = sc_0~load_int(257);
+    return (sc_0, (v'admin, v'protocolFeeBps, v'deploymentNonce));
 }
 
-(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_load() impure inline {
+(slice, int, int, cell, cell) $PulsePredictionMarket$_contract_load() impure inline {
     slice $sc = get_data().begin_parse();
     int $loaded = $sc~load_int(1);
     if ($loaded) {
         return $sc~$PulsePredictionMarket$_load();
     }
     else {
-        (slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) = $sc~$PulsePredictionMarket$init$_load();
+        (slice $admin, int $protocolFeeBps, int $deploymentNonce) = $sc~$PulsePredictionMarket$init$_load();
         $sc.end_parse();
-        return $PulsePredictionMarket$_contract_init($admin, $roundDurationSeconds, $protocolFeeBps, $deploymentNonce);
+        return $PulsePredictionMarket$_contract_init($admin, $protocolFeeBps, $deploymentNonce);
     }
 }
 
-() $PulsePredictionMarket$_contract_store((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) v) impure inline {
+() $PulsePredictionMarket$_contract_store((slice, int, int, cell, cell) v) impure inline {
     builder b = begin_cell();
     b = b.store_int(true, 1);
     b = $PulsePredictionMarket$_store(b, v);
@@ -388,44 +581,58 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, sl
 ;; Contract PulsePredictionMarket functions
 ;;
 
-(slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $roundDurationSeconds, int $protocolFeeBps, int $deploymentNonce) impure inline {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
+(slice, int, int, cell, cell) $PulsePredictionMarket$_contract_init(slice $admin, int $protocolFeeBps, int $deploymentNonce) impure inline {
+    var (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)) = (null(), null(), null(), null(), null());
     $self'admin = $admin;
-    $self'roundDurationSeconds = $roundDurationSeconds;
     $self'protocolFeeBps = $protocolFeeBps;
     $self'deploymentNonce = $deploymentNonce;
-    $self'marketId = __gen_slice_string_96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7();
-    $self'marketLabel = __gen_slice_string_96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7();
-    $self'status = 3;
-    $self'openedAt = 0;
-    $self'closesAt = 0;
-    $self'settledAt = 0;
-    $self'totalUp = 0;
-    $self'totalDown = 0;
-    $self'result = 2;
+    $self'rounds = null();
     $self'positions = null();
-    return ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions);
+    return ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions);
 }
 
-((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_startRound((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $nextMarketId, slice $nextMarketLabel, int $nowTs) impure inline_ref {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
-    $self'marketId = $nextMarketId;
-    $self'marketLabel = $nextMarketLabel;
-    $self'status = 0;
-    $self'openedAt = $nowTs;
-    $self'closesAt = ($nowTs + $self'roundDurationSeconds);
-    $self'settledAt = 0;
-    $self'totalUp = 0;
-    $self'totalDown = 0;
-    $self'result = 2;
-    $self'positions = null();
-    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_isSupportedTimeframe((slice, int, int, cell, cell) $self, slice $timeframeId, int $timeframeCode, int $durationSeconds) impure inline_ref {
+    var (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)) = $self;
+    if (__tact_slice_eq($timeframeId, __gen_slice_string_ecedea7c702f634ac4476433677099b3359c7c971033e6c174d14495cae39016())) {
+        var $fresh$ret_0 = ( (($timeframeCode == 1)) ? (($durationSeconds == 300)) : (false) );
+        return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_0);
+    }
+    if (__tact_slice_eq($timeframeId, __gen_slice_string_56f6434aa5af7aa54cc9ec9ffaa3bd3c16be25f81d932fe560823ccdc4f162b3())) {
+        var $fresh$ret_1 = ( (($timeframeCode == 2)) ? (($durationSeconds == 900)) : (false) );
+        return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_1);
+    }
+    if (__tact_slice_eq($timeframeId, __gen_slice_string_2560dc80e863ff578213ebe4c24a7e8c08b0466db80d362bbe536a77d8f3a412())) {
+        var $fresh$ret_2 = ( (($timeframeCode == 3)) ? (($durationSeconds == 3600)) : (false) );
+        return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_2);
+    }
+    if (__tact_slice_eq($timeframeId, __gen_slice_string_d0d38288bccaacf2806fa4ef803a3cbd7c400672497994790a65e531e5af93d6())) {
+        var $fresh$ret_3 = ( (($timeframeCode == 4)) ? (($durationSeconds == 14400)) : (false) );
+        return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_3);
+    }
+    if (__tact_slice_eq($timeframeId, __gen_slice_string_8d5eba5b35682249391fffebe817f04dd16aa5ce2c95a09260707baf004519b6())) {
+        var $fresh$ret_4 = ( (($timeframeCode == 5)) ? (($durationSeconds == 86400)) : (false) );
+        return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_4);
+    }
+    var $fresh$ret_5 = false;
+    return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_5);
 }
 
-((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, int, slice, slice, int, int, int, int, int, int, int, cell) $self, slice $candidate) impure inline_ref {
-    var (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)) = $self;
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_deriveRoundKey((slice, int, int, cell, cell) $self, slice $token, int $timeframeCode, int $roundStartTimestamp) impure inline_ref {
+    var (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)) = $self;
+    var $fresh$ret_6 = $Cell$_fun_hash($Builder$_fun_endCell(store_uint(store_uint($Builder$_fun_storeAddress($global_beginCell(), $token), $timeframeCode, 8), $roundStartTimestamp, 32)));
+    return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_6);
+}
+
+((slice, int, int, cell, cell), int) $PulsePredictionMarket$_fun_derivePositionKey((slice, int, int, cell, cell) $self, slice $wallet, slice $token, int $timeframeCode, int $roundStartTimestamp) impure inline_ref {
+    var (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)) = $self;
+    var $fresh$ret_7 = $Cell$_fun_hash($Builder$_fun_endCell(store_uint(store_uint($Builder$_fun_storeAddress($Builder$_fun_storeAddress($global_beginCell(), $wallet), $token), $timeframeCode, 8), $roundStartTimestamp, 32)));
+    return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), $fresh$ret_7);
+}
+
+((slice, int, int, cell, cell), ()) $PulsePredictionMarket$_fun_requireAdmin((slice, int, int, cell, cell) $self, slice $candidate) impure inline_ref {
+    var (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)) = $self;
     throw_unless(47541, ( equal_slices_bits($candidate, $self'admin) ));
-    return (($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions), ());
+    return (($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions), ());
 }
 
 ;;
@@ -452,87 +659,140 @@ builder $PulsePredictionMarket$_store(builder build_0, (slice, int, int, int, sl
     __tact_context_sender = msg_sender_addr;
     
     ;; Load contract data
-    var ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions) = $PulsePredictionMarket$_contract_load();
+    var ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions) = $PulsePredictionMarket$_contract_load();
     
     ;; Handle bounced messages
     if (msg_bounced) { return (); }
     var op = in_msg~load_opcode_internal();
     ;; Receive PlaceBet message
     if (op == 0x50554231) {
+        var $msg'roundId = in_msg~load_ref().begin_parse();
         var $msg'marketId = in_msg~load_ref().begin_parse();
-        var $msg'marketLabel = in_msg~load_ref().begin_parse();
-        var $msg'direction = in_msg~load_uint(8);
+        slice sc_1 = in_msg~load_ref().begin_parse();
+        var $msg'marketLabel = sc_1~load_ref().begin_parse();
+        var $msg'token = sc_1~load_msg_addr();
+        var $msg'timeframeId = sc_1~load_ref().begin_parse();
+        var $msg'timeframeCode = sc_1~load_uint(8);
+        var $msg'roundDurationSeconds = sc_1~load_uint(32);
+        var $msg'roundStartTimestamp = sc_1~load_uint(32);
+        var $msg'direction = sc_1~load_uint(8);
         int $nowTs = $global_now();
-        if (( (($self'status == 3)) ? (true) : (($self'status == 2)) )) {
-            ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_startRound($msg'marketId, $msg'marketLabel, $nowTs);
-        }
-        throw_unless(36840, __tact_slice_eq($self'marketId, $msg'marketId));
-        throw_unless(15520, ($self'status == 0));
-        throw_unless(55144, ($nowTs <= $self'closesAt));
+        int $expectedCloseAt = ($msg'roundStartTimestamp + $msg'roundDurationSeconds);
+        int $roundKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_deriveRoundKey($msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
+        int $positionKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_derivePositionKey(__tact_context_get_sender(), $msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
         throw_unless(32630, ($Context$_get_value(__tact_context_get()) > 0));
-        if (($msg'direction == 1)) {
-            $self'totalUp = ($self'totalUp + $Context$_get_value(__tact_context_get()));
-        } else {
-            $self'totalDown = ($self'totalDown + $Context$_get_value(__tact_context_get()));
+        throw_unless(32540, ($msg'roundStartTimestamp > 0));
+        throw_unless(41035, ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_isSupportedTimeframe($msg'timeframeId, $msg'timeframeCode, $msg'roundDurationSeconds));
+        throw_unless(50155, ($nowTs >= $msg'roundStartTimestamp));
+        throw_unless(55144, ($nowTs <= $expectedCloseAt));
+        tuple $round = $Round$_load_opt(__tact_dict_get_uint_cell($self'rounds, 256, $roundKey));
+        if (null?($round)) {
+            $round = $Round$_as_optional($Round$_constructor_roundId_marketId_marketLabel_token_timeframeId_timeframeCode_roundDurationSeconds_status_openedAt_closesAt_settledAt_totalUp_totalDown_result($msg'roundId, $msg'marketId, $msg'marketLabel, $msg'token, $msg'timeframeId, $msg'timeframeCode, $msg'roundDurationSeconds, 0, $msg'roundStartTimestamp, $expectedCloseAt, 0, 0, 0, 2));
         }
-        tuple $existingPosition = $Position$_load_opt(__tact_dict_get_slice_cell($self'positions, 267, __tact_context_get_sender()));
+        throw_unless(29972, __tact_slice_eq($Round$_get_marketId($Round$_not_null($round)), $msg'marketId));
+        throw_unless(55591, __tact_slice_eq($Round$_get_timeframeId($Round$_not_null($round)), $msg'timeframeId));
+        throw_unless(22522, ($Round$_get_timeframeCode($Round$_not_null($round)) == $msg'timeframeCode));
+        throw_unless(23269, ( equal_slices_bits($Round$_get_token($Round$_not_null($round)), $msg'token) ));
+        throw_unless(12897, ($Round$_get_openedAt($Round$_not_null($round)) == $msg'roundStartTimestamp));
+        throw_unless(24418, ($Round$_get_closesAt($Round$_not_null($round)) == $expectedCloseAt));
+        throw_unless(15520, ($Round$_get_status($Round$_not_null($round)) == 0));
+        var ($updatedRound'roundId, $updatedRound'marketId, $updatedRound'marketLabel, $updatedRound'token, $updatedRound'timeframeId, $updatedRound'timeframeCode, $updatedRound'roundDurationSeconds, $updatedRound'status, $updatedRound'openedAt, $updatedRound'closesAt, $updatedRound'settledAt, $updatedRound'totalUp, $updatedRound'totalDown, $updatedRound'result) = $Round$_not_null($round);
+        if (($msg'direction == 1)) {
+            $updatedRound'totalUp = ($updatedRound'totalUp + $Context$_get_value(__tact_context_get()));
+        } else {
+            $updatedRound'totalDown = ($updatedRound'totalDown + $Context$_get_value(__tact_context_get()));
+        }
+        tuple $existingPosition = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
         var ($position'upStake, $position'downStake, $position'claimed) = (null?($existingPosition) ? $Position$_constructor_upStake_downStake_claimed(0, 0, false) : $Position$_not_null($existingPosition));
         if (($msg'direction == 1)) {
             $position'upStake = ($position'upStake + $Context$_get_value(__tact_context_get()));
         } else {
             $position'downStake = ($position'downStake + $Context$_get_value(__tact_context_get()));
         }
-        $self'positions~__tact_dict_set_slice_cell(267, __tact_context_get_sender(), $Position$_store_cell(($position'upStake, $position'downStake, $position'claimed), begin_cell()));
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $self'positions~__tact_dict_set_uint_cell(256, $positionKey, $Position$_store_cell(($position'upStake, $position'downStake, $position'claimed), begin_cell()));
+        $self'rounds~__tact_dict_set_uint_cell(256, $roundKey, $Round$_store_cell(($updatedRound'roundId, $updatedRound'marketId, $updatedRound'marketLabel, $updatedRound'token, $updatedRound'timeframeId, $updatedRound'timeframeCode, $updatedRound'roundDurationSeconds, $updatedRound'status, $updatedRound'openedAt, $updatedRound'closesAt, $updatedRound'settledAt, $updatedRound'totalUp, $updatedRound'totalDown, $updatedRound'result), begin_cell()));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions));
         return ();
     }
     
     ;; Receive CloseRound message
     if (op == 0x50554331) {
-        var $msg'marketId = in_msg~load_ref().begin_parse();
-        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
-        throw_unless(35659, __tact_slice_eq($self'marketId, $msg'marketId));
-        throw_unless(32385, ($self'status == 0));
-        $self'status = 1;
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        var $msg'roundId = in_msg~load_ref().begin_parse();
+        var $msg'token = in_msg~load_msg_addr();
+        var $msg'timeframeCode = in_msg~load_uint(8);
+        var $msg'roundStartTimestamp = in_msg~load_uint(32);
+        ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
+        int $roundKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_deriveRoundKey($msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
+        tuple $round = $Round$_load_opt(__tact_dict_get_uint_cell($self'rounds, 256, $roundKey));
+        throw_unless(35659, (~ null?($round)));
+        throw_unless(5068, __tact_slice_eq($Round$_get_roundId($Round$_not_null($round)), $msg'roundId));
+        throw_unless(23269, ( equal_slices_bits($Round$_get_token($Round$_not_null($round)), $msg'token) ));
+        throw_unless(22522, ($Round$_get_timeframeCode($Round$_not_null($round)) == $msg'timeframeCode));
+        throw_unless(52356, ($Round$_get_openedAt($Round$_not_null($round)) == $msg'roundStartTimestamp));
+        throw_unless(32385, ($Round$_get_status($Round$_not_null($round)) == 0));
+        var ($updated'roundId, $updated'marketId, $updated'marketLabel, $updated'token, $updated'timeframeId, $updated'timeframeCode, $updated'roundDurationSeconds, $updated'status, $updated'openedAt, $updated'closesAt, $updated'settledAt, $updated'totalUp, $updated'totalDown, $updated'result) = $Round$_not_null($round);
+        $updated'status = 1;
+        $self'rounds~__tact_dict_set_uint_cell(256, $roundKey, $Round$_store_cell(($updated'roundId, $updated'marketId, $updated'marketLabel, $updated'token, $updated'timeframeId, $updated'timeframeCode, $updated'roundDurationSeconds, $updated'status, $updated'openedAt, $updated'closesAt, $updated'settledAt, $updated'totalUp, $updated'totalDown, $updated'result), begin_cell()));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions));
         return ();
     }
     
     ;; Receive SettleRound message
     if (op == 0x50555331) {
-        var $msg'marketId = in_msg~load_ref().begin_parse();
+        var $msg'roundId = in_msg~load_ref().begin_parse();
+        var $msg'token = in_msg~load_msg_addr();
+        var $msg'timeframeCode = in_msg~load_uint(8);
+        var $msg'roundStartTimestamp = in_msg~load_uint(32);
         var $msg'result = in_msg~load_uint(8);
-        ($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
-        throw_unless(35659, __tact_slice_eq($self'marketId, $msg'marketId));
-        throw_unless(59719, ($self'status == 1));
-        $self'status = 2;
-        $self'result = $msg'result;
-        $self'settledAt = $global_now();
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_requireAdmin(__tact_context_get_sender());
+        int $roundKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_deriveRoundKey($msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
+        tuple $round = $Round$_load_opt(__tact_dict_get_uint_cell($self'rounds, 256, $roundKey));
+        throw_unless(35659, (~ null?($round)));
+        throw_unless(5068, __tact_slice_eq($Round$_get_roundId($Round$_not_null($round)), $msg'roundId));
+        throw_unless(23269, ( equal_slices_bits($Round$_get_token($Round$_not_null($round)), $msg'token) ));
+        throw_unless(22522, ($Round$_get_timeframeCode($Round$_not_null($round)) == $msg'timeframeCode));
+        throw_unless(52356, ($Round$_get_openedAt($Round$_not_null($round)) == $msg'roundStartTimestamp));
+        throw_unless(59719, ($Round$_get_status($Round$_not_null($round)) == 1));
+        var ($updated'roundId, $updated'marketId, $updated'marketLabel, $updated'token, $updated'timeframeId, $updated'timeframeCode, $updated'roundDurationSeconds, $updated'status, $updated'openedAt, $updated'closesAt, $updated'settledAt, $updated'totalUp, $updated'totalDown, $updated'result) = $Round$_not_null($round);
+        $updated'status = 2;
+        $updated'result = $msg'result;
+        $updated'settledAt = $global_now();
+        $self'rounds~__tact_dict_set_uint_cell(256, $roundKey, $Round$_store_cell(($updated'roundId, $updated'marketId, $updated'marketLabel, $updated'token, $updated'timeframeId, $updated'timeframeCode, $updated'roundDurationSeconds, $updated'status, $updated'openedAt, $updated'closesAt, $updated'settledAt, $updated'totalUp, $updated'totalDown, $updated'result), begin_cell()));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions));
         return ();
     }
     
     ;; Receive Claim message
     if (op == 0x50555031) {
-        var $msg'marketId = in_msg~load_ref().begin_parse();
-        throw_unless(35659, __tact_slice_eq($self'marketId, $msg'marketId));
-        throw_unless(61822, ($self'status == 2));
-        tuple $position = $Position$_load_opt(__tact_dict_get_slice_cell($self'positions, 267, __tact_context_get_sender()));
+        var $msg'roundId = in_msg~load_ref().begin_parse();
+        var $msg'token = in_msg~load_msg_addr();
+        var $msg'timeframeCode = in_msg~load_uint(8);
+        var $msg'roundStartTimestamp = in_msg~load_uint(32);
+        int $roundKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_deriveRoundKey($msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
+        int $positionKey = ($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions)~$PulsePredictionMarket$_fun_derivePositionKey(__tact_context_get_sender(), $msg'token, $msg'timeframeCode, $msg'roundStartTimestamp);
+        tuple $round = $Round$_load_opt(__tact_dict_get_uint_cell($self'rounds, 256, $roundKey));
+        throw_unless(35659, (~ null?($round)));
+        throw_unless(5068, __tact_slice_eq($Round$_get_roundId($Round$_not_null($round)), $msg'roundId));
+        throw_unless(23269, ( equal_slices_bits($Round$_get_token($Round$_not_null($round)), $msg'token) ));
+        throw_unless(22522, ($Round$_get_timeframeCode($Round$_not_null($round)) == $msg'timeframeCode));
+        throw_unless(52356, ($Round$_get_openedAt($Round$_not_null($round)) == $msg'roundStartTimestamp));
+        throw_unless(61822, ($Round$_get_status($Round$_not_null($round)) == 2));
+        tuple $position = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
         throw_unless(19900, (~ null?($position)));
         throw_unless(45634, (~ $Position$_get_claimed($Position$_not_null($position))));
-        int $winningStake = (($self'result == 1) ? $Position$_get_upStake($Position$_not_null($position)) : $Position$_get_downStake($Position$_not_null($position)));
+        int $winningStake = (($Round$_get_result($Round$_not_null($round)) == 1) ? $Position$_get_upStake($Position$_not_null($position)) : $Position$_get_downStake($Position$_not_null($position)));
         throw_unless(45775, ($winningStake > 0));
-        int $totalPool = ($self'totalUp + $self'totalDown);
-        int $winnerPool = (($self'result == 1) ? $self'totalUp : $self'totalDown);
+        int $totalPool = ($Round$_get_totalUp($Round$_not_null($round)) + $Round$_get_totalDown($Round$_not_null($round)));
+        int $winnerPool = (($Round$_get_result($Round$_not_null($round)) == 1) ? $Round$_get_totalUp($Round$_not_null($round)) : $Round$_get_totalDown($Round$_not_null($round)));
         throw_unless(63018, ($winnerPool > 0));
         int $payout = (($winningStake * $totalPool) / $winnerPool);
         int $fee = (($payout * $self'protocolFeeBps) / 10000);
         int $netPayout = ($payout - $fee);
         var ($updatedPosition'upStake, $updatedPosition'downStake, $updatedPosition'claimed) = $Position$_not_null($position);
         $updatedPosition'claimed = true;
-        $self'positions~__tact_dict_set_slice_cell(267, __tact_context_get_sender(), $Position$_store_cell(($updatedPosition'upStake, $updatedPosition'downStake, $updatedPosition'claimed), begin_cell()));
+        $self'positions~__tact_dict_set_uint_cell(256, $positionKey, $Position$_store_cell(($updatedPosition'upStake, $updatedPosition'downStake, $updatedPosition'claimed), begin_cell()));
         $global_send($SendParameters$_constructor_to_value_mode(__tact_context_get_sender(), $netPayout, 2));
-        $PulsePredictionMarket$_contract_store(($self'admin, $self'roundDurationSeconds, $self'protocolFeeBps, $self'deploymentNonce, $self'marketId, $self'marketLabel, $self'status, $self'openedAt, $self'closesAt, $self'settledAt, $self'totalUp, $self'totalDown, $self'result, $self'positions));
+        $PulsePredictionMarket$_contract_store(($self'admin, $self'protocolFeeBps, $self'deploymentNonce, $self'rounds, $self'positions));
         return ();
     }
     

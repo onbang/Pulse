@@ -6,6 +6,7 @@ export type PredictionTransportMode = "treasury_comment" | "contract_v1";
 
 export type PredictionBetTransferInput = {
   marketId: string;
+  roundId?: string;
   label: string;
   direction: PredictionDirection;
   amount: number;
@@ -20,35 +21,41 @@ export type ParsedPredictionBetTransfer = {
 };
 
 export type PredictionClaimInput = {
-  marketId: string;
+  roundId: string;
 };
 
 export type PredictionCloseRoundInput = {
-  marketId: string;
+  roundId: string;
 };
 
 export type PredictionSettleRoundInput = {
-  marketId: string;
+  roundId: string;
   result: PredictionDirection;
 };
 
 export type ParsedPredictionContractPayload =
   | {
       type: "place_bet";
+      roundId: string;
       marketId: string;
       label: string;
+      tokenAddress: string;
+      timeframeId: string;
+      timeframeCode: number;
+      roundDurationSeconds: number;
+      roundStartTimestamp: number;
       direction: PredictionDirection;
     }
   | {
       type: "close_round";
-      marketId: string;
+      roundId: string;
     }
   | {
       type: "settle_round";
-      marketId: string;
+      roundId: string;
       result: PredictionDirection;
     }
   | {
       type: "claim";
-      marketId: string;
+      roundId: string;
     };

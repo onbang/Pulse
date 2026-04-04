@@ -13,13 +13,6 @@ export async function run(provider: NetworkProvider) {
     throw new Error("Deploy sender address is required.");
   }
 
-  const roundDurationSeconds = await resolveBigIntInput(
-    ui,
-    "Round duration in seconds",
-    process.env.PREDICTION_ROUND_DURATION_SECONDS,
-    3600n,
-  );
-
   const protocolFeeBps = await resolveBigIntInput(
     ui,
     "Protocol fee in basis points",
@@ -37,7 +30,6 @@ export async function run(provider: NetworkProvider) {
   const contract = provider.open(
     await PulsePredictionMarket.fromInit(
       senderAddress,
-      roundDurationSeconds,
       protocolFeeBps,
       deploymentNonce,
     ),

@@ -12,6 +12,7 @@ export type RewardLedgerReason =
 
 export type PredictionBet = {
   id: string;
+  roundId?: string;
   walletAddress: string;
   author: string;
   amount: number;
@@ -22,10 +23,17 @@ export type PredictionBet = {
   sourceKind?: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
 };
 
+export type PredictionHistoryBet = PredictionBet & {
+  pairId: string;
+  pairLabel: string;
+};
+
 export type PredictionRoundStatus = "open" | "closed" | "settled";
 
 export type PredictionRound = {
   id: string;
+  pairId?: string;
+  timeframeId?: string;
   status: PredictionRoundStatus;
   openedAt: string;
   closesAt: string;
@@ -143,6 +151,7 @@ export type CommunityStore = {
   profiles: Record<string, UserProfile>;
   comments: Record<string, PoolComment[]>;
   predictions: Record<string, PairPrediction>;
+  predictionHistory: PredictionHistoryBet[];
   settlements: PredictionSettlement[];
   activity: ActivityItem[];
   checkInEvents: CheckInEvent[];
@@ -211,6 +220,7 @@ export const defaultCommunityStore: CommunityStore = {
   profiles: {},
   comments: {},
   predictions: {},
+  predictionHistory: [],
   settlements: [],
   activity: [],
   checkInEvents: [],
