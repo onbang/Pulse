@@ -1,6 +1,14 @@
 import { resolvePredictionTreasuryAddress } from "@ston-pulse/prediction-sdk";
 
+function isPredictionContractFeatureEnabled() {
+  return process.env.NEXT_PUBLIC_ENABLE_PREDICTION_CONTRACT_MODE === "true";
+}
+
 export function getPredictionMarketAddress() {
+  if (!isPredictionContractFeatureEnabled()) {
+    return "";
+  }
+
   return process.env.NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS?.trim() || "";
 }
 
