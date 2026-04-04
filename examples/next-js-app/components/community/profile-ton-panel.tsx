@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
 import { useCommunityProfile } from "./community-provider";
 
 type TonProfileResponse = {
@@ -61,7 +62,7 @@ export function ProfileTonPanel() {
     const load = async () => {
       try {
         setError(null);
-        const response = await fetch(
+        const response = await fetchInternalApi(
           `/api/ton/profile/${encodeURIComponent(walletAddress)}`,
         );
         const payload = (await response.json()) as TonProfileResponse;

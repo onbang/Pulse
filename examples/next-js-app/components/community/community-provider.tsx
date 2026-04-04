@@ -32,6 +32,7 @@ import {
   buildAchievements,
   defaultCommunityStore,
 } from "@/lib/community";
+import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
 import type { TelegramMiniAppUser } from "@/lib/telegram-mini-app";
 
 type CommunityStatePayload = {
@@ -123,7 +124,7 @@ function createTelegramDisplayName(user?: TelegramMiniAppUser | null) {
 }
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetchInternalApi(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -197,7 +198,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       const url = walletAddress
         ? `/api/community/state?wallet=${encodeURIComponent(walletAddress)}`
         : "/api/community/state";
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetchInternalApi(url, { cache: "no-store" });
 
       if (!response.ok) {
         throw new Error("Failed to load community state");
@@ -332,7 +333,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       setIsSyncing(true);
 
       try {
-        const response = await fetch("/api/community/check-in", {
+        const response = await fetchInternalApi("/api/community/check-in", {
           method: "PUT",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
@@ -452,7 +453,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       setIsSyncing(true);
 
       try {
-        const response = await fetch("/api/community/predictions", {
+        const response = await fetchInternalApi("/api/community/predictions", {
           method: "PUT",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
@@ -518,7 +519,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       setIsSyncing(true);
 
       try {
-        const response = await fetch("/api/community/predictions", {
+        const response = await fetchInternalApi("/api/community/predictions", {
           method: "PATCH",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({

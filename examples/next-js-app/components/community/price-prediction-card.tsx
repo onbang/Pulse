@@ -21,6 +21,7 @@ import { parsePredictionTokenMarketId } from "@/lib/prediction-timeframes";
 import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
+import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
 import { useCommunityProfile } from "./community-provider";
 
 type PredictionSubmissionState =
@@ -79,7 +80,7 @@ function wait(ms: number) {
 }
 
 async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetchInternalApi(url, {
     ...init,
     cache: "no-store",
     headers: {
