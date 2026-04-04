@@ -22,14 +22,23 @@ export type ParsedPredictionBetTransfer = {
 
 export type PredictionClaimInput = {
   roundId: string;
+  tokenAddress: string;
+  timeframeCode: number;
+  roundStartTimestamp: number;
 };
 
 export type PredictionCloseRoundInput = {
   roundId: string;
+  tokenAddress: string;
+  timeframeCode: number;
+  roundStartTimestamp: number;
 };
 
 export type PredictionSettleRoundInput = {
   roundId: string;
+  tokenAddress: string;
+  timeframeCode: number;
+  roundStartTimestamp: number;
   result: PredictionDirection;
 };
 
@@ -49,13 +58,22 @@ export type ParsedPredictionContractPayload =
   | {
       type: "close_round";
       roundId: string;
+      tokenAddress: string;
+      timeframeCode: number;
+      roundStartTimestamp: number;
     }
   | {
       type: "settle_round";
       roundId: string;
+      tokenAddress: string;
+      timeframeCode: number;
+      roundStartTimestamp: number;
       result: PredictionDirection;
     }
   | {
       type: "claim";
       roundId: string;
+      tokenAddress: string;
+      timeframeCode: number;
+      roundStartTimestamp: number;
     };

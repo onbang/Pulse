@@ -140,10 +140,7 @@ export function buildPredictionPlaceBetPayloadBase64(input: {
   roundStartTimestamp: number;
   direction: PredictionDirection;
 }) {
-  return beginCell()
-    .storeUint(PREDICTION_OP_PLACE_BET, 32)
-    .storeStringRefTail(input.roundId)
-    .storeStringRefTail(input.marketId)
+  const detailsCell = beginCell()
     .storeStringRefTail(input.label)
     .storeAddress(Address.parse(input.tokenAddress))
     .storeStringRefTail(input.timeframeId)
@@ -151,6 +148,13 @@ export function buildPredictionPlaceBetPayloadBase64(input: {
     .storeUint(input.roundDurationSeconds, 32)
     .storeUint(input.roundStartTimestamp, 32)
     .storeUint(input.direction === "up" ? 1 : 0, 8)
+    .endCell();
+
+  return beginCell()
+    .storeUint(PREDICTION_OP_PLACE_BET, 32)
+    .storeStringRefTail(input.roundId)
+    .storeStringRefTail(input.marketId)
+    .storeRef(detailsCell)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -201,6 +205,9 @@ export function buildPredictionCloseRoundPayloadBase64(
   return beginCell()
     .storeUint(PREDICTION_OP_CLOSE_ROUND, 32)
     .storeStringRefTail(input.roundId)
+    .storeAddress(Address.parse(input.tokenAddress))
+    .storeUint(input.timeframeCode, 8)
+    .storeUint(input.roundStartTimestamp, 32)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -212,6 +219,9 @@ export function buildPredictionSettleRoundPayloadBase64(
   return beginCell()
     .storeUint(PREDICTION_OP_SETTLE_ROUND, 32)
     .storeStringRefTail(input.roundId)
+    .storeAddress(Address.parse(input.tokenAddress))
+    .storeUint(input.timeframeCode, 8)
+    .storeUint(input.roundStartTimestamp, 32)
     .storeUint(input.result === "up" ? 1 : 0, 8)
     .endCell()
     .toBoc()
@@ -222,6 +232,9 @@ export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
   return beginCell()
     .storeUint(PREDICTION_OP_CLAIM, 32)
     .storeStringRefTail(input.roundId)
+    .storeAddress(Address.parse(input.tokenAddress))
+    .storeUint(input.timeframeCode, 8)
+    .storeUint(input.roundStartTimestamp, 32)
     .endCell()
     .toBoc()
     .toString("base64");
@@ -241,13 +254,14 @@ export function parsePredictionContractPayloadBase64(
     if (opcode === PREDICTION_OP_PLACE_BET) {
       const roundId = slice.loadStringRefTail();
       const marketId = slice.loadStringRefTail();
-      const label = slice.loadStringRefTail();
-      const tokenAddress = slice.loadAddress().toString();
-      const timeframeId = slice.loadStringRefTail();
-      const timeframeCode = Number(slice.loadUint(8));
-      const roundDurationSeconds = Number(slice.loadUint(32));
-      const roundStartTimestamp = Number(slice.loadUint(32));
-      const direction = slice.loadUint(8) === 1 ? "up" : "down";
+      const detailsSlice = slice.loadRef().beginParse();
+      const label = detailsSlice.loadStringRefTail();
+      const tokenAddress = detailsSlice.loadAddress().toString();
+      const timeframeId = detailsSlice.loadStringRefTail();
+      const timeframeCode = Number(detailsSlice.loadUint(8));
+      const roundDurationSeconds = Number(detailsSlice.loadUint(32));
+      const roundStartTimestamp = Number(detailsSlice.loadUint(32));
+      const direction = detailsSlice.loadUint(8) === 1 ? "up" : "down";
 
       if (
         !roundId ||
@@ -278,23 +292,35 @@ export function parsePredictionContractPayloadBase64(
 
     if (opcode === PREDICTION_OP_CLOSE_ROUND) {
       const roundId = slice.loadStringRefTail();
+      const tokenAddress = slice.loadAddress().toString();
+      const timeframeCode = Number(slice.loadUint(8));
+      const roundStartTimestamp = Number(slice.loadUint(32));
 
-      return roundId
+      return roundId && tokenAddress
         ? {
             type: "close_round",
             roundId,
+            tokenAddress,
+            timeframeCode,
+            roundStartTimestamp,
           }
         : null;
     }
 
     if (opcode === PREDICTION_OP_SETTLE_ROUND) {
       const roundId = slice.loadStringRefTail();
+      const tokenAddress = slice.loadAddress().toString();
+      const timeframeCode = Number(slice.loadUint(8));
+      const roundStartTimestamp = Number(slice.loadUint(32));
       const result = slice.loadUint(8) === 1 ? "up" : "down";
 
-      return roundId
+      return roundId && tokenAddress
         ? {
             type: "settle_round",
             roundId,
+            tokenAddress,
+            timeframeCode,
+            roundStartTimestamp,
             result,
           }
         : null;
@@ -302,11 +328,17 @@ export function parsePredictionContractPayloadBase64(
 
     if (opcode === PREDICTION_OP_CLAIM) {
       const roundId = slice.loadStringRefTail();
+      const tokenAddress = slice.loadAddress().toString();
+      const timeframeCode = Number(slice.loadUint(8));
+      const roundStartTimestamp = Number(slice.loadUint(32));
 
-      return roundId
+      return roundId && tokenAddress
         ? {
             type: "claim",
             roundId,
+            tokenAddress,
+            timeframeCode,
+            roundStartTimestamp,
           }
         : null;
     }
