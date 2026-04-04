@@ -1,0 +1,42 @@
+name: Forecast Auto Cycle
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: forecast-auto-cycle
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Trigger forecast auto-cycle
+        env:
+          FORECAST_AUTO_CYCLE_URL: ${{ vars.FORECAST_AUTO_CYCLE_URL }}
+          FORECAST_CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          TARGET_URL="${FORECAST_AUTO_CYCLE_URL:-https://pulse-next-js-app.vercel.app/api/forecast-markets/auto-cycle}"
+
+          if [ -z "${FORECAST_CRON_SECRET:-}" ]; then
+            echo "CRON_SECRET GitHub Actions secret is missing"
+            exit 1
+          fi
+
+          echo "Triggering ${TARGET_URL}"
+          HTTP_STATUS=$(curl -sS -o /tmp/forecast-auto-cycle.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${FORECAST_CRON_SECRET}" \
+            "${TARGET_URL}")
+
+          cat /tmp/forecast-auto-cycle.json
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            echo "Forecast auto-cycle failed with HTTP ${HTTP_STATUS}"
+            exit 1
+          fi

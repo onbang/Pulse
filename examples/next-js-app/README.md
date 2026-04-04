@@ -89,3 +89,11 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `GET /api/forecast-markets/auto-cycle` is scheduled via Vercel Cron every minute to lock closed rounds, resolve winners, and trigger automatic winner payouts
 - Automatic resolution and payouts require a funded resolver wallet via `FORECAST_RESOLVER_MNEMONIC` or `FORECAST_RESOLVER_ADDRESS`
 - `FORECAST_CRON_SECRET` can be set to protect the auto-cycle route with a bearer token
+
+## Hobby scheduler
+
+- Vercel Hobby does not support minute-level Cron for this workflow
+- The repository includes `.github/workflows/forecast-auto-cycle.yml` as the external scheduler fallback
+- It triggers `https://pulse-next-js-app.vercel.app/api/forecast-markets/auto-cycle` every 5 minutes
+- To enable it, add the same `CRON_SECRET` value as a GitHub Actions secret named `CRON_SECRET`
+- Optional: add a repository variable `FORECAST_AUTO_CYCLE_URL` if the production domain changes
