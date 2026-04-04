@@ -96,7 +96,7 @@ export const SwapFormHeader = () => {
         </div>
 
         <div className="rounded-[24px] border border-sky-100 bg-white/82 p-5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
             <div className="max-w-2xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-sky-500/80">
                 {t("swap.onboarding.eyebrow")}
@@ -109,19 +109,29 @@ export const SwapFormHeader = () => {
               </p>
             </div>
 
-            <div className="flex shrink-0 flex-wrap gap-3">
-              <Link
-                href={ROUTES.pools}
-                className="rounded-full border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-sky-50"
-              >
-                {t("swap.onboarding.secondary")}
-              </Link>
-              <Link
-                href={ROUTES.checkIn}
-                className="rounded-full border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-sky-50"
-              >
-                {t("swap.onboarding.tertiary")}
-              </Link>
+            <div className="subtle-panel">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                {t("swap.onboarding.guidanceTitle")}
+              </p>
+              <div className="mt-3 space-y-3 text-sm leading-6 text-slate-600">
+                <p>{t("swap.onboarding.guidancePrimary")}</p>
+                <p>{t("swap.onboarding.guidanceSecondary")}</p>
+                <p>{t("swap.onboarding.guidanceTertiary")}</p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href={ROUTES.pools}
+                  className="rounded-full border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-sky-50"
+                >
+                  {t("swap.onboarding.secondary")}
+                </Link>
+                <Link
+                  href={ROUTES.profile}
+                  className="rounded-full border border-sky-100 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-sky-50"
+                >
+                  {t("swap.onboarding.tertiary")}
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -1,6 +1,8 @@
 "use client";
 
+import { PageIntro } from "@/components/page-intro";
 import { useI18n } from "@/components/i18n/i18n-provider";
+import { ROUTES } from "@/constants";
 
 import { PoolsBrowser } from "./components/pools-browser";
 
@@ -8,53 +10,40 @@ export default function PoolsPage() {
   const { t } = useI18n();
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-4 md:py-10">
-      <div className="hero-shell">
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="eyebrow">{t("pools.hero.eyebrow")}</p>
-            <h1 className="page-heading mt-3">{t("pools.hero.title")}</h1>
-            <p className="page-subheading mt-4">{t("pools.hero.subtitle")}</p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="stat-pill px-4 py-4">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                {t("pools.hero.coverage")}
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                {t("pools.hero.coverageValue")}
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                {t("pools.hero.coverageBody")}
-              </p>
-            </div>
-            <div className="stat-pill px-4 py-4">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                {t("pools.hero.signal")}
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                {t("pools.hero.signalValue")}
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                {t("pools.hero.signalBody")}
-              </p>
-            </div>
-            <div className="stat-pill px-4 py-4">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                {t("pools.hero.goal")}
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                {t("pools.hero.goalValue")}
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                {t("pools.hero.goalBody")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <section className="page-shell">
+      <PageIntro
+        eyebrow={t("pools.hero.eyebrow")}
+        title={t("pools.hero.title")}
+        subtitle={t("pools.hero.subtitle")}
+        actions={[
+          {
+            href: ROUTES.liquidityProvide,
+            label: t("pools.board.provide"),
+          },
+          {
+            href: ROUTES.profile,
+            label: t("nav.profile"),
+            variant: "outline",
+          },
+        ]}
+        stats={[
+          {
+            label: t("pools.hero.coverage"),
+            value: t("pools.hero.coverageValue"),
+            body: t("pools.hero.coverageBody"),
+          },
+          {
+            label: t("pools.hero.signal"),
+            value: t("pools.hero.signalValue"),
+            body: t("pools.hero.signalBody"),
+          },
+          {
+            label: t("pools.hero.goal"),
+            value: t("pools.hero.goalValue"),
+            body: t("pools.hero.goalBody"),
+          },
+        ]}
+      />
       <PoolsBrowser />
     </section>
   );

@@ -47,7 +47,14 @@ export const messages = {
     "swap.onboarding.body":
       "No separate overview page needed: choose a route, check the live quote and chart, then swap only when everything looks clear. If you want, you can explore pools or start your daily streak first.",
     "swap.onboarding.secondary": "Explore pools",
-    "swap.onboarding.tertiary": "Open check-in",
+    "swap.onboarding.tertiary": "Open profile",
+    "swap.onboarding.guidanceTitle": "Where to go next",
+    "swap.onboarding.guidancePrimary":
+      "Ready to trade right now? The swap form sits directly below this block.",
+    "swap.onboarding.guidanceSecondary":
+      "Need more context first? Open pools and compare where liquidity looks strongest.",
+    "swap.onboarding.guidanceTertiary":
+      "Want to keep progress? Open your profile for check-ins, points, and history.",
     "swap.onboarding.step1.title": "Choose tokens",
     "swap.onboarding.step1.body":
       "Pick what you want to give and what you want to receive.",
@@ -61,6 +68,12 @@ export const messages = {
     "swap.ticket.title": "Execute with confidence",
     "swap.ticket.mode": "Mode",
     "swap.ticket.modeValue": "Wallet-grade flow",
+    "swap.layout.primary": "Main action",
+    "swap.layout.primaryBody":
+      "Choose tokens, check the route, and confirm only when the quote and impact look right to you.",
+    "swap.layout.secondary": "Decision support",
+    "swap.layout.secondaryBody":
+      "Chart, prediction flow, and market context live next to the ticket so you always know why you are clicking.",
     "assetSelect.placeholder": "Select asset...",
     "assetSelect.search": "Search asset...",
     "assetSelect.empty": "No asset found.",
@@ -266,6 +279,8 @@ export const messages = {
     "profile.hero.title": "Build your onchain identity inside STON Pulse.",
     "profile.hero.subtitle":
       "Track points, achievements, watched pools, prediction history, and wallet activity in one polished personal dashboard.",
+    "profile.hero.primaryAction": "Open swap",
+    "profile.hero.secondaryAction": "Open pools",
     "profile.history.eyebrow": "Recent check-ins",
     "profile.history.title": "Your streak history",
     "profile.history.empty": "No check-ins yet.",
@@ -275,6 +290,7 @@ export const messages = {
     "profile.activePredictions.subtitle":
       "Your current open views and rounds awaiting settlement.",
     "profile.activePredictions.empty": "No active prediction positions yet.",
+    "profile.activePredictions.cta": "Open swap",
     "profile.summary.identity": "Profile Identity",
     "profile.summary.connected":
       "Connected through TON Connect. This profile powers comments, predictions, check-ins, and achievement progress.",
@@ -287,11 +303,16 @@ export const messages = {
     "profile.summary.unlockedBadgesBody": "Permanent profile milestones",
     "profile.summary.rewardEntries": "Reward entries",
     "profile.summary.rewardEntriesBody": "Confirmed reward history",
+    "profile.summary.editTitle": "Public profile",
+    "profile.summary.editBody":
+      "Your name and bio travel with Pulse activity so comments, check-ins, and predictions feel like one consistent identity.",
     "profile.summary.displayName": "Display name",
     "profile.summary.bio": "Bio",
     "profile.summary.save": "Save profile",
     "profile.summary.level": "Level",
-    "profile.summary.pointsCount": "{count} profile points",
+    "profile.summary.pointsCount": "{count} points collected",
+    "profile.summary.wallet": "Wallet",
+    "profile.summary.walletBody": "Your connected TON identity inside the app.",
     "profile.summary.totalCheckInsBody": "Confirmed onchain daily check-ins",
     "profile.summary.since": "Since",
     "profile.summary.joined": "Joined STON Pulse",
@@ -304,6 +325,24 @@ export const messages = {
     "profile.progression.maxUnlocked": "Maximum user level unlocked",
     "profile.progression.pointsLeft": "{count} points left",
     "profile.progression.progress": "Level progress",
+    "profile.watchlist.title": "Watchlist",
+    "profile.watchlist.subtitle":
+      "Pools you saved for quick return stay here inside your profile.",
+    "profile.watchlist.empty":
+      "Your watchlist is still empty. Save pools that look interesting so you can come back fast.",
+    "profile.watchlist.cta": "Explore pools",
+    "profile.betHistory.title": "Prediction history",
+    "profile.betHistory.subtitle":
+      "Your active, recent, and settled prediction positions in one place.",
+    "profile.betHistory.recent": "Active and recent bets",
+    "profile.betHistory.recentCount": "{count} entries",
+    "profile.betHistory.empty":
+      "You have no prediction history yet. Start from swap and place your first market view.",
+    "profile.betHistory.cta": "Go to swap",
+    "profile.betHistory.settled": "Settled rounds",
+    "profile.betHistory.settledCount": "{count} results",
+    "profile.betHistory.settledEmpty":
+      "Settled rounds with your wallet will appear here after the first completed market.",
     "profile.achievements.eyebrow": "Badge Collection",
     "profile.achievements.title": "Achievements that define your profile",
     "profile.achievements.subtitle":
@@ -541,7 +580,14 @@ export const messages = {
     "swap.onboarding.body":
       "Без отдельной обзорной страницы: выбери маршрут, посмотри живую котировку и график, а затем меняй только когда все понятно. Если хочешь, сначала можно изучить пулы или начать ежедневную серию.",
     "swap.onboarding.secondary": "Изучить пулы",
-    "swap.onboarding.tertiary": "Открыть чек-ин",
+    "swap.onboarding.tertiary": "Открыть профиль",
+    "swap.onboarding.guidanceTitle": "Куда идти дальше",
+    "swap.onboarding.guidancePrimary":
+      "Если готов обменять прямо сейчас, форма находится сразу под этим блоком.",
+    "swap.onboarding.guidanceSecondary":
+      "Если сначала нужен контекст, открой пулы и сравни, где сейчас самая сильная ликвидность.",
+    "swap.onboarding.guidanceTertiary":
+      "Если хочешь копить прогресс, открой профиль с чек-инами, points и историей.",
     "swap.onboarding.step1.title": "Выбери токены",
     "swap.onboarding.step1.body":
       "Укажи, что хочешь отдать и что хочешь получить.",
@@ -555,6 +601,12 @@ export const messages = {
     "swap.ticket.title": "Обменивай уверенно",
     "swap.ticket.mode": "Режим",
     "swap.ticket.modeValue": "Режим кошелька",
+    "swap.layout.primary": "Основное действие",
+    "swap.layout.primaryBody":
+      "Выбери токены, проверь маршрут и подтверждай только тогда, когда тебя устраивают котировка и влияние сделки.",
+    "swap.layout.secondary": "Поддержка решения",
+    "swap.layout.secondaryBody":
+      "График, прогноз и рыночный контекст находятся рядом с тикетом, чтобы всегда было понятно, зачем ты нажимаешь кнопку.",
     "assetSelect.placeholder": "Выбери токен...",
     "assetSelect.search": "Поиск токена...",
     "assetSelect.empty": "Токен не найден.",
@@ -765,6 +817,8 @@ export const messages = {
     "profile.hero.title": "Строй свою onchain-идентичность внутри STON Pulse.",
     "profile.hero.subtitle":
       "Следи за points, достижениями, watched pools, историей прогнозов и активностью кошелька в одном личном кабинете.",
+    "profile.hero.primaryAction": "Открыть обмен",
+    "profile.hero.secondaryAction": "Открыть пулы",
     "profile.history.eyebrow": "Последние чек-ины",
     "profile.history.title": "История твоей серии",
     "profile.history.empty": "Чек-инов пока нет.",
@@ -774,6 +828,7 @@ export const messages = {
     "profile.activePredictions.subtitle":
       "Твои текущие открытые позиции и раунды в ожидании завершения.",
     "profile.activePredictions.empty": "Активных прогнозов пока нет.",
+    "profile.activePredictions.cta": "Открыть обмен",
     "profile.summary.identity": "Идентичность профиля",
     "profile.summary.connected":
       "Профиль подключен через TON Connect. Он используется для комментариев, прогнозов, чек-инов и прогресса достижений.",
@@ -783,16 +838,21 @@ export const messages = {
     "profile.summary.longestStreak": "Лучшая серия",
     "profile.summary.longestStreakBody": "Максимум дней без пропуска",
     "profile.summary.unlockedBadges": "Открытые бейджи",
-    "profile.summary.unlockedBadgesBody": "Постоянные milestones профиля",
+    "profile.summary.unlockedBadgesBody": "Постоянные достижения профиля",
     "profile.summary.rewardEntries": "Записи наград",
-    "profile.summary.rewardEntriesBody": "Подтвержденная история начислений",
+    "profile.summary.rewardEntriesBody": "История подтвержденных начислений",
+    "profile.summary.editTitle": "Публичный профиль",
+    "profile.summary.editBody":
+      "Имя и bio используются в активности Pulse, чтобы прогнозы, комментарии и чек-ины выглядели как часть одной идентичности.",
     "profile.summary.displayName": "Имя профиля",
     "profile.summary.bio": "О себе",
     "profile.summary.save": "Сохранить профиль",
     "profile.summary.level": "Уровень",
-    "profile.summary.pointsCount": "{count} profile points",
-    "profile.summary.totalCheckInsBody":
-      "Подтвержденные onchain daily check-ins",
+    "profile.summary.pointsCount": "{count} points в профиле",
+    "profile.summary.wallet": "Кошелек",
+    "profile.summary.walletBody":
+      "Твой подключенный TON-адрес внутри приложения.",
+    "profile.summary.totalCheckInsBody": "Подтвержденные onchain-чек-ины",
     "profile.summary.since": "С",
     "profile.summary.joined": "В STON Pulse с этой даты",
     "profile.progression.eyebrow": "Прогресс",
@@ -805,6 +865,24 @@ export const messages = {
       "Открыт максимальный уровень пользователя",
     "profile.progression.pointsLeft": "Осталось {count} points",
     "profile.progression.progress": "Прогресс уровня",
+    "profile.watchlist.title": "Список наблюдения",
+    "profile.watchlist.subtitle":
+      "Пулы, которые ты сохранил для быстрого возврата, остаются здесь в профиле.",
+    "profile.watchlist.empty":
+      "Твой watchlist пока пуст. Сохраняй интересные пулы, чтобы потом возвращаться к ним быстрее.",
+    "profile.watchlist.cta": "Изучить пулы",
+    "profile.betHistory.title": "История прогнозов",
+    "profile.betHistory.subtitle":
+      "Все активные, последние и завершенные прогнозы в одном месте.",
+    "profile.betHistory.recent": "Активные и последние ставки",
+    "profile.betHistory.recentCount": "{count} записей",
+    "profile.betHistory.empty":
+      "Истории прогнозов пока нет. Начни с обмена и открой свой первый рыночный сценарий.",
+    "profile.betHistory.cta": "Перейти в обмен",
+    "profile.betHistory.settled": "Завершенные раунды",
+    "profile.betHistory.settledCount": "{count} результатов",
+    "profile.betHistory.settledEmpty":
+      "После первого завершенного рынка здесь появятся закрытые раунды с твоим участием.",
     "profile.achievements.eyebrow": "Коллекция значков",
     "profile.achievements.title": "Достижения, которые формируют твой профиль",
     "profile.achievements.subtitle":

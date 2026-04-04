@@ -36,7 +36,10 @@ export const NavBar: React.FC<
       <ul className="mx-auto flex max-w-6xl gap-1.5 overflow-x-auto rounded-[30px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,249,255,0.92))] p-1.5 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.12)] backdrop-blur-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {links.map(({ labelKey, href }) => (
           <li key={href}>
-            <NavBarLink href={href} className="whitespace-nowrap">
+            <NavBarLink
+              href={href}
+              className="min-w-[96px] whitespace-nowrap text-center"
+            >
               {t(labelKey)}
             </NavBarLink>
           </li>

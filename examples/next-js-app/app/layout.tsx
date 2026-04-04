@@ -38,7 +38,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           <NavBar className="mx-auto" links={navBarLinks} />
-          <main className="container relative flex h-full flex-1 flex-col py-8 md:py-10">
+          <main className="container relative flex h-full flex-1 flex-col pb-12 pt-6 md:pb-16 md:pt-8">
             {children}
           </main>
           <Toaster />

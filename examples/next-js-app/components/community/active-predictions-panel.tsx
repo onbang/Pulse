@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   Card,
   CardContent,
@@ -8,6 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/constants";
 import { useCommunityProfile } from "./community-provider";
 import { useI18n } from "@/components/i18n/i18n-provider";
 
@@ -29,16 +33,33 @@ export function ActivePredictionsPanel() {
   return (
     <Card className="surface-panel overflow-hidden">
       <CardHeader>
-        <CardTitle>{t("profile.activePredictions.title")}</CardTitle>
-        <CardDescription>
-          {t("profile.activePredictions.subtitle")}
-        </CardDescription>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{t("profile.activePredictions.title")}</CardTitle>
+            <CardDescription>
+              {t("profile.activePredictions.subtitle")}
+            </CardDescription>
+          </div>
+          <Badge className="border-sky-100 bg-sky-50 text-slate-700">
+            {activeBets.length}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {activeBets.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            {t("profile.activePredictions.empty")}
-          </p>
+          <div className="empty-state-panel">
+            <p className="empty-state-title">
+              {t("profile.activePredictions.title")}
+            </p>
+            <p className="text-sm leading-6 text-slate-600">
+              {t("profile.activePredictions.empty")}
+            </p>
+            <Button asChild variant="outline">
+              <Link href={ROUTES.swap}>
+                {t("profile.activePredictions.cta")}
+              </Link>
+            </Button>
+          </div>
         ) : (
           activeBets.slice(0, 6).map((bet) => {
             const prediction = getPrediction(bet.pairId);
@@ -47,7 +68,7 @@ export function ActivePredictionsPanel() {
             return (
               <div
                 key={bet.id}
-                className="rounded-2xl border border-sky-100 bg-white px-4 py-3"
+                className="rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.18)]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

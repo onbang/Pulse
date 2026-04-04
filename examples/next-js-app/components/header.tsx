@@ -19,14 +19,14 @@ export function Header() {
         <a
           href="https://ston.fi/"
           target="_blank noopener noreferrer"
-          className="mesh-card relative mr-auto flex items-center gap-4 rounded-full px-3 py-3.5 transition-transform duration-200 hover:-translate-y-0.5"
+          className="mesh-card relative mr-auto flex items-center gap-4 rounded-full px-3 py-3 transition-transform duration-200 hover:-translate-y-0.5"
         >
           <Image
             src="/pulse-logo.png"
             width={220}
             height={72}
             alt="Pulse logo"
-            className="h-11 w-auto rounded-full object-contain"
+            className="h-10 w-auto rounded-full object-contain"
             priority
           />
           <div className="hidden min-w-0 sm:block">
@@ -38,7 +38,7 @@ export function Header() {
               {t("header.productHint")}
             </p>
           </div>
-          <Badge className="absolute -bottom-1 -right-6 rotate-[-13deg] scale-[0.8] border border-white/10 bg-[linear-gradient(135deg,#0180FF,#7354F2)] text-white shadow-lg">
+          <Badge className="absolute -bottom-1 -right-5 rotate-[-10deg] scale-[0.82] border border-white/10 bg-[linear-gradient(135deg,#0180FF,#7354F2)] text-white shadow-lg">
             pulse
           </Badge>
         </a>
@@ -48,20 +48,22 @@ export function Header() {
           <TonConnectButton />
           <TelegramBadge />
         </div>
-        <a
-          href="https://github.com/ston-fi/sdk"
-          target="_blank noopener noreferrer"
-          className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
-        >
-          <Image src={GitHubIcon} alt="GitHub" width={24} height={24} />
-        </a>
-        <a
-          href="https://docs.ston.fi/docs/developer-section/sdk"
-          target="_blank noopener noreferrer"
-          className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
-        >
-          <Image src={GitBookIcon} alt="GitBook" width={24} height={24} />
-        </a>
+        <div className="hidden items-center gap-2 md:flex">
+          <a
+            href="https://github.com/ston-fi/sdk"
+            target="_blank noopener noreferrer"
+            className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
+          >
+            <Image src={GitHubIcon} alt="GitHub" width={24} height={24} />
+          </a>
+          <a
+            href="https://docs.ston.fi/docs/developer-section/sdk"
+            target="_blank noopener noreferrer"
+            className="glass-strip p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80"
+          >
+            <Image src={GitBookIcon} alt="GitBook" width={24} height={24} />
+          </a>
+        </div>
       </section>
     </header>
   );
