@@ -425,6 +425,29 @@ export declare function loadGetterTupleClaimReward(source: TupleReader): {
 };
 export declare function storeTupleClaimReward(source: ClaimReward): TupleItem[];
 export declare function dictValueParserClaimReward(): DictionaryValue<ClaimReward>;
+export type ClaimRewardFor = {
+  $$type: "ClaimRewardFor";
+  wallet: Address;
+};
+export declare function storeClaimRewardFor(
+  src: ClaimRewardFor,
+): (builder: Builder) => void;
+export declare function loadClaimRewardFor(slice: Slice): {
+  $$type: "ClaimRewardFor";
+  wallet: Address;
+};
+export declare function loadTupleClaimRewardFor(source: TupleReader): {
+  $$type: "ClaimRewardFor";
+  wallet: Address;
+};
+export declare function loadGetterTupleClaimRewardFor(source: TupleReader): {
+  $$type: "ClaimRewardFor";
+  wallet: Address;
+};
+export declare function storeTupleClaimRewardFor(
+  source: ClaimRewardFor,
+): TupleItem[];
+export declare function dictValueParserClaimRewardFor(): DictionaryValue<ClaimRewardFor>;
 export type Position = {
   $$type: "Position";
   yesStake: bigint;
@@ -925,6 +948,7 @@ export declare class TonForecastMarket implements Contract {
     LockMarket: number;
     ResolveMarket: number;
     ClaimReward: number;
+    ClaimRewardFor: number;
   };
   static init(
     owner: Address,
@@ -982,7 +1006,14 @@ export declare class TonForecastMarket implements Contract {
       value: bigint;
       bounce?: boolean | null | undefined;
     },
-    message: null | BetYes | BetNo | LockMarket | ResolveMarket | ClaimReward,
+    message:
+      | null
+      | BetYes
+      | BetNo
+      | LockMarket
+      | ResolveMarket
+      | ClaimReward
+      | ClaimRewardFor,
   ): Promise<void>;
   getGetMarketState(provider: ContractProvider): Promise<{
     $$type: "MarketState";

@@ -11,6 +11,10 @@ message(0x54465231) ResolveMarket {
 
 message(0x54464331) ClaimReward {}
 
+message(0x54464631) ClaimRewardFor {
+    wallet: Address;
+}
+
 struct Position {
     yesStake: Int as coins;
     noStake: Int as coins;
@@ -141,9 +145,17 @@ contract TonForecastMarket {
     }
 
     receive(msg: ClaimReward) {
+        self.claimFor(sender());
+    }
+
+    receive(msg: ClaimRewardFor) {
+        self.claimFor(msg.wallet);
+    }
+
+    fun claimFor(recipient: Address) {
         require(self.isResolved(), "market_not_resolved");
 
-        let positionKey = self.derivePositionKey(sender());
+        let positionKey = self.derivePositionKey(recipient);
         let position = self.positions.get(positionKey);
         require(position != null, "position_not_found");
         require(!position!!.claimed, "already_claimed");
@@ -157,7 +169,7 @@ contract TonForecastMarket {
 
         if (self.status == 4) {
             send(SendParameters {
-                to: sender(),
+                to: recipient,
                 value: payout,
                 mode: SendIgnoreErrors
             });
@@ -179,7 +191,7 @@ contract TonForecastMarket {
         }
 
         send(SendParameters {
-            to: sender(),
+            to: recipient,
             value: payout,
             mode: SendIgnoreErrors
         });

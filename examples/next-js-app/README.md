@@ -55,13 +55,26 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `POST /api/telegram/auth`
 - `GET /api/ton/profile/[wallet]`
 - `GET /api/tonconnect-manifest`
+- `GET /api/forecast-markets/context`
+- `POST /api/forecast-markets/create-intent`
+- `POST /api/forecast-markets/bet-intent`
+- `PUT /api/forecast-markets/sync`
+- `POST /api/forecast-markets/auto-cycle`
 
 ## Environment
 
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_TONCONNECT_MANIFEST_URL`
+- `NEXT_PUBLIC_CHECKIN_TREASURY_ADDRESS`
+- `NEXT_PUBLIC_PREDICTION_TREASURY_ADDRESS`
+- `NEXT_PUBLIC_FORECAST_TREASURY_ADDRESS`
+- `NEXT_PUBLIC_FORECAST_RESOLVER_ADDRESS`
+- `NEXT_PUBLIC_FORECAST_AUTO_CYCLE_ENABLED`
 - `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_BOT_TOKEN`
+- `FORECAST_RESOLVER_ADDRESS`
+- `FORECAST_RESOLVER_MNEMONIC`
+- `FORECAST_CRON_SECRET`
 - `STON_PULSE_DB_FILE`
 
 ## Deployment notes
@@ -72,3 +85,7 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
 - For durable production persistence, provide a custom `STON_PULSE_DB_FILE` backed by writable storage instead of relying on ephemeral `/tmp`
 - `GET /api/health` can be used as a lightweight health endpoint
+- Token forecasts use one `TonForecastMarket` contract per `token + timeframe + roundStart`
+- `GET /api/forecast-markets/auto-cycle` is scheduled via Vercel Cron every minute to lock closed rounds, resolve winners, and trigger automatic winner payouts
+- Automatic resolution and payouts require a funded resolver wallet via `FORECAST_RESOLVER_MNEMONIC` or `FORECAST_RESOLVER_ADDRESS`
+- `FORECAST_CRON_SECRET` can be set to protect the auto-cycle route with a bearer token

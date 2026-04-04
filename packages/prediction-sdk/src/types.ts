@@ -103,4 +103,8 @@ export type ParsedTonForecastContractPayload =
     }
   | {
       type: "claim_reward";
+    }
+  | {
+      type: "claim_reward_for";
+      walletAddress: string;
     };

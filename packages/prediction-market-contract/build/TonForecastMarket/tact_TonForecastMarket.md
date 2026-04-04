@@ -1,9 +1,9 @@
 # Tact compilation report
 Contract: TonForecastMarket
-BoC Size: 2587 bytes
+BoC Size: 2759 bytes
 
 ## Structures (Structs and Messages)
-Total structures: 18
+Total structures: 19
 
 ### DataSize
 TL-B: `_ cells:int257 bits:int257 refs:int257 = DataSize`
@@ -64,6 +64,10 @@ Signature: `ResolveMarket{finalPriceE9:uint64,resolvedAt:uint32}`
 ### ClaimReward
 TL-B: `claim_reward#54464331  = ClaimReward`
 Signature: `ClaimReward{}`
+
+### ClaimRewardFor
+TL-B: `claim_reward_for#54464631 wallet:address = ClaimRewardFor`
+Signature: `ClaimRewardFor{wallet:address}`
 
 ### Position
 TL-B: `_ yesStake:coins noStake:coins claimed:bool = Position`

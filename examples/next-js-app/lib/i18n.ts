@@ -232,6 +232,18 @@ export const messages = {
     "prediction.winnersPreview": "Winners payout preview",
     "prediction.winnersCount": "{count} winners",
     "prediction.noWinningBets": "No winning bets in this round.",
+    "prediction.nextRound": "Next round",
+    "prediction.nextRoundReadyNow": "Ready now",
+    "prediction.nextRoundOpensIn": "Next round in {value}",
+    "prediction.nextRoundBody":
+      "As soon as this round is resolved, the next market can open on the selected timeframe.",
+    "prediction.roundClosesBody":
+      "Countdown to the close of the current onchain market.",
+    "prediction.autoResolveTitle": "Auto-resolution in progress",
+    "prediction.autoResolveBody":
+      "The resolver is checking the market price and selecting the winning side for this interval.",
+    "prediction.autoPayoutBody":
+      "After resolution, winning wallets are paid automatically onchain from the market contract.",
     "prediction.stakeLine": "Stake {amount} TON",
     "prediction.disclaimer":
       "This is a sentiment widget, not financial advice. Open rounds accept bets, closed rounds await settlement, and settled rounds show payout previews.",
@@ -782,6 +794,18 @@ export const messages = {
     "prediction.winnersPreview": "Предпросмотр выплат победителям",
     "prediction.winnersCount": "{count} победителей",
     "prediction.noWinningBets": "В этом раунде нет выигравших ставок.",
+    "prediction.nextRound": "Следующий раунд",
+    "prediction.nextRoundReadyNow": "Можно открыть сейчас",
+    "prediction.nextRoundOpensIn": "Следующий раунд через {value}",
+    "prediction.nextRoundBody":
+      "После завершения текущего раунда следующий рынок можно открыть сразу на выбранном интервале.",
+    "prediction.roundClosesBody":
+      "Таймер до завершения текущего onchain-раунда.",
+    "prediction.autoResolveTitle": "Идет автоопределение победителя",
+    "prediction.autoResolveBody":
+      "Resolver уже проверяет рыночную цену и фиксирует победившую сторону для этого интервала.",
+    "prediction.autoPayoutBody":
+      "После завершения рынка выигрыш автоматически отправляется на TON-кошельки победителей.",
     "prediction.stakeLine": "Ставка {amount} TON",
     "prediction.disclaimer":
       "Это виджет рыночного настроения, а не финансовый совет. Открытые раунды принимают ставки, закрытые ждут завершения, а завершенные показывают выплаты.",

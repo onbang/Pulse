@@ -5,6 +5,7 @@ const DEFAULT_FORECAST_DEPLOY_RESERVE_TON = "0.05";
 const DEFAULT_FORECAST_CLAIM_TRIGGER_TON = "0.02";
 const DEFAULT_FORECAST_PROTOCOL_FEE_BPS = 300;
 const DEFAULT_FORECAST_THRESHOLD_PRESETS_BPS = [50, 100, 200];
+const DEFAULT_FORECAST_AUTO_CYCLE_ENABLED = true;
 
 function parseThresholdPresets(value?: string | null) {
   if (!value?.trim()) {
@@ -70,4 +71,29 @@ export function getForecastThresholdPresetsBps() {
     process.env.NEXT_PUBLIC_FORECAST_THRESHOLD_PRESETS_BPS ??
       process.env.FORECAST_THRESHOLD_PRESETS_BPS,
   );
+}
+
+export function getForecastResolverMnemonic() {
+  return (
+    process.env.FORECAST_RESOLVER_MNEMONIC?.trim() ||
+    process.env.FORECAST_AUTOMATION_MNEMONIC?.trim() ||
+    process.env.TON_WALLET_MNEMONIC?.trim() ||
+    ""
+  );
+}
+
+export function getForecastAutoCycleEnabled() {
+  const raw =
+    process.env.FORECAST_AUTO_CYCLE_ENABLED ??
+    process.env.NEXT_PUBLIC_FORECAST_AUTO_CYCLE_ENABLED;
+
+  if (!raw?.trim()) {
+    return DEFAULT_FORECAST_AUTO_CYCLE_ENABLED;
+  }
+
+  return raw === "1" || raw.toLowerCase() === "true";
+}
+
+export function getForecastCronSecret() {
+  return process.env.FORECAST_CRON_SECRET?.trim() || "";
 }

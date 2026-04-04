@@ -1,9 +1,12 @@
 import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { Address, beginCell, Cell, toNano } from "@ton/core";
+import { mnemonicToPrivateKey } from "@ton/crypto";
+import { internal, WalletContractV4 } from "@ton/ton";
 import {
   buildTonForecastBetTransferMessage,
+  buildTonForecastClaimForPayloadBase64,
   buildTonForecastClaimPayloadBase64,
   buildTonForecastLockPayloadBase64,
   buildTonForecastResolvePayloadBase64,
@@ -21,10 +24,11 @@ import type { PredictionDirection } from "@/lib/community";
 import { getCommunityState } from "@/lib/server/community-store";
 import { stonApiClient } from "@/lib/ston-api-client";
 import {
+  getForecastAutoCycleEnabled,
   getForecastClaimTriggerTon,
   getForecastDeployReserveTon,
   getForecastProtocolFeeBps,
-  getForecastResolverAddress,
+  getForecastResolverMnemonic,
   getForecastThresholdPresetsBps,
   getForecastTreasuryAddress,
 } from "@/lib/forecast-market-config";
@@ -35,12 +39,33 @@ import {
   type PredictionTimeframeId,
 } from "@/lib/prediction-timeframes";
 import { resolveCommunityDatabaseFile } from "@/lib/server/runtime-storage";
+import { tonApiClient } from "@/lib/ton-api-client";
 
 const databaseFile = resolveCommunityDatabaseFile();
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
+const AUTO_CLAIM_RETRY_WINDOW_MS = 2 * 60 * 1000;
+const AUTO_CYCLE_MARKET_LIMIT = 25;
+const AUTO_CYCLE_CLAIM_LIMIT = 25;
+const AUTO_CYCLE_CONFIRM_TIMEOUT_MS = 12_000;
+const AUTO_CYCLE_CONFIRM_POLL_MS = 1_500;
 
 let database: DatabaseSync | null = null;
 let initialized = false;
+type ResolverWalletContext = {
+  address: string;
+  wallet: {
+    address: Address;
+    getSeqno(): Promise<number>;
+    sendTransfer(args: {
+      seqno: number;
+      secretKey: Buffer;
+      messages: ReturnType<typeof internal>[];
+      sendMode?: number;
+    }): Promise<void>;
+  };
+  secretKey: Buffer;
+};
+let resolverWalletPromise: Promise<ResolverWalletContext | null> | null = null;
 
 type ForecastMarketRow = {
   contract_address: string;
@@ -63,6 +88,14 @@ type ForecastMarketRow = {
   status: TonForecastMarketStatus;
   final_price_e9: number | null;
   resolved_at: string | null;
+};
+
+type ForecastAutoClaimRow = {
+  market_address: string;
+  wallet_address: string;
+  requested_at: string;
+  claimed_at: string | null;
+  last_error: string | null;
 };
 
 const STALE_PENDING_MARKET_WINDOW_MS = 15 * 60 * 1000;
@@ -116,6 +149,89 @@ function createForecastMarketId(input: {
   ].join(":");
 }
 
+function parseMnemonicWords(value: string) {
+  return value
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function mapForecastStatusCode(value: bigint | number) {
+  const statusCode = typeof value === "bigint" ? Number(value) : value;
+
+  switch (statusCode) {
+    case 1:
+      return "locked" as const;
+    case 2:
+      return "resolved_yes" as const;
+    case 3:
+      return "resolved_no" as const;
+    case 4:
+      return "resolved_draw" as const;
+    default:
+      return "open" as const;
+  }
+}
+
+function encodeForecastBody(payloadBase64: string) {
+  return Cell.fromBase64(payloadBase64);
+}
+
+async function getResolverWalletContext() {
+  if (resolverWalletPromise) {
+    return resolverWalletPromise;
+  }
+
+  resolverWalletPromise = (async () => {
+    const mnemonic = getForecastResolverMnemonic();
+
+    if (!mnemonic) {
+      return null;
+    }
+
+    const words = parseMnemonicWords(mnemonic);
+
+    if (words.length < 12) {
+      throw new Error("FORECAST_RESOLVER_MNEMONIC is invalid.");
+    }
+
+    const keyPair = await mnemonicToPrivateKey(words);
+    const wallet = tonApiClient.open(
+      WalletContractV4.create({
+        workchain: 0,
+        publicKey: keyPair.publicKey,
+      }),
+    );
+
+    return {
+      address: wallet.address.toString(),
+      wallet,
+      secretKey: keyPair.secretKey,
+    };
+  })();
+
+  return resolverWalletPromise;
+}
+
+async function resolveForecastResolverAddress(ownerAddress?: string | null) {
+  const explicitResolver =
+    process.env.NEXT_PUBLIC_FORECAST_RESOLVER_ADDRESS?.trim() ||
+    process.env.FORECAST_RESOLVER_ADDRESS?.trim() ||
+    "";
+
+  if (explicitResolver) {
+    return normalizeTonAddress(explicitResolver);
+  }
+
+  const resolverWallet = await getResolverWalletContext();
+
+  if (resolverWallet?.address) {
+    return normalizeTonAddress(resolverWallet.address);
+  }
+
+  return normalizeTonAddress(ownerAddress);
+}
+
 async function ensureForecastDatabase() {
   if (database && initialized) {
     return database;
@@ -157,12 +273,137 @@ async function ensureForecastDatabase() {
 
       CREATE INDEX IF NOT EXISTS idx_forecast_markets_pair_created
       ON forecast_markets(pair_id, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS forecast_auto_claims (
+        market_address TEXT NOT NULL,
+        wallet_address TEXT NOT NULL,
+        requested_at TEXT NOT NULL,
+        claimed_at TEXT,
+        last_error TEXT,
+        PRIMARY KEY (market_address, wallet_address)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_forecast_auto_claims_requested
+      ON forecast_auto_claims(requested_at DESC);
     `);
 
     initialized = true;
   }
 
   return database;
+}
+
+async function readForecastMarketOnchainState(contractAddress: string) {
+  try {
+    const contract = tonApiClient.open(
+      TonForecastMarket.fromAddress(Address.parse(contractAddress)),
+    );
+    const state = await contract.getGetMarketState();
+
+    return {
+      status: mapForecastStatusCode(state.status),
+      finalPriceE9: Number(state.finalPriceE9),
+      resolvedAt:
+        Number(state.resolvedAt) > 0
+          ? new Date(Number(state.resolvedAt) * 1000).toISOString()
+          : null,
+      closeTime: new Date(Number(state.closeTime) * 1000).toISOString(),
+      createdAt: new Date(Number(state.createdAt) * 1000).toISOString(),
+      totalYes: Number(state.totalYes) / 1_000_000_000,
+      totalNo: Number(state.totalNo) / 1_000_000_000,
+      resolverAddress: state.resolver.toString(),
+      treasuryAddress: state.treasury.toString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function readForecastPositionOnchain(
+  contractAddress: string,
+  walletAddress: string,
+) {
+  try {
+    const contract = tonApiClient.open(
+      TonForecastMarket.fromAddress(Address.parse(contractAddress)),
+    );
+    const position = await contract.getGetPosition(
+      Address.parse(walletAddress),
+    );
+
+    return {
+      yesStake: Number(position.yesStake) / 1_000_000_000,
+      noStake: Number(position.noStake) / 1_000_000_000,
+      claimed: position.claimed,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function waitForResolverSeqnoIncrement(
+  wallet: ResolverWalletContext["wallet"],
+  initialSeqno: number,
+) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < AUTO_CYCLE_CONFIRM_TIMEOUT_MS) {
+    await new Promise((resolve) =>
+      setTimeout(resolve, AUTO_CYCLE_CONFIRM_POLL_MS),
+    );
+    const nextSeqno = await wallet.getSeqno();
+
+    if (nextSeqno > initialSeqno) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function sendResolverMessage(input: {
+  to: string;
+  valueTon: string;
+  payloadBase64: string;
+}) {
+  const resolverWallet = await getResolverWalletContext();
+
+  if (!resolverWallet) {
+    return { ok: false as const, reason: "resolver_wallet_missing" as const };
+  }
+
+  const seqno = await resolverWallet.wallet.getSeqno();
+
+  await resolverWallet.wallet.sendTransfer({
+    seqno,
+    secretKey: resolverWallet.secretKey,
+    messages: [
+      internal({
+        to: Address.parse(input.to),
+        value: toNano(input.valueTon),
+        bounce: true,
+        body: encodeForecastBody(input.payloadBase64),
+      }),
+    ],
+  });
+
+  await waitForResolverSeqnoIncrement(resolverWallet.wallet, seqno);
+
+  return {
+    ok: true as const,
+    resolverAddress: resolverWallet.address,
+  };
+}
+
+function shouldSkipAutoClaim(row: ForecastAutoClaimRow | null) {
+  if (!row?.requested_at || row.claimed_at) {
+    return false;
+  }
+
+  return (
+    Date.now() - new Date(row.requested_at).getTime() <
+    AUTO_CLAIM_RETRY_WINDOW_MS
+  );
 }
 
 function extractTxHash(transaction: Record<string, unknown>) {
@@ -829,6 +1070,47 @@ async function syncForecastMarketTransactions(
         );
         continue;
       }
+
+      if (incomingPayload.type === "claim_reward_for") {
+        db.prepare(`
+          INSERT INTO forecast_auto_claims (
+            market_address, wallet_address, requested_at, claimed_at, last_error
+          ) VALUES (?, ?, ?, ?, NULL)
+          ON CONFLICT(market_address, wallet_address) DO UPDATE SET
+            claimed_at = excluded.claimed_at,
+            last_error = NULL
+        `).run(
+          contractAddress,
+          normalizeTonAddress(incomingPayload.walletAddress),
+          createdAt,
+          createdAt,
+        );
+      }
+    }
+
+    const onchainState = await readForecastMarketOnchainState(contractAddress);
+
+    if (onchainState) {
+      db.prepare(`
+        UPDATE forecast_markets
+        SET resolver_address = ?,
+            treasury_address = ?,
+            created_at = ?,
+            close_time = ?,
+            status = ?,
+            final_price_e9 = ?,
+            resolved_at = ?
+        WHERE contract_address = ?
+      `).run(
+        onchainState.resolverAddress,
+        onchainState.treasuryAddress,
+        onchainState.createdAt,
+        onchainState.closeTime,
+        onchainState.status,
+        onchainState.finalPriceE9 > 0 ? onchainState.finalPriceE9 : null,
+        onchainState.resolvedAt,
+        contractAddress,
+      );
     }
 
     const refreshedMarket = getForecastMarketRow(db, contractAddress);
@@ -907,6 +1189,429 @@ function toMarketSummary(row: ForecastMarketRow | null) {
   };
 }
 
+function getForecastAutoClaimRow(
+  db: DatabaseSync,
+  marketAddress: string,
+  walletAddress: string,
+) {
+  return (
+    (db
+      .prepare(`
+        SELECT *
+        FROM forecast_auto_claims
+        WHERE market_address = ?
+          AND wallet_address = ?
+      `)
+      .get(
+        normalizeTonAddress(marketAddress),
+        normalizeTonAddress(walletAddress),
+      ) as ForecastAutoClaimRow | undefined) ?? null
+  );
+}
+
+function markForecastAutoClaimRequested(
+  db: DatabaseSync,
+  marketAddress: string,
+  walletAddress: string,
+) {
+  db.prepare(`
+    INSERT INTO forecast_auto_claims (
+      market_address, wallet_address, requested_at, claimed_at, last_error
+    ) VALUES (?, ?, ?, NULL, NULL)
+    ON CONFLICT(market_address, wallet_address) DO UPDATE SET
+      requested_at = excluded.requested_at,
+      last_error = NULL
+  `).run(
+    normalizeTonAddress(marketAddress),
+    normalizeTonAddress(walletAddress),
+    new Date().toISOString(),
+  );
+}
+
+function markForecastAutoClaimSettled(
+  db: DatabaseSync,
+  marketAddress: string,
+  walletAddress: string,
+) {
+  db.prepare(`
+    INSERT INTO forecast_auto_claims (
+      market_address, wallet_address, requested_at, claimed_at, last_error
+    ) VALUES (?, ?, ?, ?, NULL)
+    ON CONFLICT(market_address, wallet_address) DO UPDATE SET
+      claimed_at = excluded.claimed_at,
+      last_error = NULL
+  `).run(
+    normalizeTonAddress(marketAddress),
+    normalizeTonAddress(walletAddress),
+    new Date().toISOString(),
+    new Date().toISOString(),
+  );
+}
+
+function markForecastAutoClaimError(
+  db: DatabaseSync,
+  marketAddress: string,
+  walletAddress: string,
+  error: string,
+) {
+  db.prepare(`
+    INSERT INTO forecast_auto_claims (
+      market_address, wallet_address, requested_at, claimed_at, last_error
+    ) VALUES (?, ?, ?, NULL, ?)
+    ON CONFLICT(market_address, wallet_address) DO UPDATE SET
+      requested_at = excluded.requested_at,
+      last_error = excluded.last_error
+  `).run(
+    normalizeTonAddress(marketAddress),
+    normalizeTonAddress(walletAddress),
+    new Date().toISOString(),
+    error,
+  );
+}
+
+async function waitForForecastStatus(
+  contractAddress: string,
+  expectedStatuses: TonForecastMarketStatus[],
+) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < AUTO_CYCLE_CONFIRM_TIMEOUT_MS) {
+    const state = await readForecastMarketOnchainState(contractAddress);
+
+    if (state && expectedStatuses.includes(state.status)) {
+      return state;
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, AUTO_CYCLE_CONFIRM_POLL_MS),
+    );
+  }
+
+  return null;
+}
+
+async function waitForForecastClaimed(
+  contractAddress: string,
+  walletAddress: string,
+) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < AUTO_CYCLE_CONFIRM_TIMEOUT_MS) {
+    const position = await readForecastPositionOnchain(
+      contractAddress,
+      walletAddress,
+    );
+
+    if (position?.claimed) {
+      return true;
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, AUTO_CYCLE_CONFIRM_POLL_MS),
+    );
+  }
+
+  return false;
+}
+
+function getForecastMarketRowsForAutoCycle(
+  db: DatabaseSync,
+  input?: { pairId?: string; marketAddress?: string },
+) {
+  if (input?.marketAddress) {
+    const row = getForecastMarketRow(
+      db,
+      normalizeTonAddress(input.marketAddress),
+    );
+    return row ? [row] : [];
+  }
+
+  if (input?.pairId) {
+    return db
+      .prepare(`
+        SELECT *
+        FROM forecast_markets
+        WHERE pair_id = ?
+        ORDER BY created_at DESC
+        LIMIT 6
+      `)
+      .all(input.pairId) as ForecastMarketRow[];
+  }
+
+  return db
+    .prepare(`
+      SELECT *
+      FROM forecast_markets
+      WHERE status IN ('open', 'locked', 'resolved_yes', 'resolved_no', 'resolved_draw')
+      ORDER BY close_time ASC
+      LIMIT ?
+    `)
+    .all(AUTO_CYCLE_MARKET_LIMIT) as ForecastMarketRow[];
+}
+
+async function autoLockForecastMarket(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+) {
+  if (market.status !== "open") {
+    return false;
+  }
+
+  if (Date.now() < new Date(market.close_time).getTime()) {
+    return false;
+  }
+
+  await sendResolverMessage({
+    to: market.contract_address,
+    valueTon: getForecastClaimTriggerTon(),
+    payloadBase64: buildTonForecastLockPayloadBase64(),
+  });
+
+  return Boolean(
+    await waitForForecastStatus(market.contract_address, [
+      "locked",
+      "resolved_yes",
+      "resolved_no",
+      "resolved_draw",
+    ]),
+  );
+}
+
+async function autoResolveForecastMarket(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+) {
+  if (market.status !== "locked") {
+    return false;
+  }
+
+  const resolverWallet = await getResolverWalletContext();
+
+  if (
+    !resolverWallet ||
+    normalizeTonAddress(market.resolver_address) !==
+      normalizeTonAddress(resolverWallet.address)
+  ) {
+    return false;
+  }
+
+  const snapshot = await resolveAssetSnapshot(market.token_address);
+
+  await sendResolverMessage({
+    to: market.contract_address,
+    valueTon: getForecastClaimTriggerTon(),
+    payloadBase64: buildTonForecastResolvePayloadBase64({
+      finalPriceE9: snapshot.currentPriceE9,
+      resolvedAt: Math.floor(Date.now() / 1000),
+    }),
+  });
+
+  return Boolean(
+    await waitForForecastStatus(market.contract_address, [
+      "resolved_yes",
+      "resolved_no",
+      "resolved_draw",
+    ]),
+  );
+}
+
+function getForecastWinningWallets(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+) {
+  const settlementDirection = mapForecastStatusToSettlementDirection(
+    market.status,
+  );
+  const betRows = db
+    .prepare(`
+      SELECT wallet_address, direction, SUM(amount) AS total_amount
+      FROM prediction_bets
+      WHERE round_id = ?
+        AND source_kind = 'onchain_sync'
+      GROUP BY wallet_address, direction
+      ORDER BY MAX(created_at) DESC
+    `)
+    .all(market.contract_address) as Array<{
+    wallet_address: string;
+    direction: PredictionDirection;
+    total_amount: number;
+  }>;
+
+  if (market.status === "resolved_draw") {
+    return [...new Set(betRows.map((row) => row.wallet_address))];
+  }
+
+  if (!settlementDirection) {
+    return [];
+  }
+
+  return betRows
+    .filter(
+      (row) => row.direction === settlementDirection && row.total_amount > 0,
+    )
+    .map((row) => row.wallet_address);
+}
+
+async function autoClaimForecastMarket(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+) {
+  if (
+    market.status !== "resolved_yes" &&
+    market.status !== "resolved_no" &&
+    market.status !== "resolved_draw"
+  ) {
+    return 0;
+  }
+
+  const resolverWallet = await getResolverWalletContext();
+
+  if (!resolverWallet) {
+    return 0;
+  }
+
+  let processedCount = 0;
+  const wallets = getForecastWinningWallets(db, market).slice(
+    0,
+    AUTO_CYCLE_CLAIM_LIMIT,
+  );
+
+  for (const walletAddress of wallets) {
+    const normalizedWallet = normalizeTonAddress(walletAddress);
+    const position = await readForecastPositionOnchain(
+      market.contract_address,
+      normalizedWallet,
+    );
+
+    if (!position || position.claimed) {
+      markForecastAutoClaimSettled(
+        db,
+        market.contract_address,
+        normalizedWallet,
+      );
+      continue;
+    }
+
+    const existingAutoClaim = getForecastAutoClaimRow(
+      db,
+      market.contract_address,
+      normalizedWallet,
+    );
+
+    if (shouldSkipAutoClaim(existingAutoClaim)) {
+      continue;
+    }
+
+    try {
+      markForecastAutoClaimRequested(
+        db,
+        market.contract_address,
+        normalizedWallet,
+      );
+
+      await sendResolverMessage({
+        to: market.contract_address,
+        valueTon: getForecastClaimTriggerTon(),
+        payloadBase64: buildTonForecastClaimForPayloadBase64({
+          walletAddress: normalizedWallet,
+        }),
+      });
+
+      const claimed = await waitForForecastClaimed(
+        market.contract_address,
+        normalizedWallet,
+      );
+
+      if (claimed) {
+        markForecastAutoClaimSettled(
+          db,
+          market.contract_address,
+          normalizedWallet,
+        );
+        processedCount += 1;
+      } else {
+        markForecastAutoClaimError(
+          db,
+          market.contract_address,
+          normalizedWallet,
+          "claim_confirmation_timeout",
+        );
+      }
+    } catch (error) {
+      markForecastAutoClaimError(
+        db,
+        market.contract_address,
+        normalizedWallet,
+        error instanceof Error ? error.message : "claim_failed",
+      );
+    }
+  }
+
+  return processedCount;
+}
+
+export async function runForecastAutoCycle(input?: {
+  pairId?: string;
+  marketAddress?: string;
+}) {
+  const db = await ensureForecastDatabase();
+  const autoCycleEnabled = getForecastAutoCycleEnabled();
+  const markets = getForecastMarketRowsForAutoCycle(db, input);
+  const summary = {
+    scanned: markets.length,
+    locked: 0,
+    resolved: 0,
+    autoClaimed: 0,
+    automationAvailable: false,
+  };
+
+  if (markets.length === 0) {
+    return summary;
+  }
+
+  const resolverWallet = await getResolverWalletContext();
+  summary.automationAvailable = autoCycleEnabled && Boolean(resolverWallet);
+
+  for (const marketRow of markets) {
+    await syncForecastMarketTransactions(db, marketRow.contract_address);
+    let market = getForecastMarketRow(db, marketRow.contract_address);
+
+    if (!market) {
+      continue;
+    }
+
+    if (summary.automationAvailable && market.status === "open") {
+      const locked = await autoLockForecastMarket(db, market);
+      if (locked) {
+        summary.locked += 1;
+        await syncForecastMarketTransactions(db, market.contract_address);
+        market = getForecastMarketRow(db, market.contract_address) ?? market;
+      }
+    }
+
+    if (summary.automationAvailable && market.status === "locked") {
+      const resolved = await autoResolveForecastMarket(db, market);
+      if (resolved) {
+        summary.resolved += 1;
+        await syncForecastMarketTransactions(db, market.contract_address);
+        market = getForecastMarketRow(db, market.contract_address) ?? market;
+      }
+    }
+
+    if (
+      summary.automationAvailable &&
+      (market.status === "resolved_yes" ||
+        market.status === "resolved_no" ||
+        market.status === "resolved_draw")
+    ) {
+      summary.autoClaimed += await autoClaimForecastMarket(db, market);
+      await syncForecastMarketTransactions(db, market.contract_address);
+    }
+  }
+
+  return summary;
+}
+
 export async function getForecastMarketContext(input: {
   tokenAddress: string;
   timeframeId: string;
@@ -918,6 +1623,7 @@ export async function getForecastMarketContext(input: {
   const db = await ensureForecastDatabase();
   const tokenAddress = normalizeTonAddress(input.tokenAddress);
   const pairId = buildPredictionTokenMarketId(tokenAddress, input.timeframeId);
+  await runForecastAutoCycle({ pairId });
   const activeMarket = getActiveForecastMarketRow(db, pairId);
 
   if (activeMarket) {
@@ -992,9 +1698,10 @@ export async function createForecastMarketIntent(input: {
     timeframeId: input.timeframeId,
     createdAtUnix,
   });
+  const resolverAddress = await resolveForecastResolverAddress(walletAddress);
   const contract = await TonForecastMarket.fromInit(
     Address.parse(walletAddress),
-    Address.parse(getForecastResolverAddress(walletAddress)),
+    Address.parse(resolverAddress),
     Address.parse(getForecastTreasuryAddress()),
     Address.parse(tokenAddress),
     context.tokenSymbol,
@@ -1029,7 +1736,7 @@ export async function createForecastMarketIntent(input: {
     context.currentPriceE9,
     getForecastProtocolFeeBps(),
     walletAddress,
-    getForecastResolverAddress(walletAddress),
+    resolverAddress,
     getForecastTreasuryAddress(),
     new Date(createdAtUnix * 1000).toISOString(),
     new Date(closeTimeUnix * 1000).toISOString(),
@@ -1079,6 +1786,7 @@ export async function createForecastBetIntent(input: {
 }) {
   const db = await ensureForecastDatabase();
   const walletAddress = normalizeTonAddress(input.walletAddress);
+  await runForecastAutoCycle({ pairId: input.pairId });
   const activeMarket = getActiveForecastMarketRow(db, input.pairId);
 
   if (!walletAddress || !activeMarket || activeMarket.status !== "open") {
@@ -1114,6 +1822,10 @@ export async function syncForecastMarket(input: {
 }) {
   const db = await ensureForecastDatabase();
   const walletAddress = normalizeTonAddress(input.walletAddress);
+  await runForecastAutoCycle({
+    pairId: input.pairId,
+    marketAddress: input.marketAddress,
+  });
   const market =
     (input.marketAddress
       ? getForecastMarketRow(db, normalizeTonAddress(input.marketAddress))

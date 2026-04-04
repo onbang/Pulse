@@ -9,6 +9,7 @@ export {
   buildPredictionBetTransferMessage,
   buildTonForecastBetPayloadBase64,
   buildTonForecastBetTransferMessage,
+  buildTonForecastClaimForPayloadBase64,
   buildTonForecastClaimPayloadBase64,
   buildTonForecastLockPayloadBase64,
   buildTonForecastResolvePayloadBase64,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTonConnectUI } from "@tonconnect/ui-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
@@ -79,6 +79,22 @@ function wait(ms: number) {
   });
 }
 
+function formatCountdown(ms: number) {
+  const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+
+  return [hours, minutes, seconds]
+    .map((value) => value.toString().padStart(2, "0"))
+    .join(":");
+}
+
 async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
   const response = await fetchInternalApi(url, {
     ...init,
@@ -117,7 +133,6 @@ export function PricePredictionCard(props: {
     getPrediction,
     submitPrediction,
     syncPredictionTransaction,
-    settlePredictionRound,
     walletAddress,
     refresh,
   } = useCommunityProfile();
@@ -269,11 +284,78 @@ export function PricePredictionCard(props: {
                 submissionState === "syncing"
               ? "submitting"
               : null;
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setClockNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, []);
   const timeLeftMs = round
-    ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
+    ? Math.max(new Date(round.closesAt).getTime() - clockNow, 0)
     : 0;
-  const hoursLeft = Math.floor(timeLeftMs / (1000 * 60 * 60));
-  const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+  const countdownLabel = round
+    ? formatCountdown(timeLeftMs)
+    : t("prediction.pending");
+  const nextRoundReadyNow =
+    round && !isRoundOpen
+      ? clockNow >= new Date(round.closesAt).getTime()
+      : false;
+  const nextRoundStatusLabel =
+    nextRoundReadyNow && canAutoReopenRound
+      ? t("prediction.nextRoundReadyNow")
+      : isRoundOpen
+        ? t("prediction.nextRoundOpensIn", { value: countdownLabel })
+        : t("prediction.awaitingSettlement");
+  useEffect(() => {
+    if (!walletAddress || !round?.id) {
+      return;
+    }
+
+    if (!(isRoundClosed || isRoundSettled || hasPendingConfirmation)) {
+      return;
+    }
+
+    let disposed = false;
+
+    const pollRoundState = async () => {
+      try {
+        await requestJson<ForecastSyncResponse>("/api/forecast-markets/sync", {
+          method: "PUT",
+          body: JSON.stringify({
+            walletAddress,
+            pairId: props.pairId,
+            marketAddress: round.id,
+          }),
+        });
+
+        if (!disposed) {
+          await refresh();
+        }
+      } catch {
+        // Keep the existing view and retry on the next tick.
+      }
+    };
+
+    void pollRoundState();
+    const intervalId = window.setInterval(() => {
+      void pollRoundState();
+    }, 10_000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    hasPendingConfirmation,
+    isRoundClosed,
+    isRoundSettled,
+    props.pairId,
+    refresh,
+    round?.id,
+    walletAddress,
+  ]);
   const previewUpPool = upPool + (isStakeValid ? numericStake : 0);
   const previewDownPool = downPool + (isStakeValid ? numericStake : 0);
   const previewTotalPool = totalPool + (isStakeValid ? numericStake : 0);
@@ -753,14 +835,18 @@ export function PricePredictionCard(props: {
               {t("prediction.timeLeft")}
             </p>
             <p className="mt-2 text-lg font-semibold text-slate-950">
-              {round && isRoundOpen
-                ? `${hoursLeft}h ${minutesLeft}m`
-                : round
-                  ? t("prediction.closed")
-                  : t("prediction.pending")}
+              {round
+                ? isRoundOpen
+                  ? countdownLabel
+                  : nextRoundReadyNow
+                    ? t("prediction.nextRoundReadyNow")
+                    : t("prediction.closed")
+                : t("prediction.pending")}
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              {t("prediction.marketClockBody")}
+              {isRoundOpen
+                ? t("prediction.roundClosesBody")
+                : t("prediction.nextRoundBody")}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
@@ -776,7 +862,7 @@ export function PricePredictionCard(props: {
           </div>
         </div>
         {round ? (
-          <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-3">
+          <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 {t("prediction.winner")}
@@ -787,6 +873,23 @@ export function PricePredictionCard(props: {
                     ? t("prediction.up")
                     : t("prediction.down")
                   : t("prediction.pending")}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                {t("prediction.nextRound")}
+              </p>
+              <p className="text-lg font-semibold text-slate-900">
+                {nextRoundStatusLabel}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {isRoundOpen
+                  ? t("prediction.nextRoundOpensIn", {
+                      value: countdownLabel,
+                    })
+                  : canAutoReopenRound
+                    ? t("prediction.nextRoundBody")
+                    : t("prediction.autoResolveBody")}
               </p>
             </div>
           </div>
@@ -1006,41 +1109,18 @@ export function PricePredictionCard(props: {
         )}
         {isRoundClosed ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <h4 className="text-sm font-semibold text-slate-900">
-                  {t("prediction.settleTitle")}
+                  {t("prediction.autoResolveTitle")}
                 </h4>
                 <p className="text-sm text-slate-600">
-                  {t("prediction.settleBody")}
+                  {t("prediction.autoResolveBody")}
                 </p>
               </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Button
-                variant="outline"
-                className="border-emerald-200 text-slate-900 hover:bg-emerald-100"
-                onClick={() =>
-                  void settlePredictionRound({
-                    pairId: props.pairId,
-                    direction: "up",
-                  })
-                }
-              >
-                {t("prediction.settleUp")}
-              </Button>
-              <Button
-                variant="outline"
-                className="border-rose-200 text-slate-900 hover:bg-rose-100"
-                onClick={() =>
-                  void settlePredictionRound({
-                    pairId: props.pairId,
-                    direction: "down",
-                  })
-                }
-              >
-                {t("prediction.settleDown")}
-              </Button>
+              <Badge className="border-amber-200 bg-white text-amber-700">
+                {t("prediction.awaitingSettlement")}
+              </Badge>
             </div>
           </div>
         ) : null}
@@ -1086,9 +1166,14 @@ export function PricePredictionCard(props: {
         {isRoundSettled ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h4 className="text-sm font-semibold text-slate-800">
-                {t("prediction.winnersPreview")}
-              </h4>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-800">
+                  {t("prediction.winnersPreview")}
+                </h4>
+                <p className="text-sm text-slate-600">
+                  {t("prediction.autoPayoutBody")}
+                </p>
+              </div>
               <Badge variant="outline">
                 {t("prediction.winnersCount", { count: topPayouts.length })}
               </Badge>

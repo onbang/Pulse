@@ -27,6 +27,7 @@ const TON_FORECAST_OP_BET_NO = 1413893681;
 const TON_FORECAST_OP_LOCK_MARKET = 1413893169;
 const TON_FORECAST_OP_RESOLVE_MARKET = 1413894705;
 const TON_FORECAST_OP_CLAIM_REWARD = 1413890865;
+const TON_FORECAST_OP_CLAIM_REWARD_FOR = 1413891633;
 
 export function resolvePredictionTreasuryAddress(value?: string | null) {
   return value?.trim() || DEFAULT_PREDICTION_TREASURY_ADDRESS;
@@ -420,6 +421,17 @@ export function buildTonForecastClaimPayloadBase64() {
     .toString("base64");
 }
 
+export function buildTonForecastClaimForPayloadBase64(input: {
+  walletAddress: string;
+}) {
+  return beginCell()
+    .storeUint(TON_FORECAST_OP_CLAIM_REWARD_FOR, 32)
+    .storeAddress(Address.parse(input.walletAddress))
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
 export function parseTonForecastPayloadBase64(
   value?: string | null,
 ): ParsedTonForecastContractPayload | null {
@@ -453,6 +465,13 @@ export function parseTonForecastPayloadBase64(
 
     if (opcode === TON_FORECAST_OP_CLAIM_REWARD) {
       return { type: "claim_reward" };
+    }
+
+    if (opcode === TON_FORECAST_OP_CLAIM_REWARD_FOR) {
+      return {
+        type: "claim_reward_for",
+        walletAddress: slice.loadAddress().toString(),
+      };
     }
 
     return null;
