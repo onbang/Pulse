@@ -2083,6 +2083,9 @@ function extractMessageTonValue(message: Record<string, unknown> | null) {
 export async function getCommunityState(walletAddress: string | null) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
+  if (walletAddress) {
+    ensureProfile(db, walletAddress);
+  }
   await syncOnchainCheckInTransactions(db, walletAddress);
   await syncOnchainPredictionTransactions(db, walletAddress);
   const store = hydrateStore(db);
