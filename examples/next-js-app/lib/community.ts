@@ -1,6 +1,14 @@
 export type ActivityTrack = "liquidity" | "farming" | "staking";
 export type PredictionDirection = "up" | "down";
 export type CommentReactionEmoji = "🔥" | "👍" | "🚀" | "💎";
+export type CheckInEventStatus = "pending" | "confirmed";
+export type RewardLedgerReason =
+  | "daily_check_in"
+  | "streak_bonus"
+  | "prediction"
+  | "comment"
+  | "watchlist"
+  | "system";
 
 export type PredictionBet = {
   id: string;
@@ -57,13 +65,41 @@ export type UserProfile = {
   joinedAt: string;
   totalPoints: number;
   streak: number;
+  longestStreak: number;
+  totalCheckIns: number;
   lastCheckInDate?: string;
   checkInDates: string[];
   activities: Partial<Record<ActivityTrack, string>>;
   commentsCount: number;
   predictionsCount: number;
+  swapCount: number;
+  liquidityActionsCount: number;
   notificationPreferences: NotificationPreferences;
   watchedPools: Array<{ poolId: string; poolLabel: string; createdAt: string }>;
+};
+
+export type CheckInEvent = {
+  id: string;
+  walletAddress: string;
+  dateKey: string;
+  amountTon: number;
+  sourceMessageHash?: string;
+  chainTxHash?: string;
+  createdAt: string;
+  confirmedAt?: string;
+  pointsAwarded: number;
+  streakAfterCheckIn: number;
+  status: CheckInEventStatus;
+};
+
+export type RewardLedgerEntry = {
+  id: string;
+  walletAddress: string;
+  reason: RewardLedgerReason;
+  label: string;
+  points: number;
+  relatedEventId?: string;
+  createdAt: string;
 };
 
 export type PoolComment = {
@@ -109,11 +145,13 @@ export type CommunityStore = {
   predictions: Record<string, PairPrediction>;
   settlements: PredictionSettlement[];
   activity: ActivityItem[];
+  checkInEvents: CheckInEvent[];
+  rewardLedger: RewardLedgerEntry[];
 };
 
 export type Achievement = {
   id: string;
-  category: "onchain" | "consistency" | "social" | "market" | "seasonal";
+  category: "wallet" | "check-in" | "trading" | "liquidity" | "community";
   icon: string;
   label: string;
   description: string;
@@ -122,6 +160,7 @@ export type Achievement = {
   suffix: string;
   milestone: string;
   level: number;
+  tier: "locked" | "bronze" | "silver" | "gold" | "legendary";
   unlocked: boolean;
   highlight?: string;
   startedAt?: string | undefined;
@@ -140,12 +179,11 @@ export type LeaderboardEntry = {
 
 export type UserLevel = {
   id:
-    | "novice"
     | "explorer"
-    | "strategist"
-    | "operator"
-    | "professional"
-    | "legend";
+    | "regular"
+    | "signal-maker"
+    | "streak-master"
+    | "pulse-legend";
   label: string;
   shortLabel: string;
   accentClassName: string;
@@ -153,6 +191,12 @@ export type UserLevel = {
 };
 
 export const DAILY_CHECK_IN_POINTS = 10;
+export const CHECK_IN_STREAK_BONUSES = [
+  { minStreak: 30, points: 20 },
+  { minStreak: 14, points: 10 },
+  { minStreak: 7, points: 5 },
+  { minStreak: 3, points: 2 },
+] as const;
 export const COMMENT_POINTS = 7;
 export const PREDICTION_POINTS = 5;
 export const TRACK_POINTS = 20;
@@ -169,6 +213,8 @@ export const defaultCommunityStore: CommunityStore = {
   predictions: {},
   settlements: [],
   activity: [],
+  checkInEvents: [],
+  rewardLedger: [],
 };
 
 export function defaultNotificationPreferences(): NotificationPreferences {
@@ -191,46 +237,39 @@ export function normalizeNotificationPreferences(
 
 const USER_LEVELS: UserLevel[] = [
   {
-    id: "novice",
-    label: "Novice",
-    shortLabel: "NV",
-    accentClassName: "border-slate-200 bg-slate-100 text-slate-700",
-    minScore: 0,
-  },
-  {
     id: "explorer",
     label: "Explorer",
     shortLabel: "EX",
     accentClassName: "border-sky-200 bg-sky-100 text-sky-700",
-    minScore: 150,
+    minScore: 0,
   },
   {
-    id: "strategist",
-    label: "Strategist",
-    shortLabel: "ST",
+    id: "regular",
+    label: "Regular",
+    shortLabel: "RG",
     accentClassName: "border-cyan-200 bg-cyan-100 text-cyan-700",
-    minScore: 320,
+    minScore: 80,
   },
   {
-    id: "operator",
-    label: "Operator",
-    shortLabel: "OP",
+    id: "signal-maker",
+    label: "Signal Maker",
+    shortLabel: "SG",
+    accentClassName: "border-violet-200 bg-violet-100 text-violet-700",
+    minScore: 220,
+  },
+  {
+    id: "streak-master",
+    label: "Streak Master",
+    shortLabel: "SM",
     accentClassName: "border-emerald-200 bg-emerald-100 text-emerald-700",
-    minScore: 520,
+    minScore: 420,
   },
   {
-    id: "professional",
-    label: "Professional",
-    shortLabel: "PRO",
-    accentClassName: "border-fuchsia-200 bg-fuchsia-100 text-fuchsia-700",
-    minScore: 760,
-  },
-  {
-    id: "legend",
-    label: "Legend",
-    shortLabel: "LGD",
+    id: "pulse-legend",
+    label: "Pulse Legend",
+    shortLabel: "PL",
     accentClassName: "border-amber-200 bg-amber-100 text-amber-700",
-    minScore: 1020,
+    minScore: 760,
   },
 ];
 
@@ -251,43 +290,31 @@ export function createDefaultProfile(
     joinedAt: new Date().toISOString(),
     totalPoints: 0,
     streak: 0,
+    longestStreak: 0,
+    totalCheckIns: 0,
     checkInDates: [],
     activities: {},
     commentsCount: 0,
     predictionsCount: 0,
+    swapCount: 0,
+    liquidityActionsCount: 0,
     notificationPreferences: defaultNotificationPreferences(),
     watchedPools: [],
   };
 }
 
-function getTrackAchievementMeta(track: ActivityTrack) {
-  if (track === "liquidity") {
-    return {
-      id: "liquidity-keeper",
-      category: "onchain" as const,
-      icon: "🌊",
-      label: "Liquidity keeper",
-      description: "Hold a liquidity position and build consistency.",
-    };
+export function getCheckInBonusPoints(streak: number) {
+  for (const bonus of CHECK_IN_STREAK_BONUSES) {
+    if (streak >= bonus.minStreak) {
+      return bonus.points;
+    }
   }
 
-  if (track === "farming") {
-    return {
-      id: "yield-farmer",
-      category: "onchain" as const,
-      icon: "🌾",
-      label: "Yield farmer",
-      description: "Stay active in vault and farming strategies.",
-    };
-  }
+  return 0;
+}
 
-  return {
-    id: "stake-guardian",
-    category: "onchain" as const,
-    icon: "🛡️",
-    label: "Stake guardian",
-    description: "Keep your staking position alive over time.",
-  };
+export function getCheckInRewardPoints(streak: number) {
+  return DAILY_CHECK_IN_POINTS + getCheckInBonusPoints(streak);
 }
 
 function diffInDays(startedAt: string) {
@@ -298,40 +325,24 @@ function diffInDays(startedAt: string) {
   return Math.max(diff + 1, 1);
 }
 
-function buildHoldAchievement(
-  profile: UserProfile | null,
-  track: ActivityTrack,
-): Achievement {
-  const startedAt = profile?.activities[track];
-  const progress = startedAt ? diffInDays(startedAt) : 0;
-  const level = progress >= 90 ? 3 : progress >= 30 ? 2 : progress >= 7 ? 1 : 0;
-  const milestone =
-    level === 3
-      ? "Diamond 90d"
-      : level === 2
-        ? "Gold 30d"
-        : level === 1
-          ? "Silver 7d"
-          : "Start tracking";
-  const meta = getTrackAchievementMeta(track);
+function getAchievementTier(level: number): Achievement["tier"] {
+  if (level >= 4) {
+    return "legendary";
+  }
 
-  return {
-    id: meta.id,
-    category: meta.category,
-    icon: meta.icon,
-    label: meta.label,
-    description: meta.description,
-    progress,
-    target: 90,
-    suffix: "days",
-    milestone,
-    level,
-    unlocked: progress > 0,
-    highlight: startedAt
-      ? `Tracked since ${new Date(startedAt).toLocaleDateString()}.`
-      : "No active position tracked yet.",
-    startedAt,
-  };
+  if (level === 3) {
+    return "gold";
+  }
+
+  if (level === 2) {
+    return "silver";
+  }
+
+  if (level === 1) {
+    return "bronze";
+  }
+
+  return "locked";
 }
 
 function buildMetricAchievement(input: {
@@ -341,25 +352,47 @@ function buildMetricAchievement(input: {
   label: string;
   description: string;
   progress: number;
-  bronze: number;
-  silver: number;
-  gold: number;
+  tiers: number[];
   suffix: string;
   lockedMilestone: string;
+  highlight: {
+    unlocked: string;
+    locked: string;
+  };
 }) {
-  const { progress, bronze, silver, gold } = input;
+  const [bronze = 0, silver = 0, gold = 0, legendary] = input.tiers;
   const level =
-    progress >= gold ? 3 : progress >= silver ? 2 : progress >= bronze ? 1 : 0;
+    input.progress >= (legendary ?? gold)
+      ? legendary
+        ? 4
+        : 3
+      : input.progress >= gold
+        ? 3
+        : input.progress >= silver
+          ? 2
+          : input.progress >= bronze
+            ? 1
+            : 0;
   const target =
-    level === 3 ? gold : level === 2 ? gold : level === 1 ? silver : bronze;
+    level >= 4 && legendary
+      ? legendary
+      : level === 3
+        ? gold
+        : level === 2
+          ? gold
+          : level === 1
+            ? silver
+            : bronze;
   const milestone =
-    level === 3
-      ? `Gold ${gold}${input.suffix}`
-      : level === 2
-        ? `Silver ${silver}${input.suffix}`
-        : level === 1
-          ? `Bronze ${bronze}${input.suffix}`
-          : input.lockedMilestone;
+    level >= 4 && legendary
+      ? `Legend ${legendary}${input.suffix}`
+      : level === 3
+        ? `Gold ${gold}${input.suffix}`
+        : level === 2
+          ? `Silver ${silver}${input.suffix}`
+          : level === 1
+            ? `Bronze ${bronze}${input.suffix}`
+            : input.lockedMilestone;
 
   return {
     id: input.id,
@@ -367,16 +400,17 @@ function buildMetricAchievement(input: {
     icon: input.icon,
     label: input.label,
     description: input.description,
-    progress,
+    progress: input.progress,
     target,
     suffix: input.suffix,
     milestone,
     level,
-    unlocked: progress >= bronze,
+    tier: getAchievementTier(level),
+    unlocked: input.progress >= bronze,
     highlight:
-      level > 0
-        ? `${progress}${input.suffix} reached. Keep pushing for the next tier.`
-        : `Need ${bronze}${input.suffix} to unlock the first tier.`,
+      input.progress >= bronze
+        ? input.highlight.unlocked
+        : input.highlight.locked,
   } satisfies Achievement;
 }
 
@@ -386,21 +420,20 @@ export function buildAchievements(
 ): Achievement[] {
   if (!profile) {
     return [
-      buildHoldAchievement(null, "liquidity"),
-      buildHoldAchievement(null, "farming"),
-      buildHoldAchievement(null, "staking"),
       buildMetricAchievement({
-        id: "daily-ritual",
-        category: "consistency",
-        icon: "📅",
-        label: "Daily ritual",
-        description: "Check in regularly and build your points streak.",
+        id: "first-connect",
+        category: "wallet",
+        icon: "🔌",
+        label: "Wallet Native",
+        description: "Подключи TON-кошелек и активируй onchain-профиль.",
         progress: 0,
-        bronze: 3,
-        silver: 7,
-        gold: 30,
-        suffix: "d",
-        lockedMilestone: "3d streak",
+        tiers: [1, 1, 1, 1],
+        suffix: "",
+        lockedMilestone: "Подключи кошелек",
+        highlight: {
+          unlocked: "",
+          locked: "Кошелек еще не подключен.",
+        },
       }),
     ];
   }
@@ -422,6 +455,22 @@ export function buildAchievements(
     .flatMap((prediction) => prediction.bets)
     .filter((bet) => bet.walletAddress === profile.walletAddress)
     .reduce((max, bet) => Math.max(max, bet.amount), 0);
+  const checkInEvents = store.checkInEvents.filter(
+    (event) =>
+      event.walletAddress === profile.walletAddress &&
+      event.status === "confirmed",
+  );
+  const rewardEntries = store.rewardLedger.filter(
+    (entry) => entry.walletAddress === profile.walletAddress,
+  );
+  const featureUsageCount = [
+    profile.totalCheckIns > 0,
+    profile.predictionsCount > 0,
+    profile.commentsCount > 0,
+    profile.watchedPools.length > 0,
+    profile.liquidityActionsCount > 0 || Boolean(profile.activities.liquidity),
+    profile.swapCount > 0,
+  ].filter(Boolean).length;
   const leaderboard = buildBaseLeaderboard(store);
   const position =
     leaderboard.findIndex(
@@ -430,103 +479,209 @@ export function buildAchievements(
   const topTenProgress = position > 0 && position <= 10 ? 10 - position + 1 : 0;
 
   return [
-    buildHoldAchievement(profile, "liquidity"),
-    buildHoldAchievement(profile, "farming"),
-    buildHoldAchievement(profile, "staking"),
     buildMetricAchievement({
-      id: "daily-ritual",
-      category: "consistency",
-      icon: "📅",
-      label: "Daily ritual",
-      description: "Check in regularly and build your points streak.",
-      progress: profile.streak,
-      bronze: 3,
-      silver: 7,
-      gold: 30,
-      suffix: "d",
-      lockedMilestone: "3d streak",
-    }),
-    buildMetricAchievement({
-      id: "commentator",
-      category: "social",
-      icon: "💬",
-      label: "Commentator",
-      description:
-        "Join the pool conversation and become a recognizable voice.",
-      progress: profile.commentsCount,
-      bronze: 1,
-      silver: 5,
-      gold: 20,
+      id: "wallet-native",
+      category: "wallet",
+      icon: "🔐",
+      label: "Wallet Native",
+      description: "Профиль живет вместе с кошельком и onchain-активностью.",
+      progress: 1,
+      tiers: [1, 1, 1, 1],
       suffix: "",
-      lockedMilestone: "Post 1 comment",
+      lockedMilestone: "Подключи кошелек",
+      highlight: {
+        unlocked: "Кошелек подключен и профиль активен.",
+        locked: "Подключи кошелек, чтобы открыть профиль.",
+      },
     }),
     buildMetricAchievement({
-      id: "community-voice",
-      category: "social",
+      id: "first-check-in",
+      category: "check-in",
+      icon: "✅",
+      label: "First Check-in",
+      description: "Подтверди первый ежедневный check-in onchain.",
+      progress: profile.totalCheckIns,
+      tiers: [1, 7, 30, 100],
+      suffix: "",
+      lockedMilestone: "Сделай первый check-in",
+      highlight: {
+        unlocked: `${profile.totalCheckIns} подтвержденных check-in уже в истории.`,
+        locked: "Пока ни одного подтвержденного check-in.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "streak-runner",
+      category: "check-in",
       icon: "🔥",
-      label: "Community voice",
-      description: "Earn reactions on your comments from other users.",
-      progress: receivedReactions,
-      bronze: 3,
-      silver: 10,
-      gold: 25,
+      label: "Streak Runner",
+      description: "Собирай серию check-in без пропусков.",
+      progress: profile.longestStreak,
+      tiers: [3, 7, 30, 60],
+      suffix: "d",
+      lockedMilestone: "Серия 3 дня",
+      highlight: {
+        unlocked: `Лучшая серия: ${profile.longestStreak} дней.`,
+        locked: "Собери непрерывную серию check-in.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "points-engine",
+      category: "check-in",
+      icon: "⚡",
+      label: "Points Engine",
+      description: "Наращивай points и поднимай уровень профиля.",
+      progress: profile.totalPoints,
+      tiers: [50, 150, 400, 800],
       suffix: "",
-      lockedMilestone: "Get 3 reactions",
+      lockedMilestone: "50 points",
+      highlight: {
+        unlocked: `Всего накоплено ${profile.totalPoints} points.`,
+        locked: "Points начнут расти после первого onchain check-in.",
+      },
     }),
     buildMetricAchievement({
       id: "signal-hunter",
-      category: "market",
+      category: "trading",
       icon: "📈",
-      label: "Signal hunter",
-      description:
-        "Stay active in prediction markets and build your read of sentiment.",
+      label: "Signal Hunter",
+      description: "Участвуй в прогнозах и собирай рыночную историю.",
       progress: profile.predictionsCount,
-      bronze: 1,
-      silver: 5,
-      gold: 15,
+      tiers: [1, 5, 15, 40],
       suffix: "",
-      lockedMilestone: "Place 1 forecast",
+      lockedMilestone: "Сделай 1 прогноз",
+      highlight: {
+        unlocked: `${profile.predictionsCount} прогнозов уже зафиксировано.`,
+        locked: "Начни с первого прогноза по токену.",
+      },
     }),
     buildMetricAchievement({
       id: "whale-conviction",
-      category: "market",
+      category: "trading",
       icon: "🐋",
-      label: "Whale conviction",
-      description:
-        "Place a standout prediction stake and show your confidence.",
+      label: "High Conviction",
+      description: "Сделай заметную ставку и зафиксируй уверенность onchain.",
       progress: biggestBet,
-      bronze: 25,
-      silver: 100,
-      gold: 250,
-      suffix: " pts",
-      lockedMilestone: "Bet 25 pts",
+      tiers: [1, 5, 20, 50],
+      suffix: " TON",
+      lockedMilestone: "Ставка 1 TON",
+      highlight: {
+        unlocked: `Крупнейшая ставка: ${biggestBet.toFixed(2)} TON.`,
+        locked: "Пока нет крупной ставки для этого бейджа.",
+      },
     }),
     buildMetricAchievement({
       id: "pool-scout",
-      category: "social",
-      icon: "🛰️",
-      label: "Pool scout",
-      description: "Curate your own shortlist of pools worth watching.",
+      category: "liquidity",
+      icon: "🌊",
+      label: "Pool Explorer",
+      description: "Собери собственный shortlist пулов для наблюдения.",
       progress: profile.watchedPools.length,
-      bronze: 1,
-      silver: 3,
-      gold: 8,
+      tiers: [1, 3, 8, 16],
       suffix: "",
-      lockedMilestone: "Watch 1 pool",
+      lockedMilestone: "Добавь 1 пул",
+      highlight: {
+        unlocked: `В watchlist уже ${profile.watchedPools.length} пулов.`,
+        locked: "Сохрани первый пул в watchlist.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "liquidity-native",
+      category: "liquidity",
+      icon: "💧",
+      label: "Liquidity Native",
+      description: "Используй liquidity flow и onchain LP-действия.",
+      progress:
+        profile.liquidityActionsCount > 0 || profile.activities.liquidity
+          ? 1
+          : 0,
+      tiers: [1, 3, 10, 25],
+      suffix: "",
+      lockedMilestone: "Первое LP-действие",
+      highlight: {
+        unlocked: "Liquidity flow уже был использован.",
+        locked: "Бейдж откроется после первого действия с ликвидностью.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "community-voice",
+      category: "community",
+      icon: "💬",
+      label: "Community Voice",
+      description: "Комментируй, реагируй и формируй social layer.",
+      progress: profile.commentsCount + receivedReactions,
+      tiers: [1, 5, 20, 50],
+      suffix: "",
+      lockedMilestone: "Первый комментарий",
+      highlight: {
+        unlocked: `${profile.commentsCount} комментариев и ${receivedReactions} реакций в сумме.`,
+        locked: "Напиши первый комментарий к пулу.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "community-regular",
+      category: "community",
+      icon: "🛰️",
+      label: "Community Regular",
+      description:
+        "Используй больше одной функции и стань постоянным участником.",
+      progress: featureUsageCount,
+      tiers: [2, 4, 6, 6],
+      suffix: "",
+      lockedMilestone: "2 feature used",
+      highlight: {
+        unlocked: `Задействовано ${featureUsageCount} продуктовых сценариев.`,
+        locked: "Попробуй несколько разделов продукта.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "early-pulse-user",
+      category: "wallet",
+      icon: "🌟",
+      label: "Early Pulse User",
+      description: "Ранний участник, который пришел в Pulse на старте.",
+      progress:
+        new Date(profile.joinedAt).getTime() <
+        new Date("2026-06-01T00:00:00.000Z").getTime()
+          ? 1
+          : 0,
+      tiers: [1, 1, 1, 1],
+      suffix: "",
+      lockedMilestone: "Early adopter",
+      highlight: {
+        unlocked: "Профиль создан в ранней фазе продукта.",
+        locked: "Этот бейдж выдается ранним участникам.",
+      },
     }),
     buildMetricAchievement({
       id: "pulse-legend",
-      category: "seasonal",
+      category: "community",
       icon: "🏆",
-      label: "Pulse legend",
+      label: "Pulse Legend",
       description:
-        "Climb into the seasonal top 10 and stay visible on the board.",
+        "Поднимись в топ таблицы и удерживайся среди заметных участников.",
       progress: topTenProgress,
-      bronze: 1,
-      silver: 5,
-      gold: 10,
+      tiers: [1, 5, 10, 10],
       suffix: "",
-      lockedMilestone: "Reach Top 10",
+      lockedMilestone: "Попади в Top 10",
+      highlight: {
+        unlocked: `Текущая позиция в leaderboard: #${position}.`,
+        locked: "Подними points и streak, чтобы попасть в top 10.",
+      },
+    }),
+    buildMetricAchievement({
+      id: "reward-trail",
+      category: "check-in",
+      icon: "🎁",
+      label: "Reward Trail",
+      description: "Собери длинную историю начислений и onchain check-in.",
+      progress: rewardEntries.length + checkInEvents.length,
+      tiers: [3, 10, 30, 60],
+      suffix: "",
+      lockedMilestone: "3 rewards",
+      highlight: {
+        unlocked: `В ledger уже ${rewardEntries.length} записей о наградах.`,
+        locked: "Первые награды появятся после check-in.",
+      },
     }),
   ];
 }
@@ -548,13 +703,13 @@ function buildBaseLeaderboard(store: CommunityStore) {
 export function getAchievementScore(achievements: Achievement[]) {
   return achievements.reduce((sum, achievement) => {
     const milestoneWeight =
-      achievement.category === "seasonal"
+      achievement.category === "wallet"
         ? 120
-        : achievement.category === "onchain"
+        : achievement.category === "check-in"
           ? 110
-          : achievement.category === "market"
+          : achievement.category === "trading"
             ? 95
-            : achievement.category === "social"
+            : achievement.category === "community"
               ? 85
               : 80;
     const progressWeight = Math.min(
@@ -634,7 +789,7 @@ export function buildLeaderboard(store: CommunityStore): LeaderboardEntry[] {
         commentsCount: profile.commentsCount,
         predictionsCount: profile.predictionsCount,
         achievementScore,
-        userLevel: getUserLevel(achievementScore),
+        userLevel: getUserLevel(profile.totalPoints),
       };
     })
     .sort((a, b) => {

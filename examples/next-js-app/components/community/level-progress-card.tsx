@@ -3,14 +3,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/components/i18n/i18n-provider";
-import { getAchievementScore, getUserLevelProgress } from "@/lib/community";
+import { getUserLevelProgress } from "@/lib/community";
 import { useCommunityProfile } from "./community-provider";
 
 export function LevelProgressCard() {
   const { t } = useI18n();
-  const { achievements } = useCommunityProfile();
-  const achievementScore = Math.round(getAchievementScore(achievements));
-  const progress = getUserLevelProgress(achievementScore);
+  const { profile } = useCommunityProfile();
+
+  if (!profile) {
+    return null;
+  }
+
+  const progress = getUserLevelProgress(profile.totalPoints);
 
   return (
     <Card className="surface-panel overflow-hidden">
@@ -20,7 +24,9 @@ export function LevelProgressCard() {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
               {t("profile.progression.eyebrow")}
             </p>
-            <CardTitle className="mt-2">{t("profile.progression.title")}</CardTitle>
+            <CardTitle className="mt-2">
+              {t("profile.progression.title")}
+            </CardTitle>
           </div>
           <Badge className={`border-0 ${progress.current.accentClassName}`}>
             {t(`profile.level.${progress.current.id}`)}
@@ -37,8 +43,8 @@ export function LevelProgressCard() {
               {t(`profile.level.${progress.current.id}`)}
             </p>
             <p className="text-sm text-slate-600">
-              {t("profile.summary.achievementPowerCount", {
-                count: String(achievementScore),
+              {t("profile.summary.pointsCount", {
+                count: String(profile.totalPoints),
               })}
             </p>
           </div>
@@ -56,7 +62,7 @@ export function LevelProgressCard() {
             </p>
             <p className="text-sm text-slate-600">
               {progress.next
-                ? t("profile.progression.powerLeft", {
+                ? t("profile.progression.pointsLeft", {
                     count: String(progress.remainingScore),
                   })
                 : t("profile.progression.maxUnlocked")}
@@ -66,7 +72,9 @@ export function LevelProgressCard() {
 
         <div>
           <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-            <span className="text-slate-600">{t("profile.progression.progress")}</span>
+            <span className="text-slate-600">
+              {t("profile.progression.progress")}
+            </span>
             <strong>{progress.progressPercent.toFixed(0)}%</strong>
           </div>
           <div className="h-3 rounded-full bg-slate-100">

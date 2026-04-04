@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { getAchievementScore, getUserLevel } from "@/lib/community";
+import { getUserLevel } from "@/lib/community";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { useCommunityProfile } from "./community-provider";
 
@@ -43,8 +43,10 @@ export function ProfileSummary() {
     return null;
   }
 
-  const achievementScore = Math.round(getAchievementScore(achievements));
-  const userLevel = getUserLevel(achievementScore);
+  const unlockedAchievements = achievements.filter(
+    (achievement) => achievement.unlocked,
+  ).length;
+  const userLevel = getUserLevel(profile.totalPoints);
   const localizedLevel = t(`profile.level.${userLevel.id}`);
 
   return (
@@ -71,10 +73,19 @@ export function ProfileSummary() {
                   {localizedLevel}
                 </Badge>
                 <Badge className="border-0 bg-white text-slate-950">
-                  {t("profile.summary.points", { count: String(profile.totalPoints) })}
+                  {t("profile.summary.points", {
+                    count: String(profile.totalPoints),
+                  })}
                 </Badge>
                 <Badge className="border border-white/25 bg-white/10 text-white">
-                  {t("profile.summary.streak", { count: String(profile.streak) })}
+                  {t("profile.summary.streak", {
+                    count: String(profile.streak),
+                  })}
+                </Badge>
+                <Badge className="border border-white/25 bg-white/10 text-white">
+                  {t("profile.summary.totalCheckIns", {
+                    count: String(profile.totalCheckIns),
+                  })}
                 </Badge>
                 <Badge className="border border-white/25 bg-white/10 text-white">
                   {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
@@ -85,33 +96,35 @@ export function ProfileSummary() {
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                {t("profile.summary.achievementPower")}
+                {t("profile.summary.longestStreak")}
               </p>
-              <p className="mt-2 text-3xl font-semibold">{achievementScore}</p>
+              <p className="mt-2 text-3xl font-semibold">
+                {profile.longestStreak}
+              </p>
               <p className="mt-1 text-sm text-white/72">
-                {t("profile.summary.achievementPowerBody")}
+                {t("profile.summary.longestStreakBody")}
               </p>
             </div>
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                {t("profile.summary.socialReach")}
+                {t("profile.summary.unlockedBadges")}
               </p>
               <p className="mt-2 text-3xl font-semibold">
-                {profile.commentsCount}
+                {unlockedAchievements}
               </p>
               <p className="mt-1 text-sm text-white/72">
-                {t("profile.summary.socialReachBody")}
+                {t("profile.summary.unlockedBadgesBody")}
               </p>
             </div>
             <div className="rounded-[24px] border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-xl">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                {t("profile.summary.marketCalls")}
+                {t("profile.summary.rewardEntries")}
               </p>
               <p className="mt-2 text-3xl font-semibold">
-                {profile.predictionsCount}
+                {Math.max(profile.totalCheckIns, 0)}
               </p>
               <p className="mt-1 text-sm text-white/72">
-                {t("profile.summary.marketCallsBody")}
+                {t("profile.summary.rewardEntriesBody")}
               </p>
             </div>
           </div>
@@ -153,8 +166,8 @@ export function ProfileSummary() {
                 {localizedLevel}
               </p>
               <p>
-                {t("profile.summary.achievementPowerCount", {
-                  count: String(achievementScore),
+                {t("profile.summary.pointsCount", {
+                  count: String(profile.totalPoints),
                 })}
               </p>
             </CardContent>
@@ -162,23 +175,23 @@ export function ProfileSummary() {
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                {t("profile.summary.socialFootprint")}
+                {t("profile.summary.longestStreak")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
-                {profile.commentsCount}
+                {profile.longestStreak}
               </p>
-              <p>{t("profile.summary.commentsPosted")}</p>
+              <p>{t("profile.summary.longestStreakBody")}</p>
             </CardContent>
           </Card>
           <Card className="mesh-card shadow-none">
             <CardContent className="p-4 text-sm text-slate-600">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                {t("profile.summary.marketReads")}
+                {t("profile.summary.totalCheckIns")}
               </p>
               <p className="mt-1 text-lg font-semibold text-slate-900">
-                {profile.predictionsCount}
+                {profile.totalCheckIns}
               </p>
-              <p>{t("profile.summary.predictionsSubmitted")}</p>
+              <p>{t("profile.summary.totalCheckInsBody")}</p>
             </CardContent>
           </Card>
           <Card className="mesh-card shadow-none">

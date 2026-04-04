@@ -17,11 +17,18 @@ import { WalletGuard } from "@/components/wallet-guard";
 
 function ProfileCheckInHistory() {
   const { t } = useI18n();
-  const { profile } = useCommunityProfile();
+  const { profile, checkInEvents, rewardLedger } = useCommunityProfile();
 
   if (!profile) {
     return null;
   }
+
+  const userEvents = checkInEvents
+    .filter((event) => event.walletAddress === profile.walletAddress)
+    .slice(0, 8);
+  const userRewards = rewardLedger
+    .filter((entry) => entry.walletAddress === profile.walletAddress)
+    .slice(0, 4);
 
   return (
     <Card className="surface-panel">
@@ -31,22 +38,50 @@ function ProfileCheckInHistory() {
           {t("profile.history.title")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-2">
-        {profile.checkInDates.length === 0 ? (
-          <p className="text-sm text-slate-500">{t("profile.history.empty")}</p>
-        ) : (
-          profile.checkInDates
-            .slice(-14)
-            .reverse()
-            .map((date) => (
+      <CardContent className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+        <div className="flex flex-wrap gap-2">
+          {userEvents.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {t("profile.history.empty")}
+            </p>
+          ) : (
+            userEvents.map((event) => (
               <div
-                key={date}
-                className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm text-slate-700"
+                key={event.id}
+                className={`rounded-full border px-3 py-1 text-sm ${
+                  event.status === "confirmed"
+                    ? "border-sky-200 bg-sky-50 text-slate-700"
+                    : "border-amber-200 bg-amber-50 text-amber-700"
+                }`}
               >
-                {new Date(date).toLocaleDateString()}
+                {new Date(event.dateKey).toLocaleDateString()} ·{" "}
+                {event.status === "confirmed"
+                  ? t("profile.history.confirmed")
+                  : t("profile.history.pending")}
               </div>
             ))
-        )}
+          )}
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            {t("checkin.recentRewards")}
+          </p>
+          {userRewards.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {t("checkin.recentRewardsEmpty")}
+            </p>
+          ) : (
+            userRewards.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm"
+              >
+                <span className="text-slate-600">{entry.label}</span>
+                <strong className="text-emerald-600">+{entry.points}</strong>
+              </div>
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -68,12 +103,8 @@ export default function ProfilePage() {
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 py-6">
         <div className="hero-shell">
           <p className="eyebrow">{t("profile.hero.eyebrow")}</p>
-          <h1 className="page-heading mt-3">
-            {t("profile.hero.title")}
-          </h1>
-          <p className="page-subheading mt-4">
-            {t("profile.hero.subtitle")}
-          </p>
+          <h1 className="page-heading mt-3">{t("profile.hero.title")}</h1>
+          <p className="page-subheading mt-4">{t("profile.hero.subtitle")}</p>
         </div>
         <DailyCheckInCard />
         <ProfileSummary />

@@ -17,6 +17,7 @@ import {
   type ActivityTrack,
   type CommentReactionEmoji,
   type CommunityStore,
+  type CheckInEvent,
   type LeaderboardEntry,
   type NotificationPreferences,
   type PairPrediction,
@@ -24,6 +25,7 @@ import {
   type PoolComment,
   type PredictionBet,
   type PredictionDirection,
+  type RewardLedgerEntry,
   type UserProfile,
   buildAchievements,
   defaultCommunityStore,
@@ -47,13 +49,23 @@ type CommunityContextValue = {
   achievements: Achievement[];
   leaderboard: LeaderboardEntry[];
   recentActivity: ActivityItem[];
+  checkInEvents: CheckInEvent[];
+  rewardLedger: RewardLedgerEntry[];
   settledPredictions: PredictionSettlement[];
   userBets: Array<PredictionBet & { pairId: string; pairLabel: string }>;
   updateProfile: (input: { displayName: string; bio: string }) => Promise<void>;
   updateNotificationPreferences: (
     input: Partial<NotificationPreferences>,
   ) => Promise<void>;
-  checkIn: () => Promise<{ ok: boolean; points: number }>;
+  checkIn: (input: { txHash: string }) => Promise<{
+    ok: boolean;
+    points: number;
+    syncStatus: "pending" | "confirmed" | "failed";
+  }>;
+  syncCheckInTransaction: (input: { txHash: string }) => Promise<{
+    ok: boolean;
+    syncStatus: "pending" | "confirmed" | "missing";
+  }>;
   addComment: (input: { poolId: string; text: string }) => Promise<boolean>;
   getComments: (poolId: string) => PoolComment[];
   toggleCommentReaction: (input: {
@@ -237,18 +249,22 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       }
     };
 
-  const checkIn: CommunityContextValue["checkIn"] = async () => {
+  const checkIn: CommunityContextValue["checkIn"] = async ({ txHash }) => {
     if (!walletAddress) {
-      return { ok: false, points: 0 };
+      return { ok: false, points: 0, syncStatus: "failed" };
     }
 
     setIsSyncing(true);
 
     try {
       const payload = await postJson<{
-        result: { ok: boolean; points: number };
+        result: {
+          ok: boolean;
+          points: number;
+          syncStatus: "pending" | "confirmed" | "failed";
+        };
         state: CommunityStatePayload;
-      }>("/api/community/check-in", { walletAddress });
+      }>("/api/community/check-in", { walletAddress, txHash });
 
       applyPayload(payload.state);
       return payload.result;
@@ -256,6 +272,45 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       setIsSyncing(false);
     }
   };
+
+  const syncCheckInTransaction: CommunityContextValue["syncCheckInTransaction"] =
+    async ({ txHash }) => {
+      if (!walletAddress) {
+        return { ok: false, syncStatus: "missing" };
+      }
+
+      setIsSyncing(true);
+
+      try {
+        const response = await fetch("/api/community/check-in", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            walletAddress,
+            txHash,
+          }),
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return { ok: false, syncStatus: "missing" };
+        }
+
+        const payload = (await response.json()) as {
+          result: boolean;
+          syncStatus: "pending" | "confirmed" | "missing";
+          state: CommunityStatePayload;
+        };
+
+        applyPayload(payload.state);
+        return {
+          ok: payload.result,
+          syncStatus: payload.syncStatus,
+        };
+      } finally {
+        setIsSyncing(false);
+      }
+    };
 
   const addComment: CommunityContextValue["addComment"] = async ({
     poolId,
@@ -491,11 +546,14 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
             : achievements,
         leaderboard,
         recentActivity,
+        checkInEvents: store.checkInEvents,
+        rewardLedger: store.rewardLedger,
         settledPredictions,
         userBets,
         updateProfile,
         updateNotificationPreferences,
         checkIn,
+        syncCheckInTransaction,
         addComment,
         getComments,
         toggleCommentReaction,

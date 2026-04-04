@@ -9,8 +9,11 @@ import {
   DAILY_CHECK_IN_POINTS,
   PREDICTION_POINTS,
   TRACK_POINTS,
+  getCheckInBonusPoints,
+  getCheckInRewardPoints,
   type ActivityItem,
   type ActivityTrack,
+  type CheckInEvent,
   type CommentReactionEmoji,
   type CommunityStore,
   type PoolComment,
@@ -19,6 +22,7 @@ import {
   type PredictionSettlement,
   type PredictionPayoutPreview,
   type PredictionRound,
+  type RewardLedgerEntry,
   type NotificationPreferences,
   type UserProfile,
   buildCommunityState,
@@ -26,6 +30,11 @@ import {
   defaultCommunityStore,
   normalizeNotificationPreferences,
 } from "@/lib/community";
+import {
+  CHECK_IN_CONFIRM_TON_AMOUNT,
+  getCheckInTreasuryAddress,
+  parseCheckInTransferComment,
+} from "@/lib/check-in-config";
 import {
   getPredictionEntryAddress,
   getPredictionMarketAddress,
@@ -77,12 +86,40 @@ function setupSchema(db: DatabaseSync) {
       joined_at TEXT NOT NULL,
       total_points INTEGER NOT NULL DEFAULT 0,
       streak INTEGER NOT NULL DEFAULT 0,
+      longest_streak INTEGER NOT NULL DEFAULT 0,
+      total_check_ins INTEGER NOT NULL DEFAULT 0,
       last_check_in_date TEXT,
       check_in_dates_json TEXT NOT NULL DEFAULT '[]',
       activities_json TEXT NOT NULL DEFAULT '{}',
       notification_preferences_json TEXT NOT NULL DEFAULT '{}',
       comments_count INTEGER NOT NULL DEFAULT 0,
-      predictions_count INTEGER NOT NULL DEFAULT 0
+      predictions_count INTEGER NOT NULL DEFAULT 0,
+      swap_count INTEGER NOT NULL DEFAULT 0,
+      liquidity_actions_count INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS check_in_events (
+      id TEXT PRIMARY KEY,
+      wallet_address TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      amount_ton REAL NOT NULL,
+      source_message_hash TEXT,
+      chain_tx_hash TEXT,
+      created_at TEXT NOT NULL,
+      confirmed_at TEXT,
+      points_awarded INTEGER NOT NULL DEFAULT 0,
+      streak_after_check_in INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending'
+    );
+
+    CREATE TABLE IF NOT EXISTS reward_ledger (
+      id TEXT PRIMARY KEY,
+      wallet_address TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      label TEXT NOT NULL,
+      points INTEGER NOT NULL,
+      related_event_id TEXT,
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS comments (
@@ -171,6 +208,15 @@ function setupSchema(db: DatabaseSync) {
     "notification_preferences_json",
     "TEXT NOT NULL DEFAULT '{}'",
   );
+  ensureColumn(db, "profiles", "longest_streak", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "profiles", "total_check_ins", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "profiles", "swap_count", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(
+    db,
+    "profiles",
+    "liquidity_actions_count",
+    "INTEGER NOT NULL DEFAULT 0",
+  );
   ensureColumn(db, "prediction_bets", "source_message_hash", "TEXT");
   ensureColumn(db, "prediction_bets", "chain_tx_hash", "TEXT");
   ensureColumn(db, "prediction_bets", "confirmed_at", "TEXT");
@@ -182,6 +228,18 @@ function setupSchema(db: DatabaseSync) {
   );
 
   db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_check_in_events_source_message_hash
+    ON check_in_events(source_message_hash)
+    WHERE source_message_hash IS NOT NULL;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_check_in_events_chain_tx_hash
+    ON check_in_events(chain_tx_hash)
+    WHERE chain_tx_hash IS NOT NULL;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_check_in_rewards_related_event
+    ON reward_ledger(related_event_id, reason)
+    WHERE related_event_id IS NOT NULL;
+
     CREATE UNIQUE INDEX IF NOT EXISTS idx_prediction_bets_source_message_hash
     ON prediction_bets(source_message_hash)
     WHERE source_message_hash IS NOT NULL;
@@ -240,10 +298,21 @@ async function migrateLegacyJson(db: DatabaseSync) {
 
     const insertProfile = db.prepare(`
       INSERT OR REPLACE INTO profiles (
-        wallet_address, display_name, bio, joined_at, total_points, streak,
+        wallet_address, display_name, bio, joined_at, total_points, streak, longest_streak, total_check_ins,
         last_check_in_date, check_in_dates_json, activities_json, notification_preferences_json,
-        comments_count, predictions_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        comments_count, predictions_count, swap_count, liquidity_actions_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertCheckInEvent = db.prepare(`
+      INSERT OR REPLACE INTO check_in_events (
+        id, wallet_address, date_key, amount_ton, source_message_hash, chain_tx_hash, created_at,
+        confirmed_at, points_awarded, streak_after_check_in, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertRewardLedger = db.prepare(`
+      INSERT OR REPLACE INTO reward_ledger (
+        id, wallet_address, reason, label, points, related_event_id, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     const insertComment = db.prepare(`
       INSERT OR REPLACE INTO comments (id, pool_id, wallet_address, author, text, created_at)
@@ -289,6 +358,8 @@ async function migrateLegacyJson(db: DatabaseSync) {
         profile.joinedAt,
         profile.totalPoints,
         profile.streak,
+        profile.longestStreak,
+        profile.totalCheckIns,
         profile.lastCheckInDate ?? null,
         JSON.stringify(profile.checkInDates),
         JSON.stringify(profile.activities),
@@ -297,7 +368,39 @@ async function migrateLegacyJson(db: DatabaseSync) {
         ),
         profile.commentsCount,
         profile.predictionsCount,
+        profile.swapCount,
+        profile.liquidityActionsCount,
       );
+
+      for (const [index, dateKey] of profile.checkInDates.entries()) {
+        const eventId = `${profile.walletAddress}-legacy-checkin-${dateKey}`;
+        const streakAfterCheckIn = Math.min(
+          index + 1,
+          profile.longestStreak || profile.streak || index + 1,
+        );
+        insertCheckInEvent.run(
+          eventId,
+          profile.walletAddress,
+          dateKey,
+          Number(CHECK_IN_CONFIRM_TON_AMOUNT),
+          null,
+          null,
+          `${dateKey}T00:00:00.000Z`,
+          `${dateKey}T00:00:00.000Z`,
+          getCheckInRewardPoints(streakAfterCheckIn),
+          streakAfterCheckIn,
+          "confirmed",
+        );
+        insertRewardLedger.run(
+          `${eventId}-reward`,
+          profile.walletAddress,
+          "daily_check_in",
+          "Legacy daily check-in",
+          getCheckInRewardPoints(streakAfterCheckIn),
+          eventId,
+          `${dateKey}T00:00:00.000Z`,
+        );
+      }
 
       for (const item of profile.watchedPools) {
         insertWatchlist.run(
@@ -416,6 +519,77 @@ function getYesterdayKey() {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   return yesterday.toISOString().slice(0, 10);
+}
+
+function getDateKeyFromIso(iso: string) {
+  return iso.slice(0, 10);
+}
+
+function isNextDateKey(previousDateKey: string | null, nextDateKey: string) {
+  if (!previousDateKey) {
+    return false;
+  }
+
+  const previous = new Date(`${previousDateKey}T00:00:00.000Z`);
+  previous.setUTCDate(previous.getUTCDate() + 1);
+  return previous.toISOString().slice(0, 10) === nextDateKey;
+}
+
+function buildRewardEntries(input: {
+  walletAddress: string;
+  eventId: string;
+  createdAt: string;
+  streakAfterCheckIn: number;
+}) {
+  const bonusPoints = getCheckInBonusPoints(input.streakAfterCheckIn);
+  const entries: Array<Omit<RewardLedgerEntry, "id"> & { id: string }> = [
+    {
+      id: `${input.eventId}-daily`,
+      walletAddress: input.walletAddress,
+      reason: "daily_check_in",
+      label: "Daily check-in reward",
+      points: DAILY_CHECK_IN_POINTS,
+      relatedEventId: input.eventId,
+      createdAt: input.createdAt,
+    },
+  ];
+
+  if (bonusPoints > 0) {
+    entries.push({
+      id: `${input.eventId}-bonus`,
+      walletAddress: input.walletAddress,
+      reason: "streak_bonus",
+      label: `Streak bonus x${input.streakAfterCheckIn}`,
+      points: bonusPoints,
+      relatedEventId: input.eventId,
+      createdAt: input.createdAt,
+    });
+  }
+
+  return entries;
+}
+
+function insertRewardEntries(
+  db: DatabaseSync,
+  entries: Array<Omit<RewardLedgerEntry, "id"> & { id: string }>,
+) {
+  const statement = db.prepare(`
+    INSERT OR IGNORE INTO reward_ledger (
+      id, wallet_address, reason, label, points, related_event_id, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const entry of entries) {
+    statement.run(
+      entry.id,
+      entry.walletAddress,
+      entry.reason,
+      entry.label,
+      entry.points,
+      entry.relatedEventId ?? null,
+      entry.createdAt,
+    );
+  }
 }
 
 function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
@@ -634,12 +808,16 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     joined_at: string;
     total_points: number;
     streak: number;
+    longest_streak: number;
+    total_check_ins: number;
     last_check_in_date: string | null;
     check_in_dates_json: string;
     activities_json: string;
     notification_preferences_json: string;
     comments_count: number;
     predictions_count: number;
+    swap_count: number;
+    liquidity_actions_count: number;
   }>;
 
   const profiles = Object.fromEntries(
@@ -651,6 +829,8 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
         joinedAt: row.joined_at,
         totalPoints: row.total_points,
         streak: row.streak,
+        longestStreak: row.longest_streak,
+        totalCheckIns: row.total_check_ins,
         lastCheckInDate: row.last_check_in_date ?? undefined,
         checkInDates: parseJson<string[]>(row.check_in_dates_json, []),
         activities: parseJson<Partial<Record<ActivityTrack, string>>>(
@@ -665,6 +845,8 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
         ),
         commentsCount: row.comments_count,
         predictionsCount: row.predictions_count,
+        swapCount: row.swap_count,
+        liquidityActionsCount: row.liquidity_actions_count,
         watchedPools: [],
       };
 
@@ -948,11 +1130,66 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     }),
   );
 
+  const checkInEventRows = db
+    .prepare("SELECT * FROM check_in_events ORDER BY created_at DESC LIMIT 180")
+    .all() as Array<{
+    id: string;
+    wallet_address: string;
+    date_key: string;
+    amount_ton: number;
+    source_message_hash: string | null;
+    chain_tx_hash: string | null;
+    created_at: string;
+    confirmed_at: string | null;
+    points_awarded: number;
+    streak_after_check_in: number;
+    status: CheckInEvent["status"];
+  }>;
+  const rewardLedgerRows = db
+    .prepare("SELECT * FROM reward_ledger ORDER BY created_at DESC LIMIT 240")
+    .all() as Array<{
+    id: string;
+    wallet_address: string;
+    reason: RewardLedgerEntry["reason"];
+    label: string;
+    points: number;
+    related_event_id: string | null;
+    created_at: string;
+  }>;
+  const checkInEvents = checkInEventRows.map(
+    (row): CheckInEvent => ({
+      id: row.id,
+      walletAddress: row.wallet_address,
+      dateKey: row.date_key,
+      amountTon: row.amount_ton,
+      sourceMessageHash: row.source_message_hash ?? undefined,
+      chainTxHash: row.chain_tx_hash ?? undefined,
+      createdAt: row.created_at,
+      confirmedAt: row.confirmed_at ?? undefined,
+      pointsAwarded: row.points_awarded,
+      streakAfterCheckIn: row.streak_after_check_in,
+      status: row.status,
+    }),
+  );
+  const rewardLedger = rewardLedgerRows.map(
+    (row): RewardLedgerEntry => ({
+      id: row.id,
+      walletAddress: row.wallet_address,
+      reason: row.reason,
+      label: row.label,
+      points: row.points,
+      relatedEventId: row.related_event_id ?? undefined,
+      createdAt: row.created_at,
+    }),
+  );
+
   return {
     profiles,
     comments,
     predictions,
     settlements,
+    checkInEvents,
+    rewardLedger,
     activity,
   };
 }
@@ -1001,9 +1238,10 @@ function ensureProfile(
 
     db.prepare(`
       INSERT INTO profiles (
-        wallet_address, display_name, bio, joined_at, total_points, streak,
-        last_check_in_date, check_in_dates_json, activities_json, notification_preferences_json, comments_count, predictions_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        wallet_address, display_name, bio, joined_at, total_points, streak, longest_streak, total_check_ins,
+        last_check_in_date, check_in_dates_json, activities_json, notification_preferences_json, comments_count,
+        predictions_count, swap_count, liquidity_actions_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       profile.walletAddress,
       profile.displayName,
@@ -1011,12 +1249,16 @@ function ensureProfile(
       profile.joinedAt,
       profile.totalPoints,
       profile.streak,
+      profile.longestStreak,
+      profile.totalCheckIns,
       null,
       JSON.stringify(profile.checkInDates),
       JSON.stringify(profile.activities),
       JSON.stringify(profile.notificationPreferences),
       profile.commentsCount,
       profile.predictionsCount,
+      profile.swapCount,
+      profile.liquidityActionsCount,
     );
 
     pushActivity(db, {
@@ -1041,14 +1283,264 @@ function getProfileRow(db: DatabaseSync, walletAddress: string) {
         joined_at: string;
         total_points: number;
         streak: number;
+        longest_streak: number;
+        total_check_ins: number;
         last_check_in_date: string | null;
         check_in_dates_json: string;
         activities_json: string;
         notification_preferences_json: string;
         comments_count: number;
         predictions_count: number;
+        swap_count: number;
+        liquidity_actions_count: number;
       }
     | undefined;
+}
+
+async function syncOnchainCheckInTransactions(
+  db: DatabaseSync,
+  walletAddress: string | null,
+  options?: { targetMessageHash?: string | null },
+) {
+  const treasuryAddress = getCheckInTreasuryAddress();
+  const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+  const normalizedTargetMessageHash =
+    options?.targetMessageHash?.trim() || null;
+
+  try {
+    const response = await fetch(
+      `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
+        treasuryAddress,
+      )}/transactions?limit=100`,
+      {
+        headers: process.env.TON_CONSOLE_API_KEY
+          ? { Authorization: `Bearer ${process.env.TON_CONSOLE_API_KEY}` }
+          : {},
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = (await response.json()) as {
+      transactions?: Array<Record<string, unknown>>;
+    };
+
+    for (const transaction of payload.transactions ?? []) {
+      const chainTxHash = extractTxHash(transaction);
+      const incomingMessage = (transaction.in_msg ??
+        transaction.inMessage) as Record<string, unknown> | null;
+      const incomingMessageHash = extractMessageHash(incomingMessage);
+
+      if (
+        normalizedTargetMessageHash &&
+        incomingMessageHash !== normalizedTargetMessageHash
+      ) {
+        continue;
+      }
+
+      const existingConfirmedByChainHash = chainTxHash
+        ? (db
+            .prepare("SELECT id FROM check_in_events WHERE chain_tx_hash = ?")
+            .get(chainTxHash) as { id: string } | undefined)
+        : undefined;
+
+      if (existingConfirmedByChainHash) {
+        continue;
+      }
+
+      const sourceValue =
+        (incomingMessage?.source as
+          | Record<string, unknown>
+          | string
+          | undefined) ??
+        (incomingMessage?.src as
+          | Record<string, unknown>
+          | string
+          | undefined) ??
+        null;
+      const sourceAddress =
+        typeof sourceValue === "string"
+          ? sourceValue
+          : typeof sourceValue?.["address"] === "string"
+            ? (sourceValue["address"] as string)
+            : null;
+      const normalizedSourceAddress = normalizeTonAddress(sourceAddress);
+
+      if (
+        normalizedWalletAddress &&
+        normalizedSourceAddress &&
+        normalizedSourceAddress !== normalizedWalletAddress
+      ) {
+        continue;
+      }
+
+      const parsedComment = parseCheckInTransferComment(
+        extractMessageComment(incomingMessage),
+      );
+
+      if (
+        !chainTxHash ||
+        !incomingMessageHash ||
+        !normalizedSourceAddress ||
+        !parsedComment
+      ) {
+        continue;
+      }
+
+      if (parsedComment.walletAddress !== normalizedSourceAddress) {
+        continue;
+      }
+
+      const amountTon = extractMessageTonValue(incomingMessage);
+      if (amountTon < Number(CHECK_IN_CONFIRM_TON_AMOUNT) * 0.99) {
+        continue;
+      }
+
+      ensureProfile(db, normalizedSourceAddress);
+      const current = getProfileRow(db, normalizedSourceAddress);
+      if (!current) {
+        continue;
+      }
+
+      const confirmedDateKey = parsedComment.dateKey;
+      const alreadyConfirmedForDay = db
+        .prepare(
+          `
+          SELECT id FROM check_in_events
+          WHERE wallet_address = ? AND date_key = ? AND status = 'confirmed'
+          LIMIT 1
+        `,
+        )
+        .get(normalizedSourceAddress, confirmedDateKey) as
+        | { id: string }
+        | undefined;
+
+      const confirmedAt = extractTransactionCreatedAt(transaction);
+      const currentDates = parseJson<string[]>(current.check_in_dates_json, []);
+      const previousDate = current.last_check_in_date;
+      const streakAfterCheckIn =
+        previousDate === confirmedDateKey
+          ? current.streak
+          : isNextDateKey(previousDate, confirmedDateKey)
+            ? current.streak + 1
+            : 1;
+      const nextLongestStreak = Math.max(
+        current.longest_streak,
+        streakAfterCheckIn,
+      );
+      const nextCheckInDates = currentDates.includes(confirmedDateKey)
+        ? currentDates
+        : [...currentDates, confirmedDateKey].sort();
+      const rewardPoints = getCheckInRewardPoints(streakAfterCheckIn);
+      const existingByMessageHash = db
+        .prepare(
+          `
+          SELECT id, status
+          FROM check_in_events
+          WHERE source_message_hash = ?
+        `,
+        )
+        .get(incomingMessageHash) as
+        | { id: string; status: CheckInEvent["status"] }
+        | undefined;
+      const eventId =
+        existingByMessageHash?.id ??
+        `checkin-${normalizedSourceAddress}-${incomingMessageHash}`;
+
+      db.exec("BEGIN");
+      try {
+        if (existingByMessageHash) {
+          db.prepare(`
+            UPDATE check_in_events
+            SET wallet_address = ?,
+                date_key = ?,
+                amount_ton = ?,
+                chain_tx_hash = ?,
+                confirmed_at = ?,
+                points_awarded = ?,
+                streak_after_check_in = ?,
+                status = 'confirmed'
+            WHERE source_message_hash = ?
+          `).run(
+            normalizedSourceAddress,
+            confirmedDateKey,
+            amountTon,
+            chainTxHash,
+            confirmedAt,
+            rewardPoints,
+            streakAfterCheckIn,
+            incomingMessageHash,
+          );
+        } else {
+          db.prepare(`
+            INSERT INTO check_in_events (
+              id, wallet_address, date_key, amount_ton, source_message_hash, chain_tx_hash,
+              created_at, confirmed_at, points_awarded, streak_after_check_in, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed')
+          `).run(
+            eventId,
+            normalizedSourceAddress,
+            confirmedDateKey,
+            amountTon,
+            incomingMessageHash,
+            chainTxHash,
+            confirmedAt,
+            confirmedAt,
+            rewardPoints,
+            streakAfterCheckIn,
+          );
+        }
+
+        if (!alreadyConfirmedForDay) {
+          db.prepare(`
+            UPDATE profiles
+            SET total_points = total_points + ?,
+                streak = ?,
+                longest_streak = ?,
+                total_check_ins = total_check_ins + 1,
+                last_check_in_date = ?,
+                check_in_dates_json = ?
+            WHERE wallet_address = ?
+          `).run(
+            rewardPoints,
+            streakAfterCheckIn,
+            nextLongestStreak,
+            confirmedDateKey,
+            JSON.stringify(nextCheckInDates),
+            normalizedSourceAddress,
+          );
+
+          insertRewardEntries(
+            db,
+            buildRewardEntries({
+              walletAddress: normalizedSourceAddress,
+              eventId,
+              createdAt: confirmedAt,
+              streakAfterCheckIn,
+            }),
+          );
+
+          pushActivity(db, {
+            type: "daily_check_in",
+            walletAddress: normalizedSourceAddress,
+            author: current.display_name,
+            createdAt: confirmedAt,
+            title: "Confirmed daily check-in",
+            detail: `Check-in confirmed onchain. +${rewardPoints} points, streak ${streakAfterCheckIn}.`,
+          });
+        }
+
+        db.exec("COMMIT");
+      } catch {
+        db.exec("ROLLBACK");
+      }
+    }
+  } catch {
+    return;
+  }
 }
 
 function normalizeTonAddress(value?: string | null) {
@@ -1591,6 +2083,7 @@ function extractMessageTonValue(message: Record<string, unknown> | null) {
 export async function getCommunityState(walletAddress: string | null) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
+  await syncOnchainCheckInTransactions(db, walletAddress);
   await syncOnchainPredictionTransactions(db, walletAddress);
   const store = hydrateStore(db);
   return buildCommunityState(store, walletAddress);
@@ -1637,16 +2130,19 @@ export async function upsertProfile(input: {
   return buildCommunityState(hydrateStore(db), input.walletAddress);
 }
 
-export async function performCheckIn(walletAddress: string) {
+export async function registerPendingCheckInTransaction(input: {
+  walletAddress: string;
+  txHash: string;
+}) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
-  ensureProfile(db, walletAddress);
-  const current = getProfileRow(db, walletAddress);
+  ensureProfile(db, input.walletAddress);
+  const current = getProfileRow(db, input.walletAddress);
 
   if (!current) {
     return {
-      result: { ok: false, points: 0 },
-      state: buildCommunityState(hydrateStore(db), walletAddress),
+      result: { ok: false, points: 0, syncStatus: "failed" as const },
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
     };
   }
 
@@ -1654,45 +2150,111 @@ export async function performCheckIn(walletAddress: string) {
 
   if (current.last_check_in_date === today) {
     return {
-      result: { ok: false, points: 0 },
-      state: buildCommunityState(hydrateStore(db), walletAddress),
+      result: { ok: false, points: 0, syncStatus: "confirmed" as const },
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
     };
   }
 
-  const streak =
-    current.last_check_in_date === getYesterdayKey() ? current.streak + 1 : 1;
-  const checkInDates = [
-    ...parseJson<string[]>(current.check_in_dates_json, []),
-    today,
-  ];
+  const existingTodayEvent = db
+    .prepare(
+      `
+      SELECT id, status
+      FROM check_in_events
+      WHERE wallet_address = ? AND date_key = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    )
+    .get(input.walletAddress, today) as
+    | { id: string; status: CheckInEvent["status"] }
+    | undefined;
 
-  db.prepare(`
-    UPDATE profiles
-    SET total_points = total_points + ?,
-        streak = ?,
-        last_check_in_date = ?,
-        check_in_dates_json = ?
-    WHERE wallet_address = ?
-  `).run(
-    DAILY_CHECK_IN_POINTS,
-    streak,
-    today,
-    JSON.stringify(checkInDates),
-    walletAddress,
-  );
+  if (existingTodayEvent) {
+    return {
+      result: {
+        ok: existingTodayEvent.status === "pending",
+        points: 0,
+        syncStatus:
+          existingTodayEvent.status === "confirmed" ? "confirmed" : "pending",
+      },
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+    };
+  }
 
-  pushActivity(db, {
-    type: "daily_check_in",
-    walletAddress,
-    author: current.display_name,
-    createdAt: new Date().toISOString(),
-    title: "Daily check-in claimed",
-    detail: `Collected ${DAILY_CHECK_IN_POINTS} points and moved streak to ${streak}.`,
+  const existingPending = db
+    .prepare(
+      "SELECT id FROM check_in_events WHERE source_message_hash = ? OR chain_tx_hash = ?",
+    )
+    .get(input.txHash, input.txHash) as { id: string } | undefined;
+
+  if (!existingPending) {
+    db.prepare(`
+      INSERT INTO check_in_events (
+        id, wallet_address, date_key, amount_ton, source_message_hash, created_at,
+        points_awarded, streak_after_check_in, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    `).run(
+      `checkin-pending-${input.walletAddress}-${input.txHash}`,
+      input.walletAddress,
+      today,
+      Number(CHECK_IN_CONFIRM_TON_AMOUNT),
+      input.txHash,
+      new Date().toISOString(),
+      0,
+      current.streak,
+    );
+  }
+
+  await syncOnchainCheckInTransactions(db, input.walletAddress, {
+    targetMessageHash: input.txHash,
   });
 
+  const pendingState = hydrateStore(db);
+  const event = pendingState.checkInEvents.find(
+    (item) =>
+      item.walletAddress === input.walletAddress &&
+      item.sourceMessageHash === input.txHash,
+  );
+
   return {
-    result: { ok: true, points: DAILY_CHECK_IN_POINTS },
-    state: buildCommunityState(hydrateStore(db), walletAddress),
+    result: {
+      ok: true,
+      points: event?.status === "confirmed" ? event.pointsAwarded : 0,
+      syncStatus: event?.status === "confirmed" ? "confirmed" : "pending",
+    },
+    state: buildCommunityState(pendingState, input.walletAddress),
+  };
+}
+
+export async function syncCheckInTransaction(input: {
+  walletAddress: string;
+  txHash: string;
+}) {
+  const db = await ensureDatabase();
+  refreshPredictionRounds(db);
+  ensureProfile(db, input.walletAddress);
+
+  await syncOnchainCheckInTransactions(db, input.walletAddress, {
+    targetMessageHash: input.txHash,
+  });
+
+  const store = hydrateStore(db);
+  const event = store.checkInEvents.find(
+    (item) =>
+      item.walletAddress === input.walletAddress &&
+      (item.sourceMessageHash === input.txHash ||
+        item.chainTxHash === input.txHash),
+  );
+
+  return {
+    result: event?.status === "confirmed",
+    syncStatus:
+      event?.status === "confirmed"
+        ? "confirmed"
+        : event
+          ? "pending"
+          : "missing",
+    state: buildCommunityState(store, input.walletAddress),
   };
 }
 

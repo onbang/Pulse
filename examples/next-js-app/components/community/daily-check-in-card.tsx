@@ -2,9 +2,11 @@
 
 import { beginCell, toNano } from "@ton/core";
 import { useTonConnectUI } from "@tonconnect/ui-react";
-import { useState } from "react";
+import { CalendarCheck2, Flame, Gem, Sparkles, TimerReset } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,26 +21,93 @@ import {
   CHECK_IN_CONFIRM_TON_AMOUNT,
   getCheckInTreasuryAddress,
 } from "@/lib/check-in-config";
-import { DAILY_CHECK_IN_POINTS } from "@/lib/community";
+import { getUserLevelProgress } from "@/lib/community";
+import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { useCommunityProfile } from "./community-provider";
+
+type CheckInUiState =
+  | "idle"
+  | "sending"
+  | "waiting_confirmation"
+  | "syncing"
+  | "synced"
+  | "failed";
+
+const CHECK_IN_SYNC_ATTEMPTS = 12;
+const CHECK_IN_SYNC_DELAY_MS = 2500;
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function DailyCheckInCard() {
   const { t } = useI18n();
-  const { profile, checkIn } = useCommunityProfile();
+  const {
+    profile,
+    rewardLedger,
+    checkInEvents,
+    checkIn,
+    syncCheckInTransaction,
+  } = useCommunityProfile();
   const [tonConnectUI] = useTonConnectUI();
   const { toast } = useToast();
-  const [message, setMessage] = useState(
+  const [status, setStatus] = useState<CheckInUiState>("idle");
+  const [statusMessage, setStatusMessage] = useState(
     t("checkin.messageDefault"),
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const confirmedToday = useMemo(
+    () =>
+      checkInEvents.some(
+        (event) =>
+          event.walletAddress === profile?.walletAddress &&
+          event.dateKey === todayKey &&
+          event.status === "confirmed",
+      ),
+    [checkInEvents, profile?.walletAddress, todayKey],
+  );
+  const pendingToday = useMemo(
+    () =>
+      checkInEvents.some(
+        (event) =>
+          event.walletAddress === profile?.walletAddress &&
+          event.dateKey === todayKey &&
+          event.status === "pending",
+      ),
+    [checkInEvents, profile?.walletAddress, todayKey],
+  );
+
+  const lastReward = useMemo(() => {
+    if (!profile) {
+      return null;
+    }
+
+    return (
+      rewardLedger.find(
+        (entry) => entry.walletAddress === profile.walletAddress,
+      ) ?? null
+    );
+  }, [profile, rewardLedger]);
+
+  const recentRewards = useMemo(() => {
+    if (!profile) {
+      return [];
+    }
+
+    return rewardLedger
+      .filter((entry) => entry.walletAddress === profile.walletAddress)
+      .slice(0, 4);
+  }, [profile, rewardLedger]);
 
   if (!profile) {
     return null;
   }
 
-  const hasCheckedInToday =
-    profile.lastCheckInDate === new Date().toISOString().slice(0, 10);
-  const streakTarget = profile.streak >= 30 ? 90 : profile.streak >= 7 ? 30 : 7;
+  const levelProgress = getUserLevelProgress(profile.totalPoints);
+  const streakTarget =
+    profile.streak >= 30 ? 90 : profile.streak >= 14 ? 30 : 7;
   const streakProgress = Math.min((profile.streak / streakTarget) * 100, 100);
   const nextMilestoneLabel =
     streakTarget === 7
@@ -46,165 +115,398 @@ export function DailyCheckInCard() {
       : streakTarget === 30
         ? t("checkin.goal30")
         : t("checkin.goal90");
+  const isBusy =
+    status === "sending" ||
+    status === "waiting_confirmation" ||
+    status === "syncing";
+  const isDisabled = confirmedToday || pendingToday || isBusy;
+
+  const ctaLabel = confirmedToday
+    ? t("checkin.claimed")
+    : pendingToday || status === "waiting_confirmation"
+      ? t("checkin.waitingConfirmation")
+      : status === "syncing"
+        ? t("checkin.syncing")
+        : status === "sending"
+          ? t("checkin.processing")
+          : t("checkin.claim");
 
   return (
-    <Card className="surface-panel overflow-hidden">
-      <CardHeader>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
-          {t("checkin.eyebrow")}
-        </p>
-        <CardTitle className="mt-2">{t("checkin.title")}</CardTitle>
-        <CardDescription>
-          {t("checkin.subtitle")}
-        </CardDescription>
+    <Card className="surface-panel overflow-hidden border-white/70">
+      <CardHeader className="border-b border-sky-100/80 bg-[radial-gradient(circle_at_top_right,rgba(1,128,255,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.96))]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
+              {t("checkin.eyebrow")}
+            </p>
+            <CardTitle className="text-2xl text-slate-950">
+              {t("checkin.title")}
+            </CardTitle>
+            <CardDescription className="max-w-2xl text-sm leading-6">
+              {t("checkin.subtitle")}
+            </CardDescription>
+          </div>
+          <Badge className="border-0 bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] px-4 py-2 text-slate-900">
+            {t("checkin.totalPointsBadge", {
+              count: String(profile.totalPoints),
+            })}
+          </Badge>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(224,242,254,0.92),rgba(245,243,255,0.94))] p-4 shadow-[0_18px_48px_-28px_rgba(14,116,214,0.35)]">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700/70">
-                {t("checkin.confirmLabel")}
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-3xl font-semibold text-slate-950">
-                  {CHECK_IN_CONFIRM_TON_AMOUNT} TON
+      <CardContent className="space-y-5 p-6">
+        <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+          <div className="rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(240,249,255,0.98),rgba(245,243,255,0.92))] p-5 shadow-[0_20px_50px_-34px_rgba(59,130,246,0.4)]">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_14px_34px_-18px_rgba(1,128,255,0.65)]">
+                    <CalendarCheck2 className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700/70">
+                      {t("checkin.confirmLabel")}
+                    </p>
+                    <p className="mt-1 text-3xl font-semibold text-slate-950">
+                      {CHECK_IN_CONFIRM_TON_AMOUNT} TON
+                    </p>
+                  </div>
+                </div>
+                <p className="max-w-lg text-sm leading-6 text-slate-600">
+                  {t("checkin.confirmBody")}
                 </p>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-sky-700 shadow-sm">
-                  +{DAILY_CHECK_IN_POINTS} points
+              </div>
+
+              <div className="rounded-[24px] border border-white/70 bg-white/80 px-4 py-4 text-right shadow-sm">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                  {t("checkin.todayReward")}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-slate-950">
+                  +10
+                </p>
+                <p className="text-sm text-slate-500">
+                  {lastReward
+                    ? t("checkin.lastReward", {
+                        count: String(lastReward.points),
+                      })
+                    : t("checkin.rewardBody")}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.currentStreak")}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-slate-950">
+                  {profile.streak}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("checkin.daysInRow", { count: String(profile.streak) })}
+                </p>
+              </div>
+              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.longestStreak")}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-slate-950">
+                  {profile.longestStreak}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("checkin.bestSeries")}
+                </p>
+              </div>
+              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.totalCheckIns")}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-slate-950">
+                  {profile.totalCheckIns}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t("checkin.totalCheckInsBody")}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-sky-100 bg-white/80 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    {t("checkin.streakDuration")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-slate-950">
+                    {profile.streak} / {streakTarget} {t("checkin.days")}
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-sky-700/80">
+                  {t("checkin.nextGoal", { goal: nextMilestoneLabel })}
+                </p>
+              </div>
+              <div className="mt-4 h-3 overflow-hidden rounded-full bg-sky-100">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#0180FF,#3DB1FF,#7354F2)] transition-all duration-500"
+                  style={{ width: `${streakProgress}%` }}
+                />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-500">
+                <span>{t("checkin.started")}</span>
+                <span>
+                  {t("checkin.activeSeries", { count: String(profile.streak) })}
+                </span>
+                <span>{nextMilestoneLabel}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    {t("checkin.actionCard")}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {confirmedToday
+                      ? t("checkin.claimed")
+                      : pendingToday
+                        ? t("checkin.waitingConfirmation")
+                        : t("checkin.ready")}
+                  </p>
+                </div>
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] text-slate-700">
+                  {confirmedToday ? (
+                    <Sparkles className="h-5 w-5" />
+                  ) : pendingToday ? (
+                    <TimerReset className="h-5 w-5" />
+                  ) : (
+                    <Gem className="h-5 w-5" />
+                  )}
                 </span>
               </div>
-              <p className="max-w-xl text-sm leading-6 text-slate-600">
-                {t("checkin.confirmBody")}
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {statusMessage}
               </p>
-            </div>
-            <Button
-              className="h-12 min-w-[240px] rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] px-6 text-base text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.65)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.35),rgba(61,177,255,0.35),rgba(115,84,242,0.35))] disabled:text-white/85 disabled:opacity-100"
-              disabled={hasCheckedInToday || isSubmitting}
-              onClick={async () => {
-                if (hasCheckedInToday || isSubmitting) {
-                  return;
-                }
+              <Button
+                className="mt-5 h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] text-base font-semibold text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.55)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.32),rgba(61,177,255,0.32),rgba(115,84,242,0.32))] disabled:text-white/90 disabled:opacity-100"
+                disabled={isDisabled}
+                onClick={async () => {
+                  if (isDisabled) {
+                    return;
+                  }
 
-                try {
-                  setIsSubmitting(true);
+                  try {
+                    setStatus("sending");
+                    setStatusMessage(t("checkin.messageWalletOpening"));
 
-                  const payload = beginCell()
-                    .storeUint(0, 32)
-                    .storeStringTail(
-                      buildCheckInTransferComment({
-                        walletAddress: profile.walletAddress,
-                        dateKey: new Date().toISOString().slice(0, 10),
+                    const payload = beginCell()
+                      .storeUint(0, 32)
+                      .storeStringTail(
+                        buildCheckInTransferComment({
+                          walletAddress: profile.walletAddress,
+                          dateKey: todayKey,
+                        }),
+                      )
+                      .endCell()
+                      .toBoc()
+                      .toString("base64");
+
+                    const txResult = await tonConnectUI.sendTransaction({
+                      validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+                      messages: [
+                        {
+                          address: getCheckInTreasuryAddress(),
+                          amount: toNano(
+                            CHECK_IN_CONFIRM_TON_AMOUNT,
+                          ).toString(),
+                          payload,
+                        },
+                      ],
+                    });
+
+                    const txHash = getMessageHashFromSignedBoc(txResult.boc);
+                    if (!txHash) {
+                      throw new Error("missing-check-in-message-hash");
+                    }
+
+                    setStatus("waiting_confirmation");
+                    setStatusMessage(t("checkin.messageWaitingConfirmation"));
+
+                    const registered = await checkIn({ txHash });
+                    if (!registered.ok) {
+                      throw new Error("check-in-registration-failed");
+                    }
+
+                    let syncStatus:
+                      | "pending"
+                      | "confirmed"
+                      | "failed"
+                      | "missing" = registered.syncStatus;
+                    let pointsAwarded = registered.points;
+
+                    if (syncStatus !== "confirmed") {
+                      for (
+                        let attempt = 0;
+                        attempt < CHECK_IN_SYNC_ATTEMPTS;
+                        attempt += 1
+                      ) {
+                        await wait(CHECK_IN_SYNC_DELAY_MS);
+                        setStatus("syncing");
+                        setStatusMessage(t("checkin.messageSyncing"));
+
+                        const syncResult = await syncCheckInTransaction({
+                          txHash,
+                        });
+                        syncStatus = syncResult.syncStatus;
+
+                        if (syncStatus === "confirmed") {
+                          pointsAwarded =
+                            rewardLedger.find(
+                              (entry) =>
+                                entry.walletAddress === profile.walletAddress,
+                            )?.points ?? registered.points;
+                          break;
+                        }
+                      }
+                    }
+
+                    if (syncStatus !== "confirmed") {
+                      setStatus("waiting_confirmation");
+                      setStatusMessage(t("checkin.messagePendingConfirmation"));
+                      toast({
+                        title: t("checkin.waitingConfirmation"),
+                        description: t("checkin.messagePendingConfirmation"),
+                      });
+                      return;
+                    }
+
+                    setStatus("synced");
+                    setStatusMessage(
+                      t("checkin.messageSuccess", {
+                        points: String(pointsAwarded || 10),
                       }),
-                    )
-                    .endCell()
-                    .toBoc()
-                    .toString("base64");
+                    );
+                    toast({
+                      title: t("checkin.claimed"),
+                      description: t("checkin.messageSuccess", {
+                        points: String(pointsAwarded || 10),
+                      }),
+                    });
+                  } catch (error) {
+                    setStatus("failed");
+                    const description =
+                      error instanceof Error &&
+                      error.message === "missing-check-in-message-hash"
+                        ? t("checkin.messageHashMissing")
+                        : t("checkin.messageWalletCancelled");
+                    setStatusMessage(description);
+                    toast({
+                      title: t("checkin.txFailed"),
+                      description,
+                    });
+                  }
+                }}
+              >
+                {ctaLabel}
+              </Button>
+            </div>
 
-                  await tonConnectUI.sendTransaction({
-                    validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-                    messages: [
-                      {
-                        address: getCheckInTreasuryAddress(),
-                        amount: toNano(CHECK_IN_CONFIRM_TON_AMOUNT).toString(),
-                        payload,
-                      },
-                    ],
-                  });
-
-                  const result = await checkIn();
-                  const nextMessage = result.ok
-                    ? t("checkin.messageSuccess", {
-                        points: String(result.points),
-                      })
-                    : t("checkin.messageAlready");
-
-                  setMessage(nextMessage);
-                  toast({
-                    title: result.ok ? t("checkin.claimed") : t("checkin.title"),
-                    description: nextMessage,
-                  });
-                } catch {
-                  setMessage(t("checkin.messageWalletCancelled"));
-                  toast({
-                    title: t("checkin.txFailed"),
-                    description: t("checkin.messageWalletCancelled"),
-                  });
-                } finally {
-                  setIsSubmitting(false);
-                }
-              }}
-            >
-              {hasCheckedInToday
-                ? t("checkin.claimed")
-                : isSubmitting
-                  ? t("checkin.processing")
-                  : t("checkin.claim")}
-            </Button>
+            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                {t("profile.progression.title")}
+              </p>
+              <div className="mt-3 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-2xl font-semibold text-slate-950">
+                    {t(`profile.level.${levelProgress.current.id}`)}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {levelProgress.next
+                      ? t("checkin.progressNext", {
+                          level: t(`profile.level.${levelProgress.next.id}`),
+                          count: String(levelProgress.remainingScore),
+                        })
+                      : t("profile.progression.maxUnlocked")}
+                  </p>
+                </div>
+                <span className="inline-flex h-11 items-center rounded-full bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] px-4 text-sm font-semibold text-slate-700">
+                  {profile.totalPoints} pts
+                </span>
+              </div>
+              <div className="mt-4 h-3 rounded-full bg-slate-100">
+                <div
+                  className="h-3 rounded-full bg-[linear-gradient(90deg,#0284c7,#2dd4bf)]"
+                  style={{ width: `${levelProgress.progressPercent}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="space-y-3">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-[24px] border border-sky-200 bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-sky-700/70">
-                {t("checkin.totalPoints")}
-              </p>
-              <p className="mt-1 text-4xl font-semibold text-slate-950">
-                {profile.totalPoints}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-emerald-200 bg-[linear-gradient(135deg,#ecfdf5,#f0fdf4)] px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-emerald-700/70">
-                {t("checkin.currentStreak")}
-              </p>
-              <p className="mt-1 text-4xl font-semibold text-slate-950">
-                {profile.streak}
-              </p>
-              <p className="mt-1 text-sm text-emerald-700/80">
-                {t("checkin.daysInRow", { count: String(profile.streak) })}
+
+        <div className="grid gap-4 lg:grid-cols-[0.9fr,1.1fr]">
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              <p className="text-sm font-semibold text-slate-950">
+                {t("checkin.streakHighlights")}
               </p>
             </div>
-            <div className="rounded-[24px] border border-violet-200 bg-[linear-gradient(135deg,#f5f3ff,#eff6ff)] px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-violet-700/70">
-                {t("checkin.todayReward")}
-              </p>
-              <p className="mt-1 text-4xl font-semibold text-slate-950">
-                +{DAILY_CHECK_IN_POINTS}
-              </p>
-              <p className="mt-1 text-sm text-violet-700/80">
-                {t("checkin.rewardBody")}
-              </p>
-            </div>
-          </div>
-          <div className="rounded-[24px] border border-sky-200 bg-white/80 px-5 py-4">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  {t("checkin.streakDuration")}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[22px] border border-orange-100 bg-orange-50/80 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-orange-500/80">
+                  {t("checkin.currentStreak")}
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {profile.streak} / {streakTarget} {t("checkin.days")}
+                <p className="mt-2 text-3xl font-semibold text-slate-950">
+                  {profile.streak}
                 </p>
               </div>
-              <p className="text-sm font-medium text-sky-700/80">
-                {t("checkin.nextGoal", { goal: nextMilestoneLabel })}
-              </p>
-            </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-sky-100">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,#0180FF,#3DB1FF,#7354F2)] shadow-[0_8px_20px_-10px_rgba(61,177,255,0.85)] transition-all duration-500"
-                style={{ width: `${streakProgress}%` }}
-              />
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
-              <span>{t("checkin.started")}</span>
-              <span>{t("checkin.activeSeries", { count: String(profile.streak) })}</span>
-              <span>{nextMilestoneLabel}</span>
+              <div className="rounded-[22px] border border-violet-100 bg-violet-50/80 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-violet-500/80">
+                  {t("checkin.longestStreak")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold text-slate-950">
+                  {profile.longestStreak}
+                </p>
+              </div>
             </div>
           </div>
-          <p className="text-sm text-slate-600">{message}</p>
-          <p className="text-sm text-slate-500">
-            {t("checkin.footer")}
-          </p>
+
+          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-950">
+                {t("checkin.recentRewards")}
+              </p>
+              <Badge className="border-0 bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] text-slate-700">
+                {recentRewards.length}
+              </Badge>
+            </div>
+            <div className="mt-4 space-y-3">
+              {recentRewards.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  {t("checkin.recentRewardsEmpty")}
+                </p>
+              ) : (
+                recentRewards.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-4 rounded-[20px] border border-slate-100 bg-slate-50/80 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {entry.label}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(entry.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-600">
+                      +{entry.points}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

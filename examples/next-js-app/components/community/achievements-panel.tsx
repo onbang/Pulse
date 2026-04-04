@@ -15,6 +15,21 @@ export function AchievementsPanel() {
   const { t } = useI18n();
   const { achievements } = useCommunityProfile();
 
+  const tierBarClassName = (tier: string) => {
+    switch (tier) {
+      case "legendary":
+        return "bg-[linear-gradient(90deg,#f59e0b,#facc15)]";
+      case "gold":
+        return "bg-[linear-gradient(90deg,#fb7185,#f59e0b)]";
+      case "silver":
+        return "bg-[linear-gradient(90deg,#38bdf8,#22d3ee)]";
+      case "bronze":
+        return "bg-[linear-gradient(90deg,#0284c7,#2dd4bf)]";
+      default:
+        return "bg-slate-300";
+    }
+  };
+
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between gap-4">
@@ -62,7 +77,9 @@ export function AchievementsPanel() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      {achievement.category}
+                      {t(
+                        `profile.achievements.category.${achievement.category}`,
+                      )}
                     </p>
                     <CardTitle className="text-lg">
                       {achievement.label}
@@ -90,13 +107,7 @@ export function AchievementsPanel() {
               </div>
               <div className="h-2 rounded-full bg-slate-100">
                 <div
-                  className={`h-2 rounded-full ${
-                    achievement.level >= 3
-                      ? "bg-[linear-gradient(90deg,#d97706,#facc15)]"
-                      : achievement.level >= 1
-                        ? "bg-[linear-gradient(90deg,#0284c7,#2dd4bf)]"
-                        : "bg-slate-300"
-                  }`}
+                  className={`h-2 rounded-full ${tierBarClassName(achievement.tier)}`}
                   style={{
                     width: `${Math.min((achievement.progress / Math.max(achievement.target, 1)) * 100, 100)}%`,
                   }}
