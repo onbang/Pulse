@@ -177,7 +177,7 @@ export function PricePredictionCard(props: {
   const isRoundSettled = round?.status === "settled";
   const predictionEntryAddress = getPredictionEntryAddress();
   const isTokenPrediction = props.pairId.startsWith("prediction:");
-  const canAutoReopenRound = isTokenPrediction && !isRoundOpen;
+  const canAutoReopenRound = isTokenPrediction && (!round || isRoundSettled);
   const canPlacePrediction =
     !isDisabled &&
     isStakeValid &&
@@ -285,10 +285,18 @@ export function PricePredictionCard(props: {
       return;
     }
 
-    if (!(isRoundOpen || canAutoReopenRound)) {
+    if (isRoundClosed) {
       toast({
         title: t("prediction.awaitingSettlement"),
         description: t("prediction.settleBody"),
+      });
+      return;
+    }
+
+    if (!(isRoundOpen || canAutoReopenRound)) {
+      toast({
+        title: t("prediction.pending"),
+        description: t("prediction.roundPendingBody"),
       });
       return;
     }
@@ -744,7 +752,7 @@ export function PricePredictionCard(props: {
         ) : (
           <p className="text-xs text-slate-500">{t("prediction.payoutHint")}</p>
         )}
-        {isRoundClosed && !canAutoReopenRound ? (
+        {isRoundClosed ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>

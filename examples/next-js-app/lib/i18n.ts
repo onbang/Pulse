@@ -195,6 +195,8 @@ export const messages = {
     "prediction.noBets": "No bets yet for this token.",
     "prediction.settled": "Settled",
     "prediction.awaitingSettlement": "Awaiting settlement",
+    "prediction.roundPendingBody":
+      "This round is not open for new bets yet. Wait for an active round or settle the previous one.",
     "prediction.up": "Up",
     "prediction.down": "Down",
     "prediction.pointsCommitted": "{amount} TON committed in this round.",
@@ -689,6 +691,8 @@ export const messages = {
     "prediction.noBets": "Для этого сценария пока нет ставок.",
     "prediction.settled": "Завершен",
     "prediction.awaitingSettlement": "Ждет завершения",
+    "prediction.roundPendingBody":
+      "Этот раунд пока не открыт для новых ставок. Дождись активного раунда или заверши предыдущий.",
     "prediction.up": "Вверх",
     "prediction.down": "Вниз",
     "prediction.pointsCommitted": "{amount} TON в этом раунде.",
