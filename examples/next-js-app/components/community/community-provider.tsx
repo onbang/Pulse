@@ -167,6 +167,15 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const latestRequestRef = useRef(0);
 
+  const resetTransientState = () => {
+    setStore(defaultCommunityStore);
+    setProfile(null);
+    setAchievements([]);
+    setLeaderboard([]);
+    setRecentActivity([]);
+    setSettledPredictions([]);
+  };
+
   const applyPayload = (
     payload: CommunityStatePayload,
     requestedWalletAddress = walletAddress,
@@ -212,6 +221,12 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         (await response.json()) as CommunityStatePayload,
         walletAddress,
       );
+    } catch (error) {
+      console.error("Failed to refresh community state", error);
+
+      if (latestRequestRef.current === requestId && !walletAddress) {
+        resetTransientState();
+      }
     } finally {
       if (latestRequestRef.current === requestId) {
         setIsSyncing(false);
@@ -221,31 +236,92 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    void refresh();
-  }, [walletAddress]);
-
-  useEffect(() => {
-    if (!walletAddress) {
-      setProfile(null);
-      return;
-    }
-
     const requestId = latestRequestRef.current + 1;
     latestRequestRef.current = requestId;
+    setIsSyncing(true);
 
-    void postJson<CommunityStatePayload>("/api/community/profile", {
-      walletAddress,
-      displayName: "",
-      bio: "",
-      telegramDisplayName: createTelegramDisplayName(telegramUser),
-    }).then((payload) => {
-      if (latestRequestRef.current !== requestId) {
-        return;
+    const bootstrap = async () => {
+      try {
+        if (!walletAddress) {
+          const response = await fetchInternalApi("/api/community/state", {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to load anonymous community state");
+          }
+
+          if (latestRequestRef.current !== requestId) {
+            return;
+          }
+
+          applyPayload(
+            (await response.json()) as CommunityStatePayload,
+            walletAddress,
+          );
+          return;
+        }
+
+        const payload = await postJson<CommunityStatePayload>(
+          "/api/community/profile",
+          {
+            walletAddress,
+            displayName: "",
+            bio: "",
+            telegramDisplayName: createTelegramDisplayName(telegramUser),
+          },
+        );
+
+        if (latestRequestRef.current !== requestId) {
+          return;
+        }
+
+        applyPayload(payload, walletAddress);
+      } catch (error) {
+        console.error("Failed to bootstrap community provider", error);
+
+        if (latestRequestRef.current !== requestId) {
+          return;
+        }
+
+        if (!walletAddress) {
+          resetTransientState();
+          return;
+        }
+
+        try {
+          const response = await fetchInternalApi(
+            `/api/community/state?wallet=${encodeURIComponent(walletAddress)}`,
+            { cache: "no-store" },
+          );
+
+          if (!response.ok) {
+            throw new Error("Fallback community state request failed");
+          }
+
+          if (latestRequestRef.current !== requestId) {
+            return;
+          }
+
+          applyPayload(
+            (await response.json()) as CommunityStatePayload,
+            walletAddress,
+          );
+        } catch (fallbackError) {
+          console.error(
+            "Failed to recover community provider after bootstrap error",
+            fallbackError,
+          );
+        }
+      } finally {
+        if (latestRequestRef.current === requestId) {
+          setIsSyncing(false);
+          setIsLoaded(true);
+        }
       }
+    };
 
-      applyPayload(payload, walletAddress);
-      setIsLoaded(true);
-    });
+    void bootstrap();
   }, [telegramUser, walletAddress]);
 
   const updateProfile: CommunityContextValue["updateProfile"] = async (
