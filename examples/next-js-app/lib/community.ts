@@ -827,8 +827,20 @@ export function buildCommunityState(
   store: CommunityStore,
   walletAddress: string | null,
 ) {
+  const normalizedWalletAddress = walletAddress
+    ? (() => {
+        try {
+          return Address.parse(walletAddress).toString();
+        } catch {
+          return walletAddress;
+        }
+      })()
+    : null;
   const profile = walletAddress
-    ? (store.profiles[walletAddress] ?? null)
+    ? (store.profiles[walletAddress] ??
+      (normalizedWalletAddress
+        ? (store.profiles[normalizedWalletAddress] ?? null)
+        : null))
     : null;
 
   return {
@@ -846,3 +858,4 @@ export function buildCommunityState(
       .slice(0, 20),
   };
 }
+import { Address } from "@ton/core";
