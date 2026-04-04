@@ -95,5 +95,9 @@ export function getForecastAutoCycleEnabled() {
 }
 
 export function getForecastCronSecret() {
-  return process.env.FORECAST_CRON_SECRET?.trim() || "";
+  return (
+    process.env.FORECAST_CRON_SECRET?.trim() ||
+    process.env.CRON_SECRET?.trim() ||
+    ""
+  );
 }
