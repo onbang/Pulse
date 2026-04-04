@@ -66,6 +66,7 @@ let initialized = false;
 const DEFAULT_ROUND_DURATION_MINUTES = 240;
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
 const PREDICTION_HISTORY_SCAN_LIMIT = 100;
+const LEGACY_TOKEN_SETTLEMENT_GRACE_MS = 15 * 60 * 1000;
 const LEGACY_PREDICTION_MARKET_ADDRESSES = [
   "EQAGSUKo3TiF8i_TBvBbSgvmkyUgL7-RWSG72ggUszcql-y2",
   "EQB61HnN5s6wjruc7vvo7WsGBWWvNKaawTWnzFFDkB-6Fe4G",
@@ -591,6 +592,87 @@ function buildRewardEntries(input: {
   return entries;
 }
 
+function hasPredictionSettlement(db: DatabaseSync, roundId: string) {
+  const row = db
+    .prepare(
+      "SELECT round_id FROM prediction_settlements WHERE round_id = ? LIMIT 1",
+    )
+    .get(roundId) as { round_id: string } | undefined;
+
+  return Boolean(row);
+}
+
+function isStaleLegacyTokenRound(input: {
+  pairId: string;
+  roundId: string;
+  status: PredictionRound["status"];
+  closesAt: string;
+}) {
+  if (!input.pairId.startsWith("prediction:")) {
+    return false;
+  }
+
+  if (!input.roundId.startsWith("prediction:")) {
+    return false;
+  }
+
+  if (input.status !== "closed") {
+    return false;
+  }
+
+  const closesAtTimestamp = new Date(input.closesAt).getTime();
+
+  if (!Number.isFinite(closesAtTimestamp)) {
+    return false;
+  }
+
+  return Date.now() - closesAtTimestamp >= LEGACY_TOKEN_SETTLEMENT_GRACE_MS;
+}
+
+function rolloverStaleLegacyTokenRound(
+  db: DatabaseSync,
+  input: {
+    pairId: string;
+    pairLabel: string;
+  },
+) {
+  const nextRound = createCurrentTokenRound(input.pairId, input.pairLabel);
+
+  db.exec("BEGIN");
+  try {
+    db.prepare("DELETE FROM prediction_positions WHERE pair_id = ?").run(
+      input.pairId,
+    );
+    db.prepare(`
+      UPDATE prediction_rounds
+      SET round_id = ?,
+          pair_label = ?,
+          timeframe_id = ?,
+          status = 'open',
+          opened_at = ?,
+          closes_at = ?,
+          resolved_at = NULL,
+          duration_minutes = ?,
+          settlement_direction = NULL
+      WHERE pair_id = ?
+    `).run(
+      nextRound.id,
+      input.pairLabel,
+      nextRound.timeframeId ?? null,
+      nextRound.openedAt,
+      nextRound.closesAt,
+      nextRound.durationMinutes,
+      input.pairId,
+    );
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return nextRound;
+}
+
 function insertRewardEntries(
   db: DatabaseSync,
   entries: Array<Omit<RewardLedgerEntry, "id"> & { id: string }>,
@@ -679,6 +761,21 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
           resolvedAt: existing.resolved_at ?? undefined,
           durationMinutes: existing.duration_minutes,
           settlementDirection: existing.settlement_direction ?? undefined,
+        });
+      }
+
+      if (
+        isStaleLegacyTokenRound({
+          pairId: existing.pair_id,
+          roundId: existing.round_id,
+          status: existing.status,
+          closesAt: existing.closes_at,
+        }) &&
+        !hasPredictionSettlement(db, existing.round_id)
+      ) {
+        return rolloverStaleLegacyTokenRound(db, {
+          pairId: existing.pair_id,
+          pairLabel: existing.pair_label,
         });
       }
 
@@ -774,6 +871,21 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
   }
 
   if (existing.status === "closed" && isTokenPredictionRound) {
+    if (
+      isStaleLegacyTokenRound({
+        pairId: existing.pair_id,
+        roundId: existing.round_id,
+        status: existing.status,
+        closesAt: existing.closes_at,
+      }) &&
+      !hasPredictionSettlement(db, existing.round_id)
+    ) {
+      return rolloverStaleLegacyTokenRound(db, {
+        pairId: existing.pair_id,
+        pairLabel: existing.pair_label,
+      });
+    }
+
     return createRound(existing.pair_id, existing.pair_label, {
       id: existing.round_id,
       pairId: existing.pair_id,
@@ -836,12 +948,13 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
 function refreshPredictionRounds(db: DatabaseSync) {
   const rows = db
     .prepare(`
-    SELECT pair_id, pair_label, status, closes_at
+    SELECT pair_id, round_id, pair_label, status, closes_at
     FROM prediction_rounds
     ORDER BY closes_at ASC
   `)
     .all() as Array<{
     pair_id: string;
+    round_id: string;
     pair_label: string;
     status: PredictionRound["status"];
     closes_at: string;
@@ -864,6 +977,22 @@ function refreshPredictionRounds(db: DatabaseSync) {
         createdAt: new Date().toISOString(),
         title: "Prediction round closed",
         detail: `${row.pair_label} is now awaiting settlement.`,
+      });
+      continue;
+    }
+
+    if (
+      isStaleLegacyTokenRound({
+        pairId: row.pair_id,
+        roundId: row.round_id,
+        status: row.status,
+        closesAt: row.closes_at,
+      }) &&
+      !hasPredictionSettlement(db, row.round_id)
+    ) {
+      rolloverStaleLegacyTokenRound(db, {
+        pairId: row.pair_id,
+        pairLabel: row.pair_label,
       });
     }
   }

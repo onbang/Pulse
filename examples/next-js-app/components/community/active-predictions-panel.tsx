@@ -15,6 +15,8 @@ import { ROUTES } from "@/constants";
 import { useCommunityProfile } from "./community-provider";
 import { useI18n } from "@/components/i18n/i18n-provider";
 
+const CLOSED_PREDICTION_GRACE_MS = 15 * 60 * 1000;
+
 export function ActivePredictionsPanel() {
   const { t } = useI18n();
   const { userBets, getPrediction } = useCommunityProfile();
@@ -27,7 +29,21 @@ export function ActivePredictionsPanel() {
       return false;
     }
 
-    return round.status === "open" || round.status === "closed";
+    if (round.status === "open") {
+      return true;
+    }
+
+    if (round.status !== "closed") {
+      return false;
+    }
+
+    const closesAtTimestamp = new Date(round.closesAt).getTime();
+
+    if (!Number.isFinite(closesAtTimestamp)) {
+      return false;
+    }
+
+    return Date.now() - closesAtTimestamp <= CLOSED_PREDICTION_GRACE_MS;
   });
 
   return (
