@@ -1,0 +1,20 @@
+{
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@ston-fi/sdk-example-next-js-app",
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/forecast-markets/auto-cycle/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/forecast-markets/auto-cycle",
+      "schedule": "* * * * *"
+    }
+  ]
+}
