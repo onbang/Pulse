@@ -1,10 +1,12 @@
 "use client";
 
+import { Address } from "@ton/core";
 import { useTonAddress } from "@tonconnect/ui-react";
 import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -137,6 +139,18 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 
 export { COMMENT_REACTION_EMOJIS } from "@/lib/community";
 
+function normalizeTonAddress(value?: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return Address.parse(value).toString();
+  } catch {
+    return value;
+  }
+}
+
 export function CommunityProvider({ children }: { children: ReactNode }) {
   const walletAddress = useTonAddress();
   const { user: telegramUser } = useTelegramMiniApp();
@@ -150,10 +164,24 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   >([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const latestRequestRef = useRef(0);
 
-  const applyPayload = (payload: CommunityStatePayload) => {
+  const applyPayload = (
+    payload: CommunityStatePayload,
+    requestedWalletAddress = walletAddress,
+  ) => {
+    const normalizedWalletAddress = normalizeTonAddress(requestedWalletAddress);
+    const resolvedProfile =
+      payload.profile ??
+      (requestedWalletAddress
+        ? (payload.store.profiles[requestedWalletAddress] ??
+          (normalizedWalletAddress
+            ? (payload.store.profiles[normalizedWalletAddress] ?? null)
+            : null))
+        : null);
+
     setStore(payload.store);
-    setProfile(payload.profile);
+    setProfile(resolvedProfile);
     setAchievements(payload.achievements);
     setLeaderboard(payload.leaderboard);
     setRecentActivity(payload.recentActivity);
@@ -161,6 +189,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   };
 
   const refresh = async () => {
+    const requestId = latestRequestRef.current + 1;
+    latestRequestRef.current = requestId;
     setIsSyncing(true);
 
     try {
@@ -173,10 +203,19 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         throw new Error("Failed to load community state");
       }
 
-      applyPayload((await response.json()) as CommunityStatePayload);
+      if (latestRequestRef.current !== requestId) {
+        return;
+      }
+
+      applyPayload(
+        (await response.json()) as CommunityStatePayload,
+        walletAddress,
+      );
     } finally {
-      setIsSyncing(false);
-      setIsLoaded(true);
+      if (latestRequestRef.current === requestId) {
+        setIsSyncing(false);
+        setIsLoaded(true);
+      }
     }
   };
 
@@ -186,15 +225,26 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!walletAddress) {
+      setProfile(null);
       return;
     }
+
+    const requestId = latestRequestRef.current + 1;
+    latestRequestRef.current = requestId;
 
     void postJson<CommunityStatePayload>("/api/community/profile", {
       walletAddress,
       displayName: "",
       bio: "",
       telegramDisplayName: createTelegramDisplayName(telegramUser),
-    }).then(applyPayload);
+    }).then((payload) => {
+      if (latestRequestRef.current !== requestId) {
+        return;
+      }
+
+      applyPayload(payload, walletAddress);
+      setIsLoaded(true);
+    });
   }, [telegramUser, walletAddress]);
 
   const updateProfile: CommunityContextValue["updateProfile"] = async (
