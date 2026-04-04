@@ -1563,6 +1563,9 @@ async function syncOnchainCheckInTransactions(
       const parsedComment = parseCheckInTransferComment(
         extractMessageComment(incomingMessage),
       );
+      const normalizedCommentWalletAddress = normalizeTonAddress(
+        parsedComment?.walletAddress,
+      );
 
       if (
         !chainTxHash ||
@@ -1573,7 +1576,7 @@ async function syncOnchainCheckInTransactions(
         continue;
       }
 
-      if (parsedComment.walletAddress !== normalizedSourceAddress) {
+      if (normalizedCommentWalletAddress !== normalizedSourceAddress) {
         continue;
       }
 
@@ -1629,13 +1632,36 @@ async function syncOnchainCheckInTransactions(
         .get(incomingMessageHash) as
         | { id: string; status: CheckInEvent["status"] }
         | undefined;
+      const recentPendingCandidate = !existingByMessageHash
+        ? (db
+            .prepare(
+              `
+              SELECT id
+              FROM check_in_events
+              WHERE wallet_address = ?
+                AND status = 'pending'
+                AND chain_tx_hash IS NULL
+              ORDER BY created_at DESC
+              LIMIT 1
+            `,
+            )
+            .get(normalizedSourceAddress) as { id: string } | undefined)
+        : undefined;
       const eventId =
         existingByMessageHash?.id ??
+        recentPendingCandidate?.id ??
         `checkin-${normalizedSourceAddress}-${incomingMessageHash}`;
 
       db.exec("BEGIN");
       try {
-        if (existingByMessageHash) {
+        if (existingByMessageHash?.status === "confirmed") {
+          db.prepare(`
+            UPDATE check_in_events
+            SET chain_tx_hash = COALESCE(chain_tx_hash, ?),
+                confirmed_at = COALESCE(confirmed_at, ?)
+            WHERE source_message_hash = ?
+          `).run(chainTxHash, confirmedAt, incomingMessageHash);
+        } else if (existingByMessageHash || recentPendingCandidate) {
           db.prepare(`
             UPDATE check_in_events
             SET wallet_address = ?,
@@ -1646,7 +1672,7 @@ async function syncOnchainCheckInTransactions(
                 points_awarded = ?,
                 streak_after_check_in = ?,
                 status = 'confirmed'
-            WHERE source_message_hash = ?
+            WHERE id = ?
           `).run(
             normalizedSourceAddress,
             confirmedDateKey,
@@ -1655,7 +1681,7 @@ async function syncOnchainCheckInTransactions(
             confirmedAt,
             rewardPoints,
             streakAfterCheckIn,
-            incomingMessageHash,
+            eventId,
           );
         } else {
           db.prepare(`
@@ -2369,13 +2395,14 @@ function extractMessageTonValue(message: Record<string, unknown> | null) {
 export async function getCommunityState(walletAddress: string | null) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
-  if (walletAddress) {
-    ensureProfile(db, walletAddress);
+  const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+  if (normalizedWalletAddress) {
+    ensureProfile(db, normalizedWalletAddress);
   }
-  await syncOnchainCheckInTransactions(db, walletAddress);
-  await syncOnchainPredictionTransactions(db, walletAddress);
+  await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+  await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
   const store = hydrateStore(db);
-  return buildCommunityState(store, walletAddress);
+  return buildCommunityState(store, normalizedWalletAddress);
 }
 
 export async function upsertProfile(input: {
@@ -2387,13 +2414,15 @@ export async function upsertProfile(input: {
 }) {
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress, input.telegramDisplayName);
+  const normalizedWalletAddress =
+    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
+  ensureProfile(db, normalizedWalletAddress, input.telegramDisplayName);
 
-  const current = getProfileRow(db, input.walletAddress);
+  const current = getProfileRow(db, normalizedWalletAddress);
   const fallbackName =
     current?.display_name ??
     createDefaultProfile(
-      input.walletAddress,
+      normalizedWalletAddress,
       input.telegramDisplayName ?? undefined,
     ).displayName;
 
@@ -2413,25 +2442,27 @@ export async function upsertProfile(input: {
         ...(input.notificationPreferences ?? {}),
       }),
     ),
-    input.walletAddress,
+    normalizedWalletAddress,
   );
 
-  return buildCommunityState(hydrateStore(db), input.walletAddress);
+  return buildCommunityState(hydrateStore(db), normalizedWalletAddress);
 }
 
 export async function registerPendingCheckInTransaction(input: {
   walletAddress: string;
   txHash: string;
 }) {
+  const normalizedWalletAddress =
+    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  ensureProfile(db, normalizedWalletAddress);
+  const current = getProfileRow(db, normalizedWalletAddress);
 
   if (!current) {
     return {
       result: { ok: false, points: 0, syncStatus: "failed" as const },
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
     };
   }
 
@@ -2440,7 +2471,7 @@ export async function registerPendingCheckInTransaction(input: {
   if (current.last_check_in_date === today) {
     return {
       result: { ok: false, points: 0, syncStatus: "confirmed" as const },
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
     };
   }
 
@@ -2454,7 +2485,7 @@ export async function registerPendingCheckInTransaction(input: {
       LIMIT 1
     `,
     )
-    .get(input.walletAddress, today) as
+    .get(normalizedWalletAddress, today) as
     | { id: string; status: CheckInEvent["status"] }
     | undefined;
 
@@ -2466,7 +2497,7 @@ export async function registerPendingCheckInTransaction(input: {
         syncStatus:
           existingTodayEvent.status === "confirmed" ? "confirmed" : "pending",
       },
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
     };
   }
 
@@ -2483,8 +2514,8 @@ export async function registerPendingCheckInTransaction(input: {
         points_awarded, streak_after_check_in, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `).run(
-      `checkin-pending-${input.walletAddress}-${input.txHash}`,
-      input.walletAddress,
+      `checkin-pending-${normalizedWalletAddress}-${input.txHash}`,
+      normalizedWalletAddress,
       today,
       Number(CHECK_IN_CONFIRM_TON_AMOUNT),
       input.txHash,
@@ -2494,16 +2525,35 @@ export async function registerPendingCheckInTransaction(input: {
     );
   }
 
-  await syncOnchainCheckInTransactions(db, input.walletAddress, {
+  await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
     targetMessageHash: input.txHash,
   });
 
-  const pendingState = hydrateStore(db);
-  const event = pendingState.checkInEvents.find(
+  let pendingState = hydrateStore(db);
+  let event = pendingState.checkInEvents.find(
     (item) =>
-      item.walletAddress === input.walletAddress &&
-      item.sourceMessageHash === input.txHash,
+      item.walletAddress === normalizedWalletAddress &&
+      (item.sourceMessageHash === input.txHash ||
+        item.chainTxHash === input.txHash),
   );
+
+  if (event?.status !== "confirmed") {
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+    pendingState = hydrateStore(db);
+    event =
+      pendingState.checkInEvents.find(
+        (item) =>
+          item.walletAddress === normalizedWalletAddress &&
+          (item.sourceMessageHash === input.txHash ||
+            item.chainTxHash === input.txHash),
+      ) ??
+      pendingState.checkInEvents.find(
+        (item) =>
+          item.walletAddress === normalizedWalletAddress &&
+          item.dateKey === today &&
+          item.status === "confirmed",
+      );
+  }
 
   return {
     result: {
@@ -2511,7 +2561,7 @@ export async function registerPendingCheckInTransaction(input: {
       points: event?.status === "confirmed" ? event.pointsAwarded : 0,
       syncStatus: event?.status === "confirmed" ? "confirmed" : "pending",
     },
-    state: buildCommunityState(pendingState, input.walletAddress),
+    state: buildCommunityState(pendingState, normalizedWalletAddress),
   };
 }
 
@@ -2519,21 +2569,42 @@ export async function syncCheckInTransaction(input: {
   walletAddress: string;
   txHash: string;
 }) {
+  const normalizedWalletAddress =
+    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
+  ensureProfile(db, normalizedWalletAddress);
+  const today = getTodayKey();
 
-  await syncOnchainCheckInTransactions(db, input.walletAddress, {
+  await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
     targetMessageHash: input.txHash,
   });
 
-  const store = hydrateStore(db);
-  const event = store.checkInEvents.find(
+  let store = hydrateStore(db);
+  let event = store.checkInEvents.find(
     (item) =>
-      item.walletAddress === input.walletAddress &&
+      item.walletAddress === normalizedWalletAddress &&
       (item.sourceMessageHash === input.txHash ||
         item.chainTxHash === input.txHash),
   );
+
+  if (event?.status !== "confirmed") {
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+    store = hydrateStore(db);
+    event =
+      store.checkInEvents.find(
+        (item) =>
+          item.walletAddress === normalizedWalletAddress &&
+          (item.sourceMessageHash === input.txHash ||
+            item.chainTxHash === input.txHash),
+      ) ??
+      store.checkInEvents.find(
+        (item) =>
+          item.walletAddress === normalizedWalletAddress &&
+          item.dateKey === today &&
+          item.status === "confirmed",
+      );
+  }
 
   return {
     result: event?.status === "confirmed",
@@ -2543,7 +2614,7 @@ export async function syncCheckInTransaction(input: {
         : event
           ? "pending"
           : "missing",
-    state: buildCommunityState(store, input.walletAddress),
+    state: buildCommunityState(store, normalizedWalletAddress),
   };
 }
 

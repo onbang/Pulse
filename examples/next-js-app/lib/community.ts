@@ -846,12 +846,32 @@ export function buildCommunityState(
         }
       })()
     : null;
-  const profile = walletAddress
-    ? (store.profiles[walletAddress] ??
-      (normalizedWalletAddress
-        ? (store.profiles[normalizedWalletAddress] ?? null)
-        : null))
+  const rawProfile = walletAddress
+    ? (store.profiles[walletAddress] ?? null)
     : null;
+  const normalizedProfile = normalizedWalletAddress
+    ? (store.profiles[normalizedWalletAddress] ?? null)
+    : null;
+  const profile =
+    rawProfile &&
+    normalizedProfile &&
+    rawProfile.walletAddress !== normalizedProfile.walletAddress
+      ? ([rawProfile, normalizedProfile].sort((a, b) => {
+          if (b.totalPoints !== a.totalPoints) {
+            return b.totalPoints - a.totalPoints;
+          }
+
+          if (b.totalCheckIns !== a.totalCheckIns) {
+            return b.totalCheckIns - a.totalCheckIns;
+          }
+
+          if (b.longestStreak !== a.longestStreak) {
+            return b.longestStreak - a.longestStreak;
+          }
+
+          return b.joinedAt.localeCompare(a.joinedAt);
+        })[0] ?? null)
+      : (rawProfile ?? normalizedProfile ?? null);
 
   return {
     store,

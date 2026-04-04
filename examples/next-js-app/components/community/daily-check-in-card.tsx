@@ -1,9 +1,9 @@
 "use client";
 
-import { beginCell, toNano } from "@ton/core";
+import { Address, beginCell, toNano } from "@ton/core";
 import { useTonConnectUI } from "@tonconnect/ui-react";
-import { CalendarCheck2, Flame, Gem, Sparkles, TimerReset } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CalendarCheck2, Gem, Sparkles, TimerReset } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,18 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function normalizeWalletKey(value?: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return Address.parse(value).toString();
+  } catch {
+    return value;
+  }
+}
+
 export function DailyCheckInCard() {
   const { t } = useI18n();
   const {
@@ -57,49 +69,37 @@ export function DailyCheckInCard() {
   );
 
   const todayKey = new Date().toISOString().slice(0, 10);
+  const normalizedProfileWallet = normalizeWalletKey(profile?.walletAddress);
 
   const confirmedToday = useMemo(
     () =>
       checkInEvents.some(
         (event) =>
-          event.walletAddress === profile?.walletAddress &&
+          normalizeWalletKey(event.walletAddress) === normalizedProfileWallet &&
           event.dateKey === todayKey &&
           event.status === "confirmed",
       ),
-    [checkInEvents, profile?.walletAddress, todayKey],
+    [checkInEvents, normalizedProfileWallet, todayKey],
   );
   const pendingToday = useMemo(
     () =>
       checkInEvents.some(
         (event) =>
-          event.walletAddress === profile?.walletAddress &&
+          normalizeWalletKey(event.walletAddress) === normalizedProfileWallet &&
           event.dateKey === todayKey &&
           event.status === "pending",
       ),
-    [checkInEvents, profile?.walletAddress, todayKey],
+    [checkInEvents, normalizedProfileWallet, todayKey],
   );
 
   const lastReward = useMemo(() => {
-    if (!profile) {
-      return null;
-    }
-
     return (
       rewardLedger.find(
-        (entry) => entry.walletAddress === profile.walletAddress,
+        (entry) =>
+          normalizeWalletKey(entry.walletAddress) === normalizedProfileWallet,
       ) ?? null
     );
-  }, [profile, rewardLedger]);
-
-  const recentRewards = useMemo(() => {
-    if (!profile) {
-      return [];
-    }
-
-    return rewardLedger
-      .filter((entry) => entry.walletAddress === profile.walletAddress)
-      .slice(0, 4);
-  }, [profile, rewardLedger]);
+  }, [normalizedProfileWallet, rewardLedger]);
 
   if (!profile) {
     return null;
@@ -130,6 +130,72 @@ export function DailyCheckInCard() {
         : status === "sending"
           ? t("checkin.processing")
           : t("checkin.claim");
+
+  useEffect(() => {
+    if (!pendingToday || isBusy) {
+      return;
+    }
+
+    const pendingEvent = checkInEvents.find(
+      (event) =>
+        normalizeWalletKey(event.walletAddress) === normalizedProfileWallet &&
+        event.dateKey === todayKey &&
+        event.status === "pending" &&
+        (event.sourceMessageHash || event.chainTxHash),
+    );
+
+    const txHash = pendingEvent?.sourceMessageHash ?? pendingEvent?.chainTxHash;
+
+    if (!txHash) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setStatus("waiting_confirmation");
+      setStatusMessage(t("checkin.messagePendingConfirmation"));
+
+      for (let attempt = 0; attempt < CHECK_IN_SYNC_ATTEMPTS; attempt += 1) {
+        await wait(CHECK_IN_SYNC_DELAY_MS);
+
+        if (cancelled) {
+          return;
+        }
+
+        setStatus("syncing");
+        setStatusMessage(t("checkin.messageSyncing"));
+
+        const syncResult = await syncCheckInTransaction({ txHash });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (syncResult.syncStatus === "confirmed") {
+          setStatus("synced");
+          setStatusMessage(t("checkin.messageSuccess", { points: "10" }));
+          return;
+        }
+      }
+
+      if (!cancelled) {
+        setStatus("waiting_confirmation");
+        setStatusMessage(t("checkin.messagePendingConfirmation"));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    checkInEvents,
+    isBusy,
+    normalizedProfileWallet,
+    pendingToday,
+    t,
+    todayKey,
+  ]);
 
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
@@ -439,72 +505,6 @@ export function DailyCheckInCard() {
                   style={{ width: `${levelProgress.progressPercent}%` }}
                 />
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[0.9fr,1.1fr]">
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
-            <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              <p className="text-sm font-semibold text-slate-950">
-                {t("checkin.streakHighlights")}
-              </p>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-orange-100 bg-orange-50/80 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-orange-500/80">
-                  {t("checkin.currentStreak")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold text-slate-950">
-                  {profile.streak}
-                </p>
-              </div>
-              <div className="rounded-[22px] border border-violet-100 bg-violet-50/80 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-violet-500/80">
-                  {t("checkin.longestStreak")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold text-slate-950">
-                  {profile.longestStreak}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-slate-950">
-                {t("checkin.recentRewards")}
-              </p>
-              <Badge className="border-0 bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] text-slate-700">
-                {recentRewards.length}
-              </Badge>
-            </div>
-            <div className="mt-4 space-y-3">
-              {recentRewards.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  {t("checkin.recentRewardsEmpty")}
-                </p>
-              ) : (
-                recentRewards.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="flex items-center justify-between gap-4 rounded-[20px] border border-slate-100 bg-slate-50/80 px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">
-                        {entry.label}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(entry.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-emerald-600">
-                      +{entry.points}
-                    </span>
-                  </div>
-                ))
-              )}
             </div>
           </div>
         </div>
