@@ -5,6 +5,7 @@ import { Address, beginCell, Cell, toNano } from "@ton/core";
 import { mnemonicToPrivateKey } from "@ton/crypto";
 import { internal, WalletContractV4 } from "@ton/ton";
 import {
+  buildTonForecastBetPayloadBase64,
   buildTonForecastBetTransferMessage,
   buildTonForecastClaimForPayloadBase64,
   buildTonForecastClaimPayloadBase64,
@@ -1763,14 +1764,15 @@ export async function createForecastMarketIntent(input: {
       messages: [
         {
           address: contractAddress,
-          amount: toNano(getForecastDeployReserveTon()).toString(),
+          amount: (
+            toNano(getForecastDeployReserveTon()) +
+            toNano(String(input.amountTon))
+          ).toString(),
           stateInit: serializeStateInit(contract.init!),
+          payload: buildTonForecastBetPayloadBase64(
+            predictionDirectionToForecast(input.direction),
+          ),
         },
-        buildTonForecastBetTransferMessage({
-          contractAddress,
-          direction: predictionDirectionToForecast(input.direction),
-          amountTon: input.amountTon,
-        }),
       ],
     },
     syncCursor,
