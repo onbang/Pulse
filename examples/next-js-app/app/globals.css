@@ -175,7 +175,7 @@
   }
 
   .hero-shell {
-    @apply relative overflow-hidden rounded-[36px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(248,251,255,0.985)_42%,rgba(61,177,255,0.16)_78%,rgba(115,84,242,0.12))] px-6 py-8 text-slate-900 shadow-[0_30px_90px_-40px_rgba(15,23,42,0.14),0_10px_28px_-20px_rgba(1,128,255,0.12)];
+    @apply relative overflow-hidden rounded-[34px] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(248,251,255,0.985)_42%,rgba(61,177,255,0.16)_78%,rgba(115,84,242,0.12))] px-6 py-7 text-slate-900 shadow-[0_30px_90px_-40px_rgba(15,23,42,0.14),0_10px_28px_-20px_rgba(1,128,255,0.12)] md:px-8 md:py-8;
   }
 
   .hero-shell::before {
@@ -221,7 +221,7 @@
   }
 
   .page-shell {
-    @apply mx-auto flex w-full max-w-6xl flex-col gap-7 py-5 md:gap-9 md:py-8;
+    @apply mx-auto flex w-full max-w-[1320px] flex-col gap-6 py-5 md:gap-8 md:py-8 xl:gap-10;
   }
 
   .section-stack {
@@ -283,7 +283,7 @@
   }
 
   .subtle-panel {
-    @apply rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-[0_16px_38px_-30px_rgba(15,23,42,0.18)];
+    @apply rounded-[24px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,250,255,0.9))] px-4 py-4 shadow-[0_16px_38px_-30px_rgba(15,23,42,0.18)];
   }
 }
 

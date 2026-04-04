@@ -35,7 +35,7 @@ export function PageIntro({
   return (
     <div className={cn("hero-shell", className)}>
       <div className="relative z-10 flex flex-col gap-7">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
             <p className="eyebrow">{eyebrow}</p>
             <h1 className="page-heading mt-3">{title}</h1>
@@ -63,7 +63,7 @@ export function PageIntro({
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="stat-pill flex h-full flex-col px-4 py-4"
+                className="stat-pill flex h-full min-h-[142px] flex-col justify-between px-5 py-5"
               >
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
                   {stat.label}

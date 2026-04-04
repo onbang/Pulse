@@ -21,7 +21,6 @@ import {
   CHECK_IN_CONFIRM_TON_AMOUNT,
   getCheckInTreasuryAddress,
 } from "@/lib/check-in-config";
-import { getUserLevelProgress } from "@/lib/community";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { useCommunityProfile } from "./community-provider";
 
@@ -105,7 +104,6 @@ export function DailyCheckInCard() {
     return null;
   }
 
-  const levelProgress = getUserLevelProgress(profile.totalPoints);
   const streakTarget =
     profile.streak >= 30 ? 90 : profile.streak >= 14 ? 30 : 7;
   const streakProgress = Math.min((profile.streak / streakTarget) * 100, 100);
@@ -120,6 +118,16 @@ export function DailyCheckInCard() {
     status === "waiting_confirmation" ||
     status === "syncing";
   const isDisabled = confirmedToday || pendingToday || isBusy;
+  const statusLabel = confirmedToday
+    ? t("checkin.claimed")
+    : pendingToday || status === "waiting_confirmation"
+      ? t("checkin.waitingConfirmation")
+      : t("checkin.ready");
+  const statusBadgeClassName = confirmedToday
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : pendingToday || status === "waiting_confirmation"
+      ? "border-amber-200 bg-amber-50 text-amber-700"
+      : "border-sky-200 bg-sky-50 text-sky-700";
 
   const ctaLabel = confirmedToday
     ? t("checkin.claimed")
@@ -212,300 +220,295 @@ export function DailyCheckInCard() {
               {t("checkin.subtitle")}
             </CardDescription>
           </div>
-          <Badge className="border-0 bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] px-4 py-2 text-slate-900">
-            {t("checkin.totalPointsBadge", {
-              count: String(profile.totalPoints),
-            })}
+          <Badge
+            className={`px-4 py-2 text-sm font-semibold ${statusBadgeClassName}`}
+          >
+            {statusLabel}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-6">
-        <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-          <div className="rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(240,249,255,0.98),rgba(245,243,255,0.92))] p-5 shadow-[0_20px_50px_-34px_rgba(59,130,246,0.4)]">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_14px_34px_-18px_rgba(1,128,255,0.65)]">
-                    <CalendarCheck2 className="h-6 w-6" />
-                  </span>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(330px,0.9fr)] xl:items-start">
+          <div className="mesh-card p-5 md:p-6">
+            <div className="relative z-10 space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_14px_34px_-18px_rgba(1,128,255,0.65)]">
+                      <CalendarCheck2 className="h-6 w-6" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700/70">
+                        {t("checkin.confirmLabel")}
+                      </p>
+                      <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
+                        {CHECK_IN_CONFIRM_TON_AMOUNT} TON
+                      </p>
+                    </div>
+                  </div>
+                  <p className="max-w-xl text-sm leading-6 text-slate-600">
+                    {t("checkin.confirmBody")}
+                  </p>
+                </div>
+
+                <div className="subtle-panel min-w-[188px] bg-white/85 text-right">
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+                    {t("checkin.todayReward")}
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                    +10
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {lastReward
+                      ? t("checkin.lastReward", {
+                          count: String(lastReward.points),
+                        })
+                      : t("checkin.rewardBody")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-sky-100/80 bg-white/82 p-4 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.18)]">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700/70">
-                      {t("checkin.confirmLabel")}
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      {t("checkin.actionCard")}
                     </p>
-                    <p className="mt-1 text-3xl font-semibold text-slate-950">
-                      {CHECK_IN_CONFIRM_TON_AMOUNT} TON
+                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                      {statusLabel}
                     </p>
                   </div>
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] text-slate-700">
+                    {confirmedToday ? (
+                      <Sparkles className="h-5 w-5" />
+                    ) : pendingToday ? (
+                      <TimerReset className="h-5 w-5" />
+                    ) : (
+                      <Gem className="h-5 w-5" />
+                    )}
+                  </span>
                 </div>
-                <p className="max-w-lg text-sm leading-6 text-slate-600">
-                  {t("checkin.confirmBody")}
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {statusMessage}
                 </p>
-              </div>
+                <Button
+                  className="mt-5 h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] text-base font-semibold text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.55)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.32),rgba(61,177,255,0.32),rgba(115,84,242,0.32))] disabled:text-white/90 disabled:opacity-100"
+                  disabled={isDisabled}
+                  onClick={async () => {
+                    if (isDisabled) {
+                      return;
+                    }
 
-              <div className="rounded-[24px] border border-white/70 bg-white/80 px-4 py-4 text-right shadow-sm">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                  {t("checkin.todayReward")}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-slate-950">
-                  +10
-                </p>
-                <p className="text-sm text-slate-500">
-                  {lastReward
-                    ? t("checkin.lastReward", {
-                        count: String(lastReward.points),
-                      })
-                    : t("checkin.rewardBody")}
-                </p>
-              </div>
-            </div>
+                    try {
+                      setStatus("sending");
+                      setStatusMessage(t("checkin.messageWalletOpening"));
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.currentStreak")}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-slate-950">
-                  {profile.streak}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {t("checkin.daysInRow", { count: String(profile.streak) })}
-                </p>
-              </div>
-              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.longestStreak")}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-slate-950">
-                  {profile.longestStreak}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {t("checkin.bestSeries")}
-                </p>
-              </div>
-              <div className="rounded-[22px] border border-white/70 bg-white/80 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.totalCheckIns")}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-slate-950">
-                  {profile.totalCheckIns}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {t("checkin.totalCheckInsBody")}
-                </p>
-              </div>
-            </div>
+                      const payload = beginCell()
+                        .storeUint(0, 32)
+                        .storeStringTail(
+                          buildCheckInTransferComment({
+                            walletAddress: profile.walletAddress,
+                            dateKey: todayKey,
+                          }),
+                        )
+                        .endCell()
+                        .toBoc()
+                        .toString("base64");
 
-            <div className="mt-5 rounded-[24px] border border-sky-100 bg-white/80 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {t("checkin.streakDuration")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold text-slate-950">
-                    {profile.streak} / {streakTarget} {t("checkin.days")}
-                  </p>
-                </div>
-                <p className="text-sm font-medium text-sky-700/80">
-                  {t("checkin.nextGoal", { goal: nextMilestoneLabel })}
+                      const txResult = await tonConnectUI.sendTransaction({
+                        validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+                        messages: [
+                          {
+                            address: getCheckInTreasuryAddress(),
+                            amount: toNano(
+                              CHECK_IN_CONFIRM_TON_AMOUNT,
+                            ).toString(),
+                            payload,
+                          },
+                        ],
+                      });
+
+                      const txHash = getMessageHashFromSignedBoc(txResult.boc);
+                      if (!txHash) {
+                        throw new Error("missing-check-in-message-hash");
+                      }
+
+                      setStatus("waiting_confirmation");
+                      setStatusMessage(t("checkin.messageWaitingConfirmation"));
+
+                      const registered = await checkIn({ txHash });
+                      if (!registered.ok) {
+                        throw new Error("check-in-registration-failed");
+                      }
+
+                      let syncStatus:
+                        | "pending"
+                        | "confirmed"
+                        | "failed"
+                        | "missing" = registered.syncStatus;
+                      let pointsAwarded = registered.points;
+
+                      if (syncStatus !== "confirmed") {
+                        for (
+                          let attempt = 0;
+                          attempt < CHECK_IN_SYNC_ATTEMPTS;
+                          attempt += 1
+                        ) {
+                          await wait(CHECK_IN_SYNC_DELAY_MS);
+                          setStatus("syncing");
+                          setStatusMessage(t("checkin.messageSyncing"));
+
+                          const syncResult = await syncCheckInTransaction({
+                            txHash,
+                          });
+                          syncStatus = syncResult.syncStatus;
+
+                          if (syncStatus === "confirmed") {
+                            pointsAwarded =
+                              rewardLedger.find(
+                                (entry) =>
+                                  normalizeWalletKey(entry.walletAddress) ===
+                                  normalizedProfileWallet,
+                              )?.points ?? registered.points;
+                            break;
+                          }
+                        }
+                      }
+
+                      if (syncStatus !== "confirmed") {
+                        setStatus("waiting_confirmation");
+                        setStatusMessage(
+                          t("checkin.messagePendingConfirmation"),
+                        );
+                        toast({
+                          title: t("checkin.waitingConfirmation"),
+                          description: t("checkin.messagePendingConfirmation"),
+                        });
+                        return;
+                      }
+
+                      setStatus("synced");
+                      setStatusMessage(
+                        t("checkin.messageSuccess", {
+                          points: String(pointsAwarded || 10),
+                        }),
+                      );
+                      toast({
+                        title: t("checkin.claimed"),
+                        description: t("checkin.messageSuccess", {
+                          points: String(pointsAwarded || 10),
+                        }),
+                      });
+                    } catch (error) {
+                      setStatus("failed");
+                      const description =
+                        error instanceof Error &&
+                        error.message === "missing-check-in-message-hash"
+                          ? t("checkin.messageHashMissing")
+                          : t("checkin.messageWalletCancelled");
+                      setStatusMessage(description);
+                      toast({
+                        title: t("checkin.txFailed"),
+                        description,
+                      });
+                    }
+                  }}
+                >
+                  {ctaLabel}
+                </Button>
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  {t("checkin.footer")}
                 </p>
-              </div>
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-sky-100">
-                <div
-                  className="h-full rounded-full bg-[linear-gradient(90deg,#0180FF,#3DB1FF,#7354F2)] transition-all duration-500"
-                  style={{ width: `${streakProgress}%` }}
-                />
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-500">
-                <span>{t("checkin.started")}</span>
-                <span>
-                  {t("checkin.activeSeries", { count: String(profile.streak) })}
-                </span>
-                <span>{nextMilestoneLabel}</span>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4">
-            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    {t("checkin.actionCard")}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950">
-                    {confirmedToday
-                      ? t("checkin.claimed")
-                      : pendingToday
-                        ? t("checkin.waitingConfirmation")
-                        : t("checkin.ready")}
-                  </p>
-                </div>
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] text-slate-700">
-                  {confirmedToday ? (
-                    <Sparkles className="h-5 w-5" />
-                  ) : pendingToday ? (
-                    <TimerReset className="h-5 w-5" />
-                  ) : (
-                    <Gem className="h-5 w-5" />
-                  )}
-                </span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.currentStreak")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                  {profile.streak}
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {statusMessage}
+              <p className="text-sm leading-6 text-slate-500">
+                {t("checkin.daysInRow", { count: String(profile.streak) })}
               </p>
-              <Button
-                className="mt-5 h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] text-base font-semibold text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.55)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.32),rgba(61,177,255,0.32),rgba(115,84,242,0.32))] disabled:text-white/90 disabled:opacity-100"
-                disabled={isDisabled}
-                onClick={async () => {
-                  if (isDisabled) {
-                    return;
-                  }
-
-                  try {
-                    setStatus("sending");
-                    setStatusMessage(t("checkin.messageWalletOpening"));
-
-                    const payload = beginCell()
-                      .storeUint(0, 32)
-                      .storeStringTail(
-                        buildCheckInTransferComment({
-                          walletAddress: profile.walletAddress,
-                          dateKey: todayKey,
-                        }),
-                      )
-                      .endCell()
-                      .toBoc()
-                      .toString("base64");
-
-                    const txResult = await tonConnectUI.sendTransaction({
-                      validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-                      messages: [
-                        {
-                          address: getCheckInTreasuryAddress(),
-                          amount: toNano(
-                            CHECK_IN_CONFIRM_TON_AMOUNT,
-                          ).toString(),
-                          payload,
-                        },
-                      ],
-                    });
-
-                    const txHash = getMessageHashFromSignedBoc(txResult.boc);
-                    if (!txHash) {
-                      throw new Error("missing-check-in-message-hash");
-                    }
-
-                    setStatus("waiting_confirmation");
-                    setStatusMessage(t("checkin.messageWaitingConfirmation"));
-
-                    const registered = await checkIn({ txHash });
-                    if (!registered.ok) {
-                      throw new Error("check-in-registration-failed");
-                    }
-
-                    let syncStatus:
-                      | "pending"
-                      | "confirmed"
-                      | "failed"
-                      | "missing" = registered.syncStatus;
-                    let pointsAwarded = registered.points;
-
-                    if (syncStatus !== "confirmed") {
-                      for (
-                        let attempt = 0;
-                        attempt < CHECK_IN_SYNC_ATTEMPTS;
-                        attempt += 1
-                      ) {
-                        await wait(CHECK_IN_SYNC_DELAY_MS);
-                        setStatus("syncing");
-                        setStatusMessage(t("checkin.messageSyncing"));
-
-                        const syncResult = await syncCheckInTransaction({
-                          txHash,
-                        });
-                        syncStatus = syncResult.syncStatus;
-
-                        if (syncStatus === "confirmed") {
-                          pointsAwarded =
-                            rewardLedger.find(
-                              (entry) =>
-                                entry.walletAddress === profile.walletAddress,
-                            )?.points ?? registered.points;
-                          break;
-                        }
-                      }
-                    }
-
-                    if (syncStatus !== "confirmed") {
-                      setStatus("waiting_confirmation");
-                      setStatusMessage(t("checkin.messagePendingConfirmation"));
-                      toast({
-                        title: t("checkin.waitingConfirmation"),
-                        description: t("checkin.messagePendingConfirmation"),
-                      });
-                      return;
-                    }
-
-                    setStatus("synced");
-                    setStatusMessage(
-                      t("checkin.messageSuccess", {
-                        points: String(pointsAwarded || 10),
-                      }),
-                    );
-                    toast({
-                      title: t("checkin.claimed"),
-                      description: t("checkin.messageSuccess", {
-                        points: String(pointsAwarded || 10),
-                      }),
-                    });
-                  } catch (error) {
-                    setStatus("failed");
-                    const description =
-                      error instanceof Error &&
-                      error.message === "missing-check-in-message-hash"
-                        ? t("checkin.messageHashMissing")
-                        : t("checkin.messageWalletCancelled");
-                    setStatusMessage(description);
-                    toast({
-                      title: t("checkin.txFailed"),
-                      description,
-                    });
-                  }
-                }}
-              >
-                {ctaLabel}
-              </Button>
             </div>
-
-            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.16)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                {t("profile.progression.title")}
+            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.longestStreak")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                  {profile.longestStreak}
+                </p>
+              </div>
+              <p className="text-sm leading-6 text-slate-500">
+                {t("checkin.bestSeries")}
               </p>
-              <div className="mt-3 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-2xl font-semibold text-slate-950">
-                    {t(`profile.level.${levelProgress.current.id}`)}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {levelProgress.next
-                      ? t("checkin.progressNext", {
-                          level: t(`profile.level.${levelProgress.next.id}`),
-                          count: String(levelProgress.remainingScore),
-                        })
-                      : t("profile.progression.maxUnlocked")}
-                  </p>
-                </div>
-                <span className="inline-flex h-11 items-center rounded-full bg-[linear-gradient(135deg,#eff6ff,#ecfeff)] px-4 text-sm font-semibold text-slate-700">
-                  {profile.totalPoints} pts
-                </span>
-              </div>
-              <div className="mt-4 h-3 rounded-full bg-slate-100">
-                <div
-                  className="h-3 rounded-full bg-[linear-gradient(90deg,#0284c7,#2dd4bf)]"
-                  style={{ width: `${levelProgress.progressPercent}%` }}
-                />
-              </div>
             </div>
+            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.totalCheckIns")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                  {profile.totalCheckIns}
+                </p>
+              </div>
+              <p className="text-sm leading-6 text-slate-500">
+                {t("checkin.totalCheckInsBody")}
+              </p>
+            </div>
+            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  {t("checkin.todayReward")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                  +10
+                </p>
+              </div>
+              <p className="text-sm leading-6 text-slate-500">
+                {lastReward
+                  ? t("checkin.lastReward", {
+                      count: String(lastReward.points),
+                    })
+                  : t("checkin.rewardBody")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="subtle-panel overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                {t("checkin.streakDuration")}
+              </p>
+              <p className="mt-1 text-xl font-semibold text-slate-950">
+                {profile.streak} / {streakTarget} {t("checkin.days")}
+              </p>
+            </div>
+            <p className="text-sm font-medium text-sky-700/80">
+              {t("checkin.nextGoal", { goal: nextMilestoneLabel })}
+            </p>
+          </div>
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-sky-100">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,#0180FF,#3DB1FF,#7354F2)] transition-all duration-500"
+              style={{ width: `${streakProgress}%` }}
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <span>{t("checkin.started")}</span>
+            <span>
+              {t("checkin.activeSeries", { count: String(profile.streak) })}
+            </span>
+            <span>{nextMilestoneLabel}</span>
           </div>
         </div>
       </CardContent>

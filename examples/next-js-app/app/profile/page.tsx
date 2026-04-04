@@ -11,10 +11,20 @@ import { useI18n } from "@/components/i18n/i18n-provider";
 import { PageIntro } from "@/components/page-intro";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/constants";
+import { useCommunityProfile } from "@/components/community/community-provider";
+import { getUserLevelProgress } from "@/lib/community";
 import { WalletGuard } from "@/components/wallet-guard";
 
 export default function ProfilePage() {
   const { t } = useI18n();
+  const { achievements, profile } = useCommunityProfile();
+
+  const unlockedAchievements = achievements.filter(
+    (achievement) => achievement.unlocked,
+  ).length;
+  const levelProgress = profile
+    ? getUserLevelProgress(profile.totalPoints)
+    : null;
 
   return (
     <WalletGuard
@@ -31,6 +41,37 @@ export default function ProfilePage() {
           eyebrow={t("profile.hero.eyebrow")}
           title={t("profile.hero.title")}
           subtitle={t("profile.hero.subtitle")}
+          stats={
+            profile
+              ? [
+                  {
+                    label: t("checkin.totalPoints"),
+                    value: String(profile.totalPoints),
+                    body: levelProgress?.next
+                      ? t("checkin.progressNext", {
+                          count: String(levelProgress.remainingScore),
+                          level: t(`profile.level.${levelProgress.next.id}`),
+                        })
+                      : t("profile.progression.maxUnlocked"),
+                  },
+                  {
+                    label: t("checkin.currentStreak"),
+                    value: String(profile.streak),
+                    body: t("checkin.daysInRow", {
+                      count: String(profile.streak),
+                    }),
+                  },
+                  {
+                    label: t("profile.summary.unlockedBadges"),
+                    value: String(unlockedAchievements),
+                    body: t("profile.achievements.unlockedCount", {
+                      unlocked: String(unlockedAchievements),
+                      total: String(achievements.length),
+                    }),
+                  },
+                ]
+              : []
+          }
           actions={[
             {
               href: ROUTES.swap,
@@ -43,16 +84,16 @@ export default function ProfilePage() {
             },
           ]}
         />
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] 2xl:items-start">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)] xl:items-start">
           <DailyCheckInCard />
           <ProfileSummary />
         </div>
-        <AchievementsPanel />
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:items-start">
           <ActivePredictionsPanel />
           <ProfileBetHistory />
         </div>
-        <div className="grid gap-6 lg:grid-cols-2">
+        <AchievementsPanel />
+        <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] xl:items-start">
           <WatchlistPanel />
           <ProfileTonPanel />
         </div>

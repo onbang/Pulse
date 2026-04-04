@@ -331,6 +331,21 @@ export const messages = {
     "profile.watchlist.empty":
       "Your watchlist is still empty. Save pools that look interesting so you can come back fast.",
     "profile.watchlist.cta": "Explore pools",
+    "profile.ton.title": "TON portfolio",
+    "profile.ton.subtitle":
+      "Live wallet snapshot powered by TON account, jetton, and event data.",
+    "profile.ton.loading": "Loading wallet activity and balances...",
+    "profile.ton.error": "Unable to load TON portfolio: {message}",
+    "profile.ton.balance": "TON balance",
+    "profile.ton.status": "Account status",
+    "profile.ton.lastActivity": "Last activity",
+    "profile.ton.jettons": "Top jettons",
+    "profile.ton.jettonsEmpty":
+      "Jettons will appear here after the first token activity.",
+    "profile.ton.events": "Latest onchain events",
+    "profile.ton.eventsEmpty":
+      "Recent wallet events will appear here once the account becomes active.",
+    "profile.ton.eventFallback": "TON event",
     "profile.betHistory.title": "Prediction history",
     "profile.betHistory.subtitle":
       "Your active, recent, and settled prediction positions in one place.",
@@ -871,6 +886,22 @@ export const messages = {
     "profile.watchlist.empty":
       "Твой watchlist пока пуст. Сохраняй интересные пулы, чтобы потом возвращаться к ним быстрее.",
     "profile.watchlist.cta": "Изучить пулы",
+    "profile.ton.title": "TON-портфель",
+    "profile.ton.subtitle":
+      "Живой обзор кошелька на основе данных аккаунта, jetton-ов и onchain-событий TON.",
+    "profile.ton.loading":
+      "Загружаем баланс, jetton-ы и последние действия кошелька...",
+    "profile.ton.error": "Не удалось загрузить TON-портфель: {message}",
+    "profile.ton.balance": "Баланс TON",
+    "profile.ton.status": "Статус аккаунта",
+    "profile.ton.lastActivity": "Последняя активность",
+    "profile.ton.jettons": "Основные jetton-ы",
+    "profile.ton.jettonsEmpty":
+      "Jetton-ы появятся здесь после первой токенной активности.",
+    "profile.ton.events": "Последние onchain-события",
+    "profile.ton.eventsEmpty":
+      "История последних действий появится здесь, как только кошелек начнет активность.",
+    "profile.ton.eventFallback": "TON-событие",
     "profile.betHistory.title": "История прогнозов",
     "profile.betHistory.subtitle":
       "Все активные, последние и завершенные прогнозы в одном месте.",

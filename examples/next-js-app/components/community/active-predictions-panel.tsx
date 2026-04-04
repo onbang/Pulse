@@ -31,8 +31,8 @@ export function ActivePredictionsPanel() {
   });
 
   return (
-    <Card className="surface-panel overflow-hidden">
-      <CardHeader>
+    <Card className="surface-panel h-full overflow-hidden border-white/70">
+      <CardHeader className="border-b border-sky-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.95))]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle>{t("profile.activePredictions.title")}</CardTitle>

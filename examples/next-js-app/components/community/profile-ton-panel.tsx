@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
 import { useCommunityProfile } from "./community-provider";
 
@@ -52,6 +53,7 @@ function formatUnits(value: string, decimals: number) {
 }
 
 export function ProfileTonPanel() {
+  const { t } = useI18n();
   const { walletAddress } = useCommunityProfile();
   const [data, setData] = useState<TonProfileResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,104 +97,122 @@ export function ProfileTonPanel() {
   }, [walletAddress]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>TON portfolio</CardTitle>
-        <CardDescription>
-          Live wallet view powered by TON API account, jetton, and event data.
-        </CardDescription>
+    <Card className="surface-panel overflow-hidden border-white/70">
+      <CardHeader className="border-b border-sky-100/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.95))]">
+        <CardTitle>{t("profile.ton.title")}</CardTitle>
+        <CardDescription>{t("profile.ton.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? (
-          <p className="text-sm text-slate-500">{error}</p>
+          <div className="empty-state-panel">
+            <p className="empty-state-title">{t("profile.ton.title")}</p>
+            <p className="text-sm leading-6 text-slate-600">
+              {t("profile.ton.error", { message: error })}
+            </p>
+          </div>
         ) : !data ? (
-          <p className="text-sm text-slate-500">Loading TON portfolio...</p>
+          <div className="empty-state-panel">
+            <p className="empty-state-title">{t("profile.ton.title")}</p>
+            <p className="text-sm leading-6 text-slate-600">
+              {t("profile.ton.loading")}
+            </p>
+          </div>
         ) : (
           <>
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="subtle-panel">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  TON balance
+                  {t("profile.ton.balance")}
                 </p>
-                <p className="text-2xl font-semibold">
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
                   {formatUnits(data.account.balance, 9)} TON
                 </p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="subtle-panel">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Account status
+                  {t("profile.ton.status")}
                 </p>
-                <p className="text-2xl font-semibold capitalize">
+                <p className="mt-2 text-2xl font-semibold capitalize tracking-tight text-slate-950">
                   {data.account.status}
                 </p>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="subtle-panel">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                  Last activity
+                  {t("profile.ton.lastActivity")}
                 </p>
-                <p className="text-sm font-medium">
+                <p className="mt-2 text-sm font-medium text-slate-700">
                   {new Date(data.account.lastActivity * 1000).toLocaleString()}
                 </p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-slate-800">
-                Top jettons
-              </h4>
-              {data.jettons.length === 0 ? (
-                <p className="text-sm text-slate-500">No jettons found.</p>
-              ) : (
-                data.jettons.map((jetton) => (
-                  <div
-                    key={`${jetton.symbol}-${jetton.balance}`}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-medium text-slate-800">
-                        {jetton.symbol}
-                      </p>
-                      <p className="text-xs text-slate-500">{jetton.name}</p>
-                    </div>
-                    <strong>
-                      {formatUnits(jetton.balance, jetton.decimals)}
-                    </strong>
+            <div className="grid gap-6 xl:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.18fr)]">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-800">
+                  {t("profile.ton.jettons")}
+                </h4>
+                {data.jettons.length === 0 ? (
+                  <div className="empty-state-panel">
+                    <p className="text-sm leading-6 text-slate-600">
+                      {t("profile.ton.jettonsEmpty")}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-slate-800">
-                Latest on-chain events
-              </h4>
-              {data.events.length === 0 ? (
-                <p className="text-sm text-slate-500">No recent events.</p>
-              ) : (
-                data.events.map((event) => (
-                  <article
-                    key={event.eventId}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <strong className="text-slate-800">
-                        {event.actions[0]?.name ?? "TON event"}
+                ) : (
+                  data.jettons.map((jetton) => (
+                    <div
+                      key={`${jetton.symbol}-${jetton.balance}`}
+                      className="subtle-panel flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800">
+                          {jetton.symbol}
+                        </p>
+                        <p className="text-xs text-slate-500">{jetton.name}</p>
+                      </div>
+                      <strong className="shrink-0 text-slate-950">
+                        {formatUnits(jetton.balance, jetton.decimals)}
                       </strong>
-                      <span className="text-xs text-slate-500">
-                        {new Date(event.timestamp * 1000).toLocaleString()}
-                      </span>
                     </div>
-                    {event.actions.map((action) => (
-                      <p
-                        key={`${event.eventId}-${action.type}`}
-                        className="text-sm text-slate-600"
-                      >
-                        {action.description}
-                      </p>
-                    ))}
-                  </article>
-                ))
-              )}
+                  ))
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-800">
+                  {t("profile.ton.events")}
+                </h4>
+                {data.events.length === 0 ? (
+                  <div className="empty-state-panel">
+                    <p className="text-sm leading-6 text-slate-600">
+                      {t("profile.ton.eventsEmpty")}
+                    </p>
+                  </div>
+                ) : (
+                  data.events.map((event) => (
+                    <article key={event.eventId} className="subtle-panel">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <strong className="text-slate-800">
+                          {event.actions[0]?.name ??
+                            t("profile.ton.eventFallback")}
+                        </strong>
+                        <span className="text-xs text-slate-500">
+                          {new Date(event.timestamp * 1000).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {event.actions.map((action) => (
+                          <p
+                            key={`${event.eventId}-${action.type}`}
+                            className="text-sm leading-6 text-slate-600"
+                          >
+                            {action.description}
+                          </p>
+                        ))}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
           </>
         )}
