@@ -1,13 +1,7 @@
 import { resolvePredictionTreasuryAddress } from "@ston-pulse/prediction-sdk";
 
-const DEFAULT_PREDICTION_MARKET_ADDRESS =
-  "EQB61HnN5s6wjruc7vvo7WsGBWWvNKaawTWnzFFDkB-6Fe4G";
-
 export function getPredictionMarketAddress() {
-  return (
-    process.env.NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS?.trim() ||
-    DEFAULT_PREDICTION_MARKET_ADDRESS
-  );
+  return process.env.NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS?.trim() || "";
 }
 
 export function getPredictionTreasuryAddress() {
@@ -21,5 +15,5 @@ export function getPredictionEntryAddress() {
 }
 
 export function isPredictionContractModeEnabled() {
-  return Boolean(getPredictionMarketAddress());
+  return getPredictionMarketAddress().length > 0;
 }
