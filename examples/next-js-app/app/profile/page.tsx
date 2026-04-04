@@ -43,7 +43,7 @@ export default function ProfilePage() {
             },
           ]}
         />
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] 2xl:items-start">
           <DailyCheckInCard />
           <ProfileSummary />
         </div>

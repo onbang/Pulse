@@ -1,6 +1,4 @@
 "use client";
-
-import { ShieldCheck, Trophy, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -50,12 +48,13 @@ export function ProfileSummary() {
   const userLevel = getUserLevel(profile.totalPoints);
   const localizedLevel = t(`profile.level.${userLevel.id}`);
   const walletPreview = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+  const joinedDate = new Date(profile.joinedAt).toLocaleDateString();
 
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
-      <CardHeader className="relative overflow-hidden bg-[linear-gradient(135deg,rgba(8,47,73,0.96),rgba(3,105,161,0.9)_46%,rgba(16,185,129,0.54))] pb-8 text-white">
+      <CardHeader className="relative overflow-hidden bg-[linear-gradient(135deg,rgba(8,47,73,0.96),rgba(3,105,161,0.9)_46%,rgba(16,185,129,0.54))] pb-7 text-white">
         <div className="absolute inset-y-0 right-0 w-72 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.18),transparent_68%)]" />
-        <div className="relative z-10">
+        <div className="relative z-10 space-y-5">
           <div className="flex items-start gap-4">
             <Avatar className="h-20 w-20 border border-white/30 bg-[linear-gradient(135deg,#0f172a,#2563eb)] text-white shadow-xl">
               <AvatarFallback>{initials(profile.displayName)}</AvatarFallback>
@@ -65,7 +64,7 @@ export function ProfileSummary() {
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100/80">
                   {t("profile.summary.identity")}
                 </p>
-                <CardTitle className="mt-2 text-3xl text-white md:text-4xl">
+                <CardTitle className="mt-2 text-3xl text-white">
                   {profile.displayName}
                 </CardTitle>
                 <CardDescription className="mt-2 max-w-lg text-sm leading-6 text-white/76">
@@ -87,9 +86,41 @@ export function ProfileSummary() {
               </div>
             </div>
           </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[22px] border border-white/18 bg-white/10 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
+                {t("profile.summary.unlockedBadges")}
+              </p>
+              <p className="mt-2 text-2xl font-semibold">
+                {unlockedAchievements}
+              </p>
+              <p className="mt-1 text-sm text-white/72">
+                {t("profile.summary.unlockedBadgesBody")}
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-white/18 bg-white/10 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
+                {t("profile.summary.wallet")}
+              </p>
+              <p className="mt-2 text-xl font-semibold">{walletPreview}</p>
+              <p className="mt-1 text-sm text-white/72">
+                {t("profile.summary.walletBody")}
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-white/18 bg-white/10 px-4 py-4 backdrop-blur-xl">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
+                {t("profile.summary.since")}
+              </p>
+              <p className="mt-2 text-2xl font-semibold">{joinedDate}</p>
+              <p className="mt-1 text-sm text-white/72">
+                {t("profile.summary.joined")}
+              </p>
+            </div>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
+      <CardContent className="space-y-5 p-6">
         <div className="mesh-card p-5 shadow-none">
           <div className="mb-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -117,69 +148,12 @@ export function ProfileSummary() {
               />
             </label>
             <Button
-              className="rounded-full bg-[linear-gradient(135deg,#082f49,#0284c7)] px-5 shadow-[0_16px_40px_-22px_rgba(2,132,199,0.8)]"
+              className="h-11 rounded-full bg-[linear-gradient(135deg,#082f49,#0284c7)] px-5 shadow-[0_16px_40px_-22px_rgba(2,132,199,0.8)]"
               onClick={() => void updateProfile({ displayName, bio })}
             >
               {t("profile.summary.save")}
             </Button>
           </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Card className="mesh-card shadow-none">
-            <CardContent className="p-4 text-sm text-slate-600">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                  <Trophy className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {t("profile.summary.unlockedBadges")}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {unlockedAchievements}
-                  </p>
-                  <p>{t("profile.summary.unlockedBadgesBody")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="mesh-card shadow-none">
-            <CardContent className="p-4 text-sm text-slate-600">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                  <Wallet className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {t("profile.summary.wallet")}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {walletPreview}
-                  </p>
-                  <p>{t("profile.summary.walletBody")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="mesh-card shadow-none sm:col-span-2">
-            <CardContent className="p-4 text-sm text-slate-600">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
-                  <ShieldCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {t("profile.summary.since")}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {new Date(profile.joinedAt).toLocaleDateString()}
-                  </p>
-                  <p>{t("profile.summary.joined")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </CardContent>
     </Card>
