@@ -37,9 +37,8 @@ import {
   parseCheckInTransferComment,
 } from "@/lib/check-in-config";
 import {
-  getPredictionEntryAddress,
   getPredictionMarketAddress,
-  isPredictionContractModeEnabled,
+  getPredictionTreasuryAddress,
 } from "@/lib/prediction-config";
 import {
   canonicalizePredictionMarketId,
@@ -66,6 +65,12 @@ let database: DatabaseSync | null = null;
 let initialized = false;
 const DEFAULT_ROUND_DURATION_MINUTES = 240;
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
+const PREDICTION_HISTORY_SCAN_LIMIT = 100;
+const LEGACY_PREDICTION_MARKET_ADDRESSES = [
+  "EQAGSUKo3TiF8i_TBvBbSgvmkyUgL7-RWSG72ggUszcql-y2",
+  "EQB61HnN5s6wjruc7vvo7WsGBWWvNKaawTWnzFFDkB-6Fe4G",
+  "EQDMMbmN1GhNJjMWOf8F83LvkUo2gO9C9KrqhwsFt0Kx6Veb",
+];
 
 async function ensureDatabase() {
   if (database && initialized) {
@@ -1779,6 +1784,16 @@ function resolvePredictionPairIdByLabel(db: DatabaseSync, label: string) {
   return rows[0]?.pair_id ?? null;
 }
 
+function createLegacyPredictionPairId(label: string) {
+  const normalized = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `legacy-prediction:${normalized || "unknown-market"}`;
+}
+
 function extractTxHash(transaction: Record<string, unknown>) {
   const candidates = [
     transaction.hash,
@@ -1812,6 +1827,38 @@ function extractMessageHash(message: Record<string, unknown> | null) {
   );
 }
 
+function extractMessageAddress(
+  message: Record<string, unknown> | null,
+  kind: "source" | "destination",
+) {
+  if (!message) {
+    return null;
+  }
+
+  const candidates =
+    kind === "source"
+      ? [message.source, message.src]
+      : [message.destination, message.dest, message.dst];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+
+    if (
+      candidate &&
+      typeof candidate === "object" &&
+      "address" in candidate &&
+      typeof candidate.address === "string" &&
+      candidate.address.trim().length > 0
+    ) {
+      return candidate.address.trim();
+    }
+  }
+
+  return null;
+}
+
 function extractTransactionCreatedAt(transaction: Record<string, unknown>) {
   const candidates = [
     transaction.utime,
@@ -1841,6 +1888,120 @@ function extractTransactionCreatedAt(transaction: Record<string, unknown>) {
   }
 
   return new Date().toISOString();
+}
+
+function isTonApiTransactionConfirmed(transaction: Record<string, unknown>) {
+  if (transaction.success === false || transaction.aborted === true) {
+    return false;
+  }
+
+  return true;
+}
+
+function extractOutgoingMessages(transaction: Record<string, unknown>) {
+  const candidates = [
+    transaction.out_msgs,
+    transaction.outMessages,
+    transaction.out_msgs_list,
+  ];
+
+  for (const candidate of candidates) {
+    if (!Array.isArray(candidate)) {
+      continue;
+    }
+
+    return candidate.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    );
+  }
+
+  return [] as Array<Record<string, unknown>>;
+}
+
+async function fetchTonApiTransactions(address: string, limit = 100) {
+  const response = await fetch(
+    `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
+      address,
+    )}/transactions?limit=${limit}`,
+    {
+      headers: process.env.TON_CONSOLE_API_KEY
+        ? { Authorization: `Bearer ${process.env.TON_CONSOLE_API_KEY}` }
+        : {},
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    return [] as Array<Record<string, unknown>>;
+  }
+
+  const payload = (await response.json()) as {
+    transactions?: Array<Record<string, unknown>>;
+  };
+
+  return payload.transactions ?? [];
+}
+
+function getStaticPredictionEntryAddresses() {
+  return [
+    getPredictionTreasuryAddress(),
+    getPredictionMarketAddress(),
+    ...LEGACY_PREDICTION_MARKET_ADDRESSES,
+  ]
+    .map((address) => normalizeTonAddress(address))
+    .filter((address): address is string => Boolean(address))
+    .filter((address, index, items) => items.indexOf(address) === index);
+}
+
+async function discoverPredictionEntryAddresses(walletAddress: string | null) {
+  const staticAddresses = getStaticPredictionEntryAddresses();
+
+  if (!walletAddress) {
+    return staticAddresses;
+  }
+
+  const discovered = new Set(staticAddresses);
+
+  try {
+    const walletTransactions = await fetchTonApiTransactions(
+      walletAddress,
+      PREDICTION_HISTORY_SCAN_LIMIT,
+    );
+
+    for (const transaction of walletTransactions) {
+      if (!isTonApiTransactionConfirmed(transaction)) {
+        continue;
+      }
+
+      for (const message of extractOutgoingMessages(transaction)) {
+        const destinationAddress = normalizeTonAddress(
+          extractMessageAddress(message, "destination"),
+        );
+
+        if (!destinationAddress) {
+          continue;
+        }
+
+        const parsedComment = parsePredictionTransferComment(
+          extractMessageComment(message),
+        );
+        const parsedPayload = extractPredictionContractPayload(message);
+
+        if (
+          parsedComment ||
+          parsedPayload ||
+          staticAddresses.includes(destinationAddress)
+        ) {
+          discovered.add(destinationAddress);
+        }
+      }
+    }
+  } catch {
+    return staticAddresses;
+  }
+
+  return [...discovered];
 }
 
 function getRoundSnapshot(db: DatabaseSync, pairId: string, label: string) {
@@ -1949,60 +2110,50 @@ async function syncOnchainPredictionTransactions(
     targetMessageHash?: string | null;
   },
 ) {
-  const entryAddress = getPredictionEntryAddress();
-  const contractAddress = getPredictionMarketAddress();
-  const isContractMode = isPredictionContractModeEnabled();
+  const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+  const normalizedTargetMessageHash =
+    options?.targetMessageHash?.trim() || null;
+  const entryAddresses = await discoverPredictionEntryAddresses(
+    normalizedWalletAddress,
+  );
 
-  if (!entryAddress) {
+  if (entryAddresses.length === 0) {
     return;
   }
 
   try {
-    const response = await fetch(
-      `${TONAPI_BASE_URL}/v2/blockchain/accounts/${encodeURIComponent(
-        entryAddress,
-      )}/transactions?limit=100`,
-      {
-        headers: process.env.TON_CONSOLE_API_KEY
-          ? { Authorization: `Bearer ${process.env.TON_CONSOLE_API_KEY}` }
-          : {},
-        cache: "no-store",
-      },
-    );
+    const allTransactions: Array<{
+      entryAddress: string;
+      transaction: Record<string, unknown>;
+    }> = [];
 
-    if (!response.ok) {
-      return;
+    for (const entryAddress of entryAddresses) {
+      const transactions = await fetchTonApiTransactions(
+        entryAddress,
+        PREDICTION_HISTORY_SCAN_LIMIT,
+      );
+
+      for (const transaction of transactions) {
+        allTransactions.push({ entryAddress, transaction });
+      }
     }
 
-    const payload = (await response.json()) as {
-      transactions?: Array<Record<string, unknown>>;
-    };
-    const transactions = payload.transactions ?? [];
-    const normalizedWalletAddress = normalizeTonAddress(walletAddress);
-    const normalizedTargetMessageHash =
-      options?.targetMessageHash?.trim() || null;
+    allTransactions.sort(
+      (left, right) =>
+        new Date(extractTransactionCreatedAt(left.transaction)).getTime() -
+        new Date(extractTransactionCreatedAt(right.transaction)).getTime(),
+    );
 
-    for (const transaction of transactions) {
+    for (const { transaction } of allTransactions) {
+      if (!isTonApiTransactionConfirmed(transaction)) {
+        continue;
+      }
+
       const chainTxHash = extractTxHash(transaction);
       const incomingMessage = (transaction.in_msg ??
         transaction.inMessage) as Record<string, unknown> | null;
       const incomingMessageHash = extractMessageHash(incomingMessage);
-      const sourceValue =
-        (incomingMessage?.source as
-          | Record<string, unknown>
-          | string
-          | undefined) ??
-        (incomingMessage?.src as
-          | Record<string, unknown>
-          | string
-          | undefined) ??
-        null;
-      const sourceAddress =
-        typeof sourceValue === "string"
-          ? sourceValue
-          : typeof sourceValue?.["address"] === "string"
-            ? (sourceValue["address"] as string)
-            : null;
+      const sourceAddress = extractMessageAddress(incomingMessage, "source");
       const normalizedSourceAddress = normalizeTonAddress(sourceAddress);
 
       if (
@@ -2016,11 +2167,7 @@ async function syncOnchainPredictionTransactions(
       const comment = extractMessageComment(incomingMessage);
       const parsedComment = parsePredictionTransferComment(comment);
       const parsedContractPayload =
-        isContractMode &&
-        normalizeTonAddress(entryAddress) ===
-          normalizeTonAddress(contractAddress)
-          ? extractPredictionContractPayload(incomingMessage)
-          : null;
+        extractPredictionContractPayload(incomingMessage);
 
       if (
         normalizedTargetMessageHash &&
@@ -2051,7 +2198,7 @@ async function syncOnchainPredictionTransactions(
                   db,
                   parsedComment?.label ?? "",
                 ) ??
-                "",
+                createLegacyPredictionPairId(parsedComment?.label ?? ""),
             );
 
       if (!pairId) {
@@ -2073,11 +2220,8 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
-      const round = getRoundSnapshot(
-        db,
-        pairId,
-        parsedContractPayload?.label ?? parsedComment?.label ?? pairId,
-      );
+      const confirmedAt = extractTransactionCreatedAt(transaction);
+      const parsedMarketId = parsePredictionTokenMarketId(pairId);
       const roundId =
         parsedContractPayload?.type === "place_bet" &&
         isPredictionTimeframeId(parsedContractPayload.timeframeId)
@@ -2086,7 +2230,13 @@ async function syncOnchainPredictionTransactions(
               parsedContractPayload.timeframeId,
               new Date(parsedContractPayload.roundStartTimestamp * 1000),
             )
-          : (parsedContractPayload?.roundId ?? round.id);
+          : parsedMarketId
+            ? buildPredictionTokenRoundId(
+                parsedMarketId.contractAddress,
+                parsedMarketId.timeframe,
+                new Date(confirmedAt),
+              )
+            : null;
 
       const amount = parsedContractPayload
         ? extractMessageTonValue(incomingMessage)
@@ -2099,8 +2249,6 @@ async function syncOnchainPredictionTransactions(
       if (!direction || !Number.isFinite(amount) || amount <= 0) {
         continue;
       }
-
-      const confirmedAt = extractTransactionCreatedAt(transaction);
       const existingByMessageHash = db
         .prepare(
           `
@@ -2204,10 +2352,12 @@ async function syncOnchainPredictionTransactions(
           );
         }
 
-        db.prepare(`
-          INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
-          VALUES (?, ?, ?)
-        `).run(pairId, normalizedSourceAddress, direction);
+        if (parsedContractPayload?.type === "place_bet") {
+          db.prepare(`
+            INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
+            VALUES (?, ?, ?)
+          `).run(pairId, normalizedSourceAddress, direction);
+        }
 
         const existingBetTarget =
           existingByMessageHash?.id ?? recentPendingCandidate?.id ?? null;
@@ -2445,6 +2595,9 @@ export async function upsertProfile(input: {
     ),
     normalizedWalletAddress,
   );
+
+  await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+  await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
 
   return buildCommunityState(hydrateStore(db), normalizedWalletAddress);
 }
