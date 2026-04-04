@@ -42,9 +42,13 @@ import {
   isPredictionContractModeEnabled,
 } from "@/lib/prediction-config";
 import {
+  canonicalizePredictionMarketId,
+  canonicalizePredictionRoundId,
+  buildPredictionTokenMarketId,
   buildPredictionTokenRoundId,
   getPredictionTimeframeMinutes,
   getPredictionTimeframeSeconds,
+  isPredictionTimeframeId,
   parsePredictionTokenMarketId,
   resolvePredictionDurationMinutes,
   resolvePredictionRoundStartTimestamp,
@@ -605,10 +609,11 @@ function insertRewardEntries(
 }
 
 function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
+  const normalizedPairId = canonicalizePredictionMarketId(pairId);
   const isTokenPredictionRound = pairId.startsWith("prediction:");
   const existing = db
     .prepare("SELECT * FROM prediction_rounds WHERE pair_id = ?")
-    .get(pairId) as
+    .get(normalizedPairId) as
     | {
         pair_id: string;
         round_id: string;
@@ -624,7 +629,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
     | undefined;
 
   if (isTokenPredictionRound) {
-    const currentRound = createCurrentTokenRound(pairId, label);
+    const currentRound = createCurrentTokenRound(normalizedPairId, label);
 
     if (!existing) {
       db.prepare(`
@@ -632,7 +637,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
           pair_id, round_id, pair_label, timeframe_id, status, opened_at, closes_at, resolved_at, duration_minutes, settlement_direction
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        pairId,
+        normalizedPairId,
         currentRound.id,
         label,
         currentRound.timeframeId ?? null,
@@ -648,10 +653,47 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
     }
 
     if (existing.round_id !== currentRound.id) {
+      if (
+        existing.status === "open" &&
+        new Date(existing.closes_at).getTime() <= Date.now()
+      ) {
+        db.prepare(`
+          UPDATE prediction_rounds
+          SET status = 'closed'
+          WHERE pair_id = ? AND status = 'open'
+        `).run(normalizedPairId);
+
+        return createRound(existing.pair_id, existing.pair_label, {
+          id: existing.round_id,
+          pairId: existing.pair_id,
+          timeframeId: existing.timeframe_id ?? undefined,
+          status: "closed",
+          openedAt: existing.opened_at,
+          closesAt: existing.closes_at,
+          resolvedAt: existing.resolved_at ?? undefined,
+          durationMinutes: existing.duration_minutes,
+          settlementDirection: existing.settlement_direction ?? undefined,
+        });
+      }
+
+      if (existing.status !== "settled") {
+        return createRound(existing.pair_id, existing.pair_label, {
+          id: existing.round_id,
+          pairId: existing.pair_id,
+          timeframeId: existing.timeframe_id ?? undefined,
+          status: existing.status,
+          openedAt: existing.opened_at,
+          closesAt: existing.closes_at,
+          resolvedAt: existing.resolved_at ?? undefined,
+          durationMinutes: existing.duration_minutes,
+          settlementDirection: existing.settlement_direction ?? undefined,
+        });
+      }
+
       db.exec("BEGIN");
       try {
         db.prepare("DELETE FROM prediction_positions WHERE pair_id = ?").run(
-          pairId,
+          normalizedPairId,
         );
         db.prepare(`
           UPDATE prediction_rounds
@@ -667,7 +709,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
           null,
           currentRound.durationMinutes,
           null,
-          pairId,
+          normalizedPairId,
         );
         db.exec("COMMIT");
       } catch (error) {
@@ -710,7 +752,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
       UPDATE prediction_rounds
       SET status = 'closed'
       WHERE pair_id = ? AND status = 'open'
-    `).run(pairId);
+    `).run(normalizedPairId);
 
     return createRound(existing.pair_id, existing.pair_label, {
       id: existing.round_id,
@@ -726,36 +768,17 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
   }
 
   if (existing.status === "closed" && isTokenPredictionRound) {
-    const round = createRound(pairId, label);
-
-    db.exec("BEGIN");
-    try {
-      db.prepare("DELETE FROM prediction_positions WHERE pair_id = ?").run(
-        pairId,
-      );
-      db.prepare(`
-        UPDATE prediction_rounds
-        SET round_id = ?, pair_label = ?, timeframe_id = ?, status = ?, opened_at = ?, closes_at = ?, resolved_at = ?, duration_minutes = ?, settlement_direction = ?
-        WHERE pair_id = ?
-      `).run(
-        round.id,
-        label,
-        round.timeframeId ?? null,
-        round.status,
-        round.openedAt,
-        round.closesAt,
-        null,
-        round.durationMinutes,
-        null,
-        pairId,
-      );
-      db.exec("COMMIT");
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
-    }
-
-    return round;
+    return createRound(existing.pair_id, existing.pair_label, {
+      id: existing.round_id,
+      pairId: existing.pair_id,
+      timeframeId: existing.timeframe_id ?? undefined,
+      status: existing.status,
+      openedAt: existing.opened_at,
+      closesAt: existing.closes_at,
+      resolvedAt: existing.resolved_at ?? undefined,
+      durationMinutes: existing.duration_minutes,
+      settlementDirection: existing.settlement_direction ?? undefined,
+    });
   }
 
   if (existing.status === "settled") {
@@ -764,7 +787,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
     db.exec("BEGIN");
     try {
       db.prepare("DELETE FROM prediction_positions WHERE pair_id = ?").run(
-        pairId,
+        normalizedPairId,
       );
       db.prepare(`
         UPDATE prediction_rounds
@@ -780,7 +803,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
         null,
         round.durationMinutes,
         null,
-        pairId,
+        normalizedPairId,
       );
       db.exec("COMMIT");
     } catch (error) {
@@ -1097,15 +1120,17 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
   const currentRoundIds = new Map<string, string>();
 
   for (const row of roundRows) {
-    currentRoundIds.set(row.pair_id, row.round_id);
-    predictions[row.pair_id] = {
+    const canonicalPairId = canonicalizePredictionMarketId(row.pair_id);
+    const canonicalRoundId = canonicalizePredictionRoundId(row.round_id);
+    currentRoundIds.set(canonicalPairId, canonicalRoundId);
+    predictions[canonicalPairId] = {
       label: row.pair_label,
       up: [],
       down: [],
       bets: [],
       round: createRound(row.pair_id, row.pair_label, {
-        id: row.round_id,
-        pairId: row.pair_id,
+        id: canonicalRoundId,
+        pairId: canonicalPairId,
         timeframeId: row.timeframe_id ?? undefined,
         status: row.status,
         openedAt: row.opened_at,
@@ -1119,9 +1144,13 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
   }
 
   for (const row of betRows) {
+    const canonicalPairId = canonicalizePredictionMarketId(row.pair_id);
+    const canonicalRoundId = row.round_id
+      ? canonicalizePredictionRoundId(row.round_id)
+      : undefined;
     const bet: PredictionBet = {
       id: row.id,
-      roundId: row.round_id ?? undefined,
+      roundId: canonicalRoundId,
       walletAddress: row.wallet_address,
       author: row.author,
       amount: row.amount,
@@ -1134,26 +1163,30 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
 
     predictionHistory.push({
       ...bet,
-      pairId: row.pair_id,
+      pairId: canonicalPairId,
       pairLabel: row.pair_label,
     });
 
-    const currentRoundId = currentRoundIds.get(row.pair_id);
+    const currentRoundId = currentRoundIds.get(canonicalPairId);
 
-    if (currentRoundId && row.round_id && row.round_id !== currentRoundId) {
+    if (
+      currentRoundId &&
+      canonicalRoundId &&
+      canonicalRoundId !== currentRoundId
+    ) {
       continue;
     }
 
-    const existing = predictions[row.pair_id] ?? {
+    const existing = predictions[canonicalPairId] ?? {
       label: row.pair_label,
       up: [],
       down: [],
       bets: [],
-      round: createRound(row.pair_id, row.pair_label),
+      round: createRound(canonicalPairId, row.pair_label),
       payoutPreviews: [],
     };
 
-    predictions[row.pair_id] = {
+    predictions[canonicalPairId] = {
       ...existing,
       label: row.pair_label,
       bets: [...existing.bets, bet].sort((a, b) =>
@@ -1163,16 +1196,17 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
   }
 
   for (const row of positionRows) {
-    const existing = predictions[row.pair_id] ?? {
-      label: row.pair_id,
+    const canonicalPairId = canonicalizePredictionMarketId(row.pair_id);
+    const existing = predictions[canonicalPairId] ?? {
+      label: canonicalPairId,
       up: [],
       down: [],
       bets: [],
-      round: createRound(row.pair_id, row.pair_id),
+      round: createRound(canonicalPairId, canonicalPairId),
       payoutPreviews: [],
     };
 
-    predictions[row.pair_id] = {
+    predictions[canonicalPairId] = {
       ...existing,
       up:
         row.direction === "up"
@@ -1977,10 +2011,21 @@ async function syncOnchainPredictionTransactions(
         continue;
       }
 
-      const pairId = parsedContractPayload?.marketId
-        ? parsedContractPayload.marketId
-        : (parsedComment?.pairId ??
-          resolvePredictionPairIdByLabel(db, parsedComment?.label ?? ""));
+      const pairId =
+        parsedContractPayload?.type === "place_bet" &&
+        isPredictionTimeframeId(parsedContractPayload.timeframeId)
+          ? buildPredictionTokenMarketId(
+              parsedContractPayload.tokenAddress,
+              parsedContractPayload.timeframeId,
+            )
+          : canonicalizePredictionMarketId(
+              parsedComment?.pairId ??
+                resolvePredictionPairIdByLabel(
+                  db,
+                  parsedComment?.label ?? "",
+                ) ??
+                "",
+            );
 
       if (!pairId) {
         continue;
@@ -2006,7 +2051,15 @@ async function syncOnchainPredictionTransactions(
         pairId,
         parsedContractPayload?.label ?? parsedComment?.label ?? pairId,
       );
-      const roundId = parsedContractPayload?.roundId ?? round.id;
+      const roundId =
+        parsedContractPayload?.type === "place_bet" &&
+        isPredictionTimeframeId(parsedContractPayload.timeframeId)
+          ? buildPredictionTokenRoundId(
+              parsedContractPayload.tokenAddress,
+              parsedContractPayload.timeframeId,
+              new Date(parsedContractPayload.roundStartTimestamp * 1000),
+            )
+          : (parsedContractPayload?.roundId ?? round.id);
 
       const amount = parsedContractPayload
         ? extractMessageTonValue(incomingMessage)
@@ -2039,6 +2092,31 @@ async function syncOnchainPredictionTransactions(
               | "onchain_sync";
           }
         | undefined;
+
+      const recentPendingCandidate = !existingByMessageHash
+        ? (db
+            .prepare(
+              `
+              SELECT id
+              FROM prediction_bets
+              WHERE wallet_address = ?
+                AND pair_id = ?
+                AND direction = ?
+                AND source_kind = 'pending'
+                AND chain_tx_hash IS NULL
+                AND amount BETWEEN ? AND ?
+              ORDER BY created_at DESC
+              LIMIT 1
+            `,
+            )
+            .get(
+              normalizedSourceAddress,
+              pairId,
+              direction,
+              Math.max(0, Math.round(amount * 100) / 100 - 0.0001),
+              Math.round(amount * 100) / 100 + 0.0001,
+            ) as { id: string } | undefined)
+        : undefined;
 
       if (existingByMessageHash?.source_kind === "onchain_sync") {
         db.prepare(`
@@ -2104,7 +2182,10 @@ async function syncOnchainPredictionTransactions(
           VALUES (?, ?, ?)
         `).run(pairId, normalizedSourceAddress, direction);
 
-        if (existingByMessageHash) {
+        const existingBetTarget =
+          existingByMessageHash?.id ?? recentPendingCandidate?.id ?? null;
+
+        if (existingBetTarget) {
           db.prepare(`
             UPDATE prediction_bets
             SET round_id = ?,
@@ -2118,7 +2199,7 @@ async function syncOnchainPredictionTransactions(
                 chain_tx_hash = ?,
                 confirmed_at = ?,
                 source_kind = 'onchain_sync'
-            WHERE source_message_hash = ?
+            WHERE ${existingByMessageHash ? "source_message_hash = ?" : "id = ?"}
           `).run(
             roundId,
             pairId,
@@ -2130,7 +2211,7 @@ async function syncOnchainPredictionTransactions(
             confirmedAt,
             chainTxHash,
             confirmedAt,
-            incomingMessageHash,
+            existingByMessageHash ? incomingMessageHash : existingBetTarget,
           );
         } else {
           db.prepare(`
@@ -2585,9 +2666,12 @@ export async function addPrediction(input: {
   amount: number;
   txHash?: string;
 }) {
+  const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
+
   if (input.txHash) {
     return registerPendingPredictionTransaction({
       ...input,
+      pairId: canonicalPairId,
       txHash: input.txHash,
     });
   }
@@ -2604,7 +2688,7 @@ export async function addPrediction(input: {
     };
   }
 
-  const round = ensureRoundState(db, input.pairId, input.label);
+  const round = ensureRoundState(db, canonicalPairId, input.label);
 
   if (round.status !== "open") {
     return {
@@ -2619,7 +2703,7 @@ export async function addPrediction(input: {
       FROM prediction_positions
       WHERE pair_id = ? AND wallet_address = ?
     `)
-    .get(input.pairId, input.walletAddress) as
+    .get(canonicalPairId, input.walletAddress) as
     | { direction: PredictionDirection }
     | undefined;
 
@@ -2638,7 +2722,7 @@ export async function addPrediction(input: {
     db.prepare(`
       INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
       VALUES (?, ?, ?)
-    `).run(input.pairId, input.walletAddress, input.direction);
+    `).run(canonicalPairId, input.walletAddress, input.direction);
 
     db.prepare(`
       INSERT INTO prediction_bets (
@@ -2657,7 +2741,7 @@ export async function addPrediction(input: {
     `).run(
       betId,
       round.id,
-      input.pairId,
+      canonicalPairId,
       input.label,
       input.walletAddress,
       current.display_name,
@@ -2704,6 +2788,7 @@ export async function registerPendingPredictionTransaction(input: {
   amount: number;
   txHash: string;
 }) {
+  const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
   const db = await ensureDatabase();
   refreshPredictionRounds(db);
   ensureProfile(db, input.walletAddress);
@@ -2722,7 +2807,7 @@ export async function registerPendingPredictionTransaction(input: {
     };
   }
 
-  const round = ensureRoundState(db, input.pairId, input.label);
+  const round = ensureRoundState(db, canonicalPairId, input.label);
 
   if (round.status !== "open") {
     return {
@@ -2768,7 +2853,7 @@ export async function registerPendingPredictionTransaction(input: {
     `).run(
       `pending-${input.txHash}`,
       round.id,
-      input.pairId,
+      canonicalPairId,
       input.label,
       input.walletAddress,
       current.display_name,
@@ -2786,7 +2871,7 @@ export async function registerPendingPredictionTransaction(input: {
     targetMessageHash: input.txHash,
   });
 
-  const syncedBet = db
+  let syncedBet = db
     .prepare(
       `
       SELECT source_kind
@@ -2800,6 +2885,28 @@ export async function registerPendingPredictionTransaction(input: {
         source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
       }
     | undefined;
+
+  if (syncedBet?.source_kind !== "onchain_sync") {
+    await syncOnchainPredictionTransactions(db, input.walletAddress);
+    syncedBet = db
+      .prepare(
+        `
+        SELECT source_kind
+        FROM prediction_bets
+        WHERE source_message_hash = ?
+           OR chain_tx_hash = ?
+      `,
+      )
+      .get(input.txHash, input.txHash) as
+      | {
+          source_kind:
+            | "offchain"
+            | "wallet_signed"
+            | "pending"
+            | "onchain_sync";
+        }
+      | undefined;
+  }
 
   return {
     result: Boolean(syncedBet),
@@ -2823,7 +2930,7 @@ export async function syncPredictionTransaction(input: {
     targetMessageHash: input.txHash,
   });
 
-  const bet = db
+  let bet = db
     .prepare(
       `
       SELECT source_kind
@@ -2837,6 +2944,28 @@ export async function syncPredictionTransaction(input: {
         source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
       }
     | undefined;
+
+  if (bet?.source_kind !== "onchain_sync") {
+    await syncOnchainPredictionTransactions(db, input.walletAddress);
+    bet = db
+      .prepare(
+        `
+        SELECT source_kind
+        FROM prediction_bets
+        WHERE source_message_hash = ?
+           OR chain_tx_hash = ?
+      `,
+      )
+      .get(input.txHash, input.txHash) as
+      | {
+          source_kind:
+            | "offchain"
+            | "wallet_signed"
+            | "pending"
+            | "onchain_sync";
+        }
+      | undefined;
+  }
 
   return {
     result: Boolean(bet),

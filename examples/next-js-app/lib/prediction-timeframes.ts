@@ -1,3 +1,5 @@
+import { Address } from "@ton/core";
+
 export const PREDICTION_TIMEFRAMES = [
   { id: "5M", minutes: 5, code: 1 },
   { id: "15M", minutes: 15, code: 2 },
@@ -11,6 +13,20 @@ export type PredictionTimeframeId =
 
 const PREDICTION_TIMEFRAME_PREFIX = "prediction:";
 
+export function normalizePredictionContractAddress(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  try {
+    return Address.parse(trimmed).toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 export function isPredictionTimeframeId(
   value: string | null | undefined,
 ): value is PredictionTimeframeId {
@@ -21,7 +37,7 @@ export function buildPredictionTokenMarketId(
   contractAddress: string,
   timeframe: PredictionTimeframeId,
 ) {
-  return `${PREDICTION_TIMEFRAME_PREFIX}${contractAddress}:${timeframe}`;
+  return `${PREDICTION_TIMEFRAME_PREFIX}${normalizePredictionContractAddress(contractAddress)}:${timeframe}`;
 }
 
 export function getPredictionTimeframeMinutes(
@@ -53,9 +69,16 @@ export function parsePredictionTokenMarketId(value: string) {
     return null;
   }
 
+  const normalizedContractAddress =
+    normalizePredictionContractAddress(contractAddress);
+
   return {
-    contractAddress,
+    contractAddress: normalizedContractAddress,
     timeframe,
+    marketId: buildPredictionTokenMarketId(
+      normalizedContractAddress,
+      timeframe,
+    ),
   };
 }
 
@@ -102,12 +125,37 @@ export function parsePredictionTokenRoundId(value: string) {
     return null;
   }
 
+  const normalizedContractAddress =
+    normalizePredictionContractAddress(contractAddress);
+
   return {
-    contractAddress,
+    contractAddress: normalizedContractAddress,
     timeframe,
     roundStartTimestamp,
-    marketId: buildPredictionTokenMarketId(contractAddress, timeframe),
+    marketId: buildPredictionTokenMarketId(
+      normalizedContractAddress,
+      timeframe,
+    ),
   };
+}
+
+export function canonicalizePredictionMarketId(value: string) {
+  const parsed = parsePredictionTokenMarketId(value);
+  return parsed?.marketId ?? value;
+}
+
+export function canonicalizePredictionRoundId(value: string) {
+  const parsed = parsePredictionTokenRoundId(value);
+
+  if (!parsed) {
+    return value;
+  }
+
+  return buildPredictionTokenRoundId(
+    parsed.contractAddress,
+    parsed.timeframe,
+    new Date(parsed.roundStartTimestamp * 1000),
+  );
 }
 
 export function resolvePredictionDurationMinutes(pairId: string) {
