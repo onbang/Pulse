@@ -214,23 +214,57 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
     submissionState === "syncing";
 
   const placePrediction = async (direction: "up" | "down") => {
-    if (
-      !walletAddress ||
-      !predictionEntryAddress ||
-      !isStakeValid ||
-      isSubmitting
-    ) {
+    if (!walletAddress) {
+      tonConnectUI.openModal();
+      toast({
+        title: t("swap.button.connect"),
+        description: t("prediction.connectToVote"),
+      });
+      return;
+    }
+
+    if (!predictionEntryAddress) {
+      toast({
+        title: t("prediction.txFailed"),
+        description: t("prediction.txUnexpectedFailure"),
+      });
+      return;
+    }
+
+    if (!isStakeValid) {
+      toast({
+        title: t("prediction.stakeAmount"),
+        description: t("prediction.enterStakeHint"),
+      });
+      return;
+    }
+
+    if (isSubmitting) {
       return;
     }
 
     try {
       setSubmissionState("sending");
-      const message = buildPredictionTransferMessage({
-        pairId: props.pairId,
-        label: props.pairLabel,
-        direction,
-        amountTon: numericStake,
-      });
+      let message;
+
+      try {
+        message = buildPredictionTransferMessage({
+          pairId: props.pairId,
+          label: props.pairLabel,
+          direction,
+          amountTon: numericStake,
+        });
+      } catch (error) {
+        setSubmissionState("failed");
+        toast({
+          title: t("prediction.txFailed"),
+          description:
+            error instanceof Error && error.message
+              ? error.message
+              : t("prediction.txUnexpectedFailure"),
+        });
+        return;
+      }
 
       const txResult = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
@@ -356,12 +390,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
       <div className="grid gap-2 sm:grid-cols-2">
         <Button
           variant="outline"
-          disabled={
-            !walletAddress ||
-            !predictionEntryAddress ||
-            !isStakeValid ||
-            isSubmitting
-          }
+          disabled={isSubmitting}
           className="rounded-2xl border-emerald-200 bg-emerald-50 text-slate-900 hover:bg-emerald-100"
           onClick={() => void placePrediction("up")}
         >
@@ -369,12 +398,7 @@ function PoolQuickPrediction(props: { pairId: string; pairLabel: string }) {
         </Button>
         <Button
           variant="outline"
-          disabled={
-            !walletAddress ||
-            !predictionEntryAddress ||
-            !isStakeValid ||
-            isSubmitting
-          }
+          disabled={isSubmitting}
           className="rounded-2xl border-rose-200 bg-rose-50 text-slate-900 hover:bg-rose-100"
           onClick={() => void placePrediction("down")}
         >

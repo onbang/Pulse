@@ -187,6 +187,21 @@ export function PricePredictionCard(props: {
     !hasPendingConfirmation &&
     !!predictionEntryAddress &&
     (isRoundOpen || canAutoReopenRound);
+  const predictionUnavailableReason = !walletAddress
+    ? "wallet"
+    : !predictionEntryAddress
+      ? "entry"
+      : !isStakeValid
+        ? "stake"
+        : hasPendingConfirmation
+          ? "pending"
+          : !(isRoundOpen || canAutoReopenRound)
+            ? "round"
+            : submissionState === "sending" ||
+                submissionState === "waiting_confirmation" ||
+                submissionState === "syncing"
+              ? "submitting"
+              : null;
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - Date.now(), 0)
     : 0;
@@ -235,7 +250,54 @@ export function PricePredictionCard(props: {
               : null;
 
   const placePrediction = async (direction: "up" | "down") => {
-    if (!canPlacePrediction) {
+    if (!walletAddress) {
+      tonConnectUI.openModal();
+      toast({
+        title: t("swap.button.connect"),
+        description: t("prediction.connectToVote"),
+      });
+      return;
+    }
+
+    if (!predictionEntryAddress) {
+      toast({
+        title: t("prediction.txFailed"),
+        description: t("prediction.txUnexpectedFailure"),
+      });
+      return;
+    }
+
+    if (!isStakeValid) {
+      toast({
+        title: t("prediction.stakeAmount"),
+        description: t("prediction.enterStakeHint"),
+      });
+      return;
+    }
+
+    if (hasPendingConfirmation) {
+      toast({
+        title: t("prediction.txPendingTitle"),
+        description: t("prediction.txPendingBody", {
+          amount: numericStake.toFixed(2),
+        }),
+      });
+      return;
+    }
+
+    if (!(isRoundOpen || canAutoReopenRound)) {
+      toast({
+        title: t("prediction.awaitingSettlement"),
+        description: t("prediction.settleBody"),
+      });
+      return;
+    }
+
+    if (
+      submissionState === "sending" ||
+      submissionState === "waiting_confirmation" ||
+      submissionState === "syncing"
+    ) {
       return;
     }
 
@@ -248,12 +310,26 @@ export function PricePredictionCard(props: {
 
     try {
       setSubmissionState("sending");
-      const message = buildPredictionTransferMessage({
-        pairId: props.pairId,
-        label: props.label,
-        direction,
-        amountTon: numericStake,
-      });
+      let message;
+
+      try {
+        message = buildPredictionTransferMessage({
+          pairId: props.pairId,
+          label: props.label,
+          direction,
+          amountTon: numericStake,
+        });
+      } catch (error) {
+        setSubmissionState("failed");
+        toast({
+          title: t("prediction.txFailed"),
+          description:
+            error instanceof Error && error.message
+              ? error.message
+              : t("prediction.txUnexpectedFailure"),
+        });
+        return;
+      }
 
       let messageHash: string | undefined;
 
@@ -491,7 +567,7 @@ export function PricePredictionCard(props: {
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Button
               variant="outline"
-              disabled={!canPlacePrediction}
+              disabled={predictionUnavailableReason === "submitting"}
               className="h-auto min-h-[168px] flex-col items-start rounded-[28px] border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.95),rgba(220,252,231,0.86))] p-5 text-left text-slate-900 hover:bg-emerald-100"
               onClick={() => void placePrediction("up")}
             >
@@ -534,7 +610,7 @@ export function PricePredictionCard(props: {
             </Button>
             <Button
               variant="outline"
-              disabled={!canPlacePrediction}
+              disabled={predictionUnavailableReason === "submitting"}
               className="h-auto min-h-[168px] flex-col items-start rounded-[28px] border-rose-200 bg-[linear-gradient(180deg,rgba(255,241,242,0.96),rgba(255,228,230,0.88))] p-5 text-left text-slate-900 hover:bg-rose-100"
               onClick={() => void placePrediction("down")}
             >
