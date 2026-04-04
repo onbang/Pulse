@@ -1,4 +1,12 @@
 export type PredictionDirection = "up" | "down";
+export type TonForecastDirection = "yes" | "no";
+export type TonForecastMarketStatus =
+  | "pending"
+  | "open"
+  | "locked"
+  | "resolved_yes"
+  | "resolved_no"
+  | "resolved_draw";
 
 export type PredictionMessageSource = "machine" | "legacy";
 
@@ -76,4 +84,23 @@ export type ParsedPredictionContractPayload =
       tokenAddress: string;
       timeframeCode: number;
       roundStartTimestamp: number;
+    };
+
+export type ParsedTonForecastContractPayload =
+  | {
+      type: "bet_yes";
+    }
+  | {
+      type: "bet_no";
+    }
+  | {
+      type: "lock_market";
+    }
+  | {
+      type: "resolve_market";
+      finalPriceE9: number;
+      resolvedAt: number;
+    }
+  | {
+      type: "claim_reward";
     };

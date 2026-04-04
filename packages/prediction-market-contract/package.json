@@ -9,6 +9,7 @@
     "directory": "packages/prediction-market-contract"
   },
   "files": [
+    "build",
     "contracts",
     "wrappers",
     "scripts",
@@ -16,8 +17,19 @@
     "package.json",
     "README.md"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./pulse-prediction-market": {
+      "types": "./build/PulsePredictionMarket/tact_PulsePredictionMarket.d.ts",
+      "default": "./build/PulsePredictionMarket/tact_PulsePredictionMarket.js"
+    },
+    "./ton-forecast-market": {
+      "types": "./build/TonForecastMarket/tact_TonForecastMarket.d.ts",
+      "default": "./build/TonForecastMarket/tact_TonForecastMarket.js"
+    }
+  },
   "scripts": {
-    "build": "blueprint build && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration false --outDir build/PulsePredictionMarket",
+    "build": "blueprint build PulsePredictionMarket && blueprint build TonForecastMarket && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/PulsePredictionMarket && pnpm exec tsc build/TonForecastMarket/tact_TonForecastMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/TonForecastMarket",
     "lint": "tsc --noEmit --pretty",
     "deploy": "blueprint run deployPulsePredictionMarket",
     "close-round": "blueprint run closePredictionRound",

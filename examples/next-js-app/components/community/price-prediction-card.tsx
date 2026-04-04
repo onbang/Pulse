@@ -31,10 +31,71 @@ type PredictionSubmissionState =
   | "synced"
   | "failed";
 
+type ForecastTonConnectMessage = {
+  address: string;
+  amount: string;
+  payload?: string;
+  stateInit?: string;
+};
+
+type ForecastMarketSummary = {
+  contractAddress: string;
+  pairId: string;
+  label: string;
+  tokenAddress: string;
+  tokenSymbol: string;
+  timeframeId: string;
+  timeframeSeconds: number;
+  thresholdBps: number;
+  referencePriceE9: number;
+  createdAt: string;
+  closeTime: string;
+  status: string;
+  finalPriceE9: number | null;
+  resolvedAt: string | null;
+};
+
+type ForecastIntentResponse = {
+  ok: boolean;
+  reason?: string;
+  market?: ForecastMarketSummary | null;
+  tonConnect?: {
+    validUntil: number;
+    messages: ForecastTonConnectMessage[];
+  };
+  syncCursor?: string;
+};
+
+type ForecastSyncResponse = {
+  result: boolean;
+  syncStatus: "pending" | "confirmed" | "missing";
+  market?: ForecastMarketSummary | null;
+};
+
 function wait(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      "content-type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(payload?.error || `Request failed: ${url}`);
+  }
+
+  return (await response.json()) as T;
 }
 
 export function PricePredictionCard(props: {
@@ -57,6 +118,7 @@ export function PricePredictionCard(props: {
     syncPredictionTransaction,
     settlePredictionRound,
     walletAddress,
+    refresh,
   } = useCommunityProfile();
   const stakeAmount = props.stakeAmount ?? internalStakeAmount;
   const setStakeAmount = props.onStakeAmountChange ?? setInternalStakeAmount;
@@ -172,12 +234,16 @@ export function PricePredictionCard(props: {
   const isDisabled = props.disabled || !walletAddress;
   const upOdds = upPool > 0 ? totalPool / upPool : 0;
   const downOdds = downPool > 0 ? totalPool / downPool : 0;
+  const parsedMarket = parsePredictionTokenMarketId(props.pairId);
   const isRoundOpen = round?.status === "open";
   const isRoundClosed = round?.status === "closed";
   const isRoundSettled = round?.status === "settled";
   const predictionEntryAddress = getPredictionEntryAddress();
   const isTokenPrediction = props.pairId.startsWith("prediction:");
   const canAutoReopenRound = isTokenPrediction && (!round || isRoundSettled);
+  const hasPredictionTransport = isTokenPrediction
+    ? Boolean(parsedMarket)
+    : Boolean(predictionEntryAddress);
   const canPlacePrediction =
     !isDisabled &&
     isStakeValid &&
@@ -185,11 +251,11 @@ export function PricePredictionCard(props: {
     submissionState !== "waiting_confirmation" &&
     submissionState !== "syncing" &&
     !hasPendingConfirmation &&
-    !!predictionEntryAddress &&
+    hasPredictionTransport &&
     (isRoundOpen || canAutoReopenRound);
   const predictionUnavailableReason = !walletAddress
     ? "wallet"
-    : !predictionEntryAddress
+    : !hasPredictionTransport
       ? "entry"
       : !isStakeValid
         ? "stake"
@@ -228,7 +294,6 @@ export function PricePredictionCard(props: {
       : downOdds;
   const upSplitWidth = totalPool > 0 ? upShare : 50;
   const downSplitWidth = totalPool > 0 ? downShare : 50;
-  const parsedMarket = parsePredictionTokenMarketId(props.pairId);
   const [tokenLabelPart, timeframeLabelPart] = props.label
     .split("•")
     .map((part) => part.trim());
@@ -257,6 +322,192 @@ export function PricePredictionCard(props: {
         description: t("prediction.connectToVote"),
       });
       return;
+    }
+
+    if (isTokenPrediction) {
+      if (!parsedMarket) {
+        toast({
+          title: t("prediction.txFailed"),
+          description: t("prediction.txUnexpectedFailure"),
+        });
+        return;
+      }
+
+      if (!isStakeValid) {
+        toast({
+          title: t("prediction.stakeAmount"),
+          description: t("prediction.enterStakeHint"),
+        });
+        return;
+      }
+
+      if (hasPendingConfirmation) {
+        toast({
+          title: t("prediction.txPendingTitle"),
+          description: t("prediction.txPendingBody", {
+            amount: numericStake.toFixed(2),
+          }),
+        });
+        return;
+      }
+
+      if (isRoundClosed) {
+        toast({
+          title: t("prediction.awaitingSettlement"),
+          description: t("prediction.settleBody"),
+        });
+        return;
+      }
+
+      if (
+        submissionState === "sending" ||
+        submissionState === "waiting_confirmation" ||
+        submissionState === "syncing"
+      ) {
+        return;
+      }
+
+      try {
+        setSubmissionState("sending");
+
+        const endpointOrder = canAutoReopenRound
+          ? (["create", "bet"] as const)
+          : (["bet", "create"] as const);
+        let intent: ForecastIntentResponse | null = null;
+
+        for (const endpoint of endpointOrder) {
+          if (endpoint === "create") {
+            const response = await requestJson<ForecastIntentResponse>(
+              "/api/forecast-markets/create-intent",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  walletAddress,
+                  tokenAddress: parsedMarket.contractAddress,
+                  timeframeId: parsedMarket.timeframe,
+                  direction,
+                  amountTon: numericStake,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              intent = response;
+              break;
+            }
+
+            if (response.reason !== "active_market_exists") {
+              continue;
+            }
+          } else {
+            const response = await requestJson<ForecastIntentResponse>(
+              "/api/forecast-markets/bet-intent",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  walletAddress,
+                  pairId: props.pairId,
+                  direction,
+                  amountTon: numericStake,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              intent = response;
+              break;
+            }
+          }
+        }
+
+        if (!intent?.ok || !intent.tonConnect || !intent.market) {
+          setSubmissionState("failed");
+          toast({
+            title: t("prediction.txFailed"),
+            description: t("prediction.roundPendingBody"),
+          });
+          return;
+        }
+
+        try {
+          await tonConnectUI.sendTransaction({
+            validUntil: intent.tonConnect.validUntil,
+            messages: intent.tonConnect.messages,
+          });
+        } catch {
+          setSubmissionState("failed");
+          toast({
+            title: t("prediction.txFailed"),
+            description: t("prediction.txFailedBody"),
+          });
+          return;
+        }
+
+        setSubmissionState("waiting_confirmation");
+
+        let syncStatus: "pending" | "confirmed" | "missing" = "pending";
+
+        for (let attempt = 0; attempt < 20; attempt += 1) {
+          await wait(2500);
+
+          try {
+            const syncResponse = await requestJson<ForecastSyncResponse>(
+              "/api/forecast-markets/sync",
+              {
+                method: "PUT",
+                body: JSON.stringify({
+                  walletAddress,
+                  pairId: props.pairId,
+                  marketAddress: intent.market.contractAddress,
+                  syncCursor: intent.syncCursor,
+                }),
+              },
+            );
+
+            syncStatus = syncResponse.syncStatus;
+          } catch {
+            syncStatus = "pending";
+          }
+
+          if (syncStatus === "confirmed") {
+            break;
+          }
+        }
+
+        if (syncStatus === "confirmed") {
+          setSubmissionState("syncing");
+          await refresh();
+          setSubmissionState("synced");
+          toast({
+            title: t("prediction.txSyncedTitle"),
+            description: t("prediction.txSyncedBody", {
+              amount: numericStake.toFixed(2),
+            }),
+          });
+          setStakeAmount("10");
+          window.setTimeout(() => setSubmissionState("idle"), 1800);
+          return;
+        }
+
+        setSubmissionState("waiting_confirmation");
+        toast({
+          title: t("prediction.txPendingTitle"),
+          description: t("prediction.txPendingBody", {
+            amount: numericStake.toFixed(2),
+          }),
+        });
+        return;
+      } catch (error) {
+        setSubmissionState("failed");
+        toast({
+          title: t("prediction.txFailed"),
+          description:
+            error instanceof Error && error.message
+              ? error.message
+              : t("prediction.txUnexpectedFailure"),
+        });
+        return;
+      }
     }
 
     if (!predictionEntryAddress) {
@@ -916,7 +1167,7 @@ export function PricePredictionCard(props: {
           <p className="text-sm text-slate-500">
             {t("prediction.connectToVote")}
           </p>
-        ) : !predictionEntryAddress ? (
+        ) : !hasPredictionTransport ? (
           <p className="text-sm text-amber-600">
             {t("prediction.treasuryMissing")}
           </p>

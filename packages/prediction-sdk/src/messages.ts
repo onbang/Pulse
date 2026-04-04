@@ -11,6 +11,7 @@ import {
   PREDICTION_OP_SETTLE_ROUND,
 } from "./opcodes";
 import type {
+  ParsedTonForecastContractPayload,
   ParsedPredictionContractPayload,
   PredictionClaimInput,
   PredictionCloseRoundInput,
@@ -18,7 +19,14 @@ import type {
   PredictionBetTransferInput,
   PredictionDirection,
   PredictionSettleRoundInput,
+  TonForecastDirection,
 } from "./types";
+
+const TON_FORECAST_OP_BET_YES = 1413896497;
+const TON_FORECAST_OP_BET_NO = 1413893681;
+const TON_FORECAST_OP_LOCK_MARKET = 1413893169;
+const TON_FORECAST_OP_RESOLVE_MARKET = 1413894705;
+const TON_FORECAST_OP_CLAIM_REWARD = 1413890865;
 
 export function resolvePredictionTreasuryAddress(value?: string | null) {
   return value?.trim() || DEFAULT_PREDICTION_TREASURY_ADDRESS;
@@ -341,6 +349,110 @@ export function parsePredictionContractPayloadBase64(
             roundStartTimestamp,
           }
         : null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildTonForecastBetPayloadBase64(
+  direction: TonForecastDirection,
+) {
+  return beginCell()
+    .storeUint(
+      direction === "yes" ? TON_FORECAST_OP_BET_YES : TON_FORECAST_OP_BET_NO,
+      32,
+    )
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildTonForecastBetTransferMessage(input: {
+  contractAddress: string;
+  direction: TonForecastDirection;
+  amountTon: number | string;
+}) {
+  const numericAmount =
+    typeof input.amountTon === "string"
+      ? Number(input.amountTon)
+      : input.amountTon;
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    throw new Error("Forecast stake amount must be a positive TON value.");
+  }
+
+  return {
+    address: input.contractAddress,
+    amount: toNano(numericAmount).toString(),
+    payload: buildTonForecastBetPayloadBase64(input.direction),
+  };
+}
+
+export function buildTonForecastLockPayloadBase64() {
+  return beginCell()
+    .storeUint(TON_FORECAST_OP_LOCK_MARKET, 32)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildTonForecastResolvePayloadBase64(input: {
+  finalPriceE9: number;
+  resolvedAt: number;
+}) {
+  return beginCell()
+    .storeUint(TON_FORECAST_OP_RESOLVE_MARKET, 32)
+    .storeUint(input.finalPriceE9, 64)
+    .storeUint(input.resolvedAt, 32)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function buildTonForecastClaimPayloadBase64() {
+  return beginCell()
+    .storeUint(TON_FORECAST_OP_CLAIM_REWARD, 32)
+    .endCell()
+    .toBoc()
+    .toString("base64");
+}
+
+export function parseTonForecastPayloadBase64(
+  value?: string | null,
+): ParsedTonForecastContractPayload | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const slice = Cell.fromBase64(value).beginParse();
+    const opcode = slice.loadUint(32);
+
+    if (opcode === TON_FORECAST_OP_BET_YES) {
+      return { type: "bet_yes" };
+    }
+
+    if (opcode === TON_FORECAST_OP_BET_NO) {
+      return { type: "bet_no" };
+    }
+
+    if (opcode === TON_FORECAST_OP_LOCK_MARKET) {
+      return { type: "lock_market" };
+    }
+
+    if (opcode === TON_FORECAST_OP_RESOLVE_MARKET) {
+      return {
+        type: "resolve_market",
+        finalPriceE9: Number(slice.loadUintBig(64)),
+        resolvedAt: Number(slice.loadUintBig(32)),
+      };
+    }
+
+    if (opcode === TON_FORECAST_OP_CLAIM_REWARD) {
+      return { type: "claim_reward" };
     }
 
     return null;

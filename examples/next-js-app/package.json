@@ -19,6 +19,7 @@
     "@radix-ui/react-switch": "1.2.5",
     "@radix-ui/react-toast": "1.2.13",
     "@ston-fi/api": "0.29.0",
+    "@ston-pulse/prediction-market-contract": "workspace:*",
     "@ston-pulse/prediction-sdk": "workspace:*",
     "@ston-fi/sdk": "2.7.0",
     "@ston-fi/stake-sdk": "1.3.1",
