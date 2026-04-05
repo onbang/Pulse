@@ -26,10 +26,6 @@ struct MarketState {
     resolver: Address;
     treasury: Address;
     token: Address;
-    tokenSymbol: String;
-    marketId: String;
-    marketTitle: String;
-    timeframeId: String;
     timeframeSeconds: Int as uint32;
     thresholdBps: Int as uint16;
     referencePriceE9: Int as uint64;
@@ -48,10 +44,6 @@ contract TonForecastMarket {
     resolver: Address;
     treasury: Address;
     token: Address;
-    tokenSymbol: String;
-    marketId: String;
-    marketTitle: String;
-    timeframeId: String;
     timeframeSeconds: Int as uint32;
     thresholdBps: Int as uint16;
     referencePriceE9: Int as uint64;
@@ -71,10 +63,6 @@ contract TonForecastMarket {
         resolver: Address,
         treasury: Address,
         token: Address,
-        tokenSymbol: String,
-        marketId: String,
-        marketTitle: String,
-        timeframeId: String,
         timeframeSeconds: Int,
         thresholdBps: Int,
         referencePriceE9: Int,
@@ -91,10 +79,6 @@ contract TonForecastMarket {
         self.resolver = resolver;
         self.treasury = treasury;
         self.token = token;
-        self.tokenSymbol = tokenSymbol;
-        self.marketId = marketId;
-        self.marketTitle = marketTitle;
-        self.timeframeId = timeframeId;
         self.timeframeSeconds = timeframeSeconds;
         self.thresholdBps = thresholdBps;
         self.referencePriceE9 = referencePriceE9;
@@ -271,10 +255,6 @@ contract TonForecastMarket {
             resolver: self.resolver,
             treasury: self.treasury,
             token: self.token,
-            tokenSymbol: self.tokenSymbol,
-            marketId: self.marketId,
-            marketTitle: self.marketTitle,
-            timeframeId: self.timeframeId,
             timeframeSeconds: self.timeframeSeconds,
             thresholdBps: self.thresholdBps,
             referencePriceE9: self.referencePriceE9,

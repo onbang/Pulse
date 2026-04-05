@@ -133,23 +133,6 @@ function createForecastPairLabel(tokenSymbol: string, timeframeId: string) {
   return `${tokenSymbol} • ${timeframeId}`;
 }
 
-function createForecastMarketTitle(tokenSymbol: string, timeframeId: string) {
-  return `${tokenSymbol} ${timeframeId} forecast`;
-}
-
-function createForecastMarketId(input: {
-  tokenAddress: string;
-  timeframeId: PredictionTimeframeId;
-  createdAtUnix: number;
-}) {
-  return [
-    "forecast",
-    normalizeTonAddress(input.tokenAddress),
-    input.timeframeId,
-    input.createdAtUnix,
-  ].join(":");
-}
-
 function toUnixSeconds(value: string) {
   return Math.floor(new Date(value).getTime() / 1000);
 }
@@ -171,24 +154,11 @@ async function buildPendingForecastDeployBetIntent(input: {
 
   const createdAtUnix = toUnixSeconds(input.market.created_at);
   const closeTimeUnix = toUnixSeconds(input.market.close_time);
-  const marketId = createForecastMarketId({
-    tokenAddress: input.market.token_address,
-    timeframeId: input.market.timeframe_id,
-    createdAtUnix,
-  });
-  const marketTitle = createForecastMarketTitle(
-    input.market.token_symbol,
-    input.market.timeframe_id,
-  );
   const contract = await TonForecastMarket.fromInit(
     Address.parse(input.market.owner_address),
     Address.parse(input.market.resolver_address),
     Address.parse(input.market.treasury_address),
     Address.parse(input.market.token_address),
-    input.market.token_symbol,
-    marketId,
-    marketTitle,
-    input.market.timeframe_id,
     BigInt(input.market.timeframe_seconds),
     BigInt(input.market.threshold_bps),
     BigInt(input.market.reference_price_e9),
@@ -1787,25 +1757,12 @@ export async function createForecastMarketIntent(input: {
     context.tokenSymbol,
     input.timeframeId,
   );
-  const marketTitle = createForecastMarketTitle(
-    context.tokenSymbol,
-    input.timeframeId,
-  );
-  const marketId = createForecastMarketId({
-    tokenAddress,
-    timeframeId: input.timeframeId,
-    createdAtUnix,
-  });
   const resolverAddress = await resolveForecastResolverAddress(walletAddress);
   const contract = await TonForecastMarket.fromInit(
     Address.parse(walletAddress),
     Address.parse(resolverAddress),
     Address.parse(getForecastTreasuryAddress()),
     Address.parse(tokenAddress),
-    context.tokenSymbol,
-    marketId,
-    marketTitle,
-    input.timeframeId,
     BigInt(timeframeSeconds),
     BigInt(thresholdBps),
     BigInt(context.currentPriceE9),

@@ -1139,10 +1139,6 @@ export type MarketState = {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -1164,10 +1160,6 @@ export function storeMarketState(src: MarketState) {
     b_0.storeAddress(src.treasury);
     const b_1 = new Builder();
     b_1.storeAddress(src.token);
-    b_1.storeStringRefTail(src.tokenSymbol);
-    b_1.storeStringRefTail(src.marketId);
-    b_1.storeStringRefTail(src.marketTitle);
-    b_1.storeStringRefTail(src.timeframeId);
     b_1.storeUint(src.timeframeSeconds, 32);
     b_1.storeUint(src.thresholdBps, 16);
     b_1.storeUint(src.referencePriceE9, 64);
@@ -1190,10 +1182,6 @@ export function loadMarketState(slice: Slice) {
   const _treasury = sc_0.loadAddress();
   const sc_1 = sc_0.loadRef().beginParse();
   const _token = sc_1.loadAddress();
-  const _tokenSymbol = sc_1.loadStringRefTail();
-  const _marketId = sc_1.loadStringRefTail();
-  const _marketTitle = sc_1.loadStringRefTail();
-  const _timeframeId = sc_1.loadStringRefTail();
   const _timeframeSeconds = sc_1.loadUintBig(32);
   const _thresholdBps = sc_1.loadUintBig(16);
   const _referencePriceE9 = sc_1.loadUintBig(64);
@@ -1211,10 +1199,6 @@ export function loadMarketState(slice: Slice) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1234,17 +1218,12 @@ export function loadTupleMarketState(source: TupleReader) {
   const _resolver = source.readAddress();
   const _treasury = source.readAddress();
   const _token = source.readAddress();
-  const _tokenSymbol = source.readString();
-  const _marketId = source.readString();
-  const _marketTitle = source.readString();
-  const _timeframeId = source.readString();
   const _timeframeSeconds = source.readBigNumber();
   const _thresholdBps = source.readBigNumber();
   const _referencePriceE9 = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
   const _createdAt = source.readBigNumber();
   const _closeTime = source.readBigNumber();
-  source = source.readTuple();
   const _status = source.readBigNumber();
   const _resolvedAt = source.readBigNumber();
   const _finalPriceE9 = source.readBigNumber();
@@ -1256,10 +1235,6 @@ export function loadTupleMarketState(source: TupleReader) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1279,10 +1254,6 @@ export function loadGetterTupleMarketState(source: TupleReader) {
   const _resolver = source.readAddress();
   const _treasury = source.readAddress();
   const _token = source.readAddress();
-  const _tokenSymbol = source.readString();
-  const _marketId = source.readString();
-  const _marketTitle = source.readString();
-  const _timeframeId = source.readString();
   const _timeframeSeconds = source.readBigNumber();
   const _thresholdBps = source.readBigNumber();
   const _referencePriceE9 = source.readBigNumber();
@@ -1300,10 +1271,6 @@ export function loadGetterTupleMarketState(source: TupleReader) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1324,10 +1291,6 @@ export function storeTupleMarketState(source: MarketState) {
   builder.writeAddress(source.resolver);
   builder.writeAddress(source.treasury);
   builder.writeAddress(source.token);
-  builder.writeString(source.tokenSymbol);
-  builder.writeString(source.marketId);
-  builder.writeString(source.marketTitle);
-  builder.writeString(source.timeframeId);
   builder.writeNumber(source.timeframeSeconds);
   builder.writeNumber(source.thresholdBps);
   builder.writeNumber(source.referencePriceE9);
@@ -1359,10 +1322,6 @@ export type TonForecastMarket$Data = {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -1385,28 +1344,22 @@ export function storeTonForecastMarket$Data(src: TonForecastMarket$Data) {
     b_0.storeAddress(src.treasury);
     const b_1 = new Builder();
     b_1.storeAddress(src.token);
-    b_1.storeStringRefTail(src.tokenSymbol);
-    b_1.storeStringRefTail(src.marketId);
-    b_1.storeStringRefTail(src.marketTitle);
-    const b_2 = new Builder();
-    b_2.storeStringRefTail(src.timeframeId);
-    b_2.storeUint(src.timeframeSeconds, 32);
-    b_2.storeUint(src.thresholdBps, 16);
-    b_2.storeUint(src.referencePriceE9, 64);
-    b_2.storeUint(src.protocolFeeBps, 16);
-    b_2.storeUint(src.createdAt, 32);
-    b_2.storeUint(src.closeTime, 32);
-    b_2.storeUint(src.status, 8);
-    b_2.storeUint(src.resolvedAt, 32);
-    b_2.storeUint(src.finalPriceE9, 64);
-    b_2.storeCoins(src.totalYes);
-    b_2.storeCoins(src.totalNo);
-    b_2.storeDict(
+    b_1.storeUint(src.timeframeSeconds, 32);
+    b_1.storeUint(src.thresholdBps, 16);
+    b_1.storeUint(src.referencePriceE9, 64);
+    b_1.storeUint(src.protocolFeeBps, 16);
+    b_1.storeUint(src.createdAt, 32);
+    b_1.storeUint(src.closeTime, 32);
+    b_1.storeUint(src.status, 8);
+    b_1.storeUint(src.resolvedAt, 32);
+    b_1.storeUint(src.finalPriceE9, 64);
+    b_1.storeCoins(src.totalYes);
+    b_1.storeCoins(src.totalNo);
+    b_1.storeDict(
       src.positions,
       Dictionary.Keys.BigUint(256),
       dictValueParserPosition(),
     );
-    b_1.storeRef(b_2.endCell());
     b_0.storeRef(b_1.endCell());
   };
 }
@@ -1418,26 +1371,21 @@ export function loadTonForecastMarket$Data(slice: Slice) {
   const _treasury = sc_0.loadAddress();
   const sc_1 = sc_0.loadRef().beginParse();
   const _token = sc_1.loadAddress();
-  const _tokenSymbol = sc_1.loadStringRefTail();
-  const _marketId = sc_1.loadStringRefTail();
-  const _marketTitle = sc_1.loadStringRefTail();
-  const sc_2 = sc_1.loadRef().beginParse();
-  const _timeframeId = sc_2.loadStringRefTail();
-  const _timeframeSeconds = sc_2.loadUintBig(32);
-  const _thresholdBps = sc_2.loadUintBig(16);
-  const _referencePriceE9 = sc_2.loadUintBig(64);
-  const _protocolFeeBps = sc_2.loadUintBig(16);
-  const _createdAt = sc_2.loadUintBig(32);
-  const _closeTime = sc_2.loadUintBig(32);
-  const _status = sc_2.loadUintBig(8);
-  const _resolvedAt = sc_2.loadUintBig(32);
-  const _finalPriceE9 = sc_2.loadUintBig(64);
-  const _totalYes = sc_2.loadCoins();
-  const _totalNo = sc_2.loadCoins();
+  const _timeframeSeconds = sc_1.loadUintBig(32);
+  const _thresholdBps = sc_1.loadUintBig(16);
+  const _referencePriceE9 = sc_1.loadUintBig(64);
+  const _protocolFeeBps = sc_1.loadUintBig(16);
+  const _createdAt = sc_1.loadUintBig(32);
+  const _closeTime = sc_1.loadUintBig(32);
+  const _status = sc_1.loadUintBig(8);
+  const _resolvedAt = sc_1.loadUintBig(32);
+  const _finalPriceE9 = sc_1.loadUintBig(64);
+  const _totalYes = sc_1.loadCoins();
+  const _totalNo = sc_1.loadCoins();
   const _positions = Dictionary.load(
     Dictionary.Keys.BigUint(256),
     dictValueParserPosition(),
-    sc_2,
+    sc_1,
   );
   return {
     $$type: "TonForecastMarket$Data" as const,
@@ -1445,10 +1393,6 @@ export function loadTonForecastMarket$Data(slice: Slice) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1469,21 +1413,17 @@ export function loadTupleTonForecastMarket$Data(source: TupleReader) {
   const _resolver = source.readAddress();
   const _treasury = source.readAddress();
   const _token = source.readAddress();
-  const _tokenSymbol = source.readString();
-  const _marketId = source.readString();
-  const _marketTitle = source.readString();
-  const _timeframeId = source.readString();
   const _timeframeSeconds = source.readBigNumber();
   const _thresholdBps = source.readBigNumber();
   const _referencePriceE9 = source.readBigNumber();
   const _protocolFeeBps = source.readBigNumber();
   const _createdAt = source.readBigNumber();
   const _closeTime = source.readBigNumber();
-  source = source.readTuple();
   const _status = source.readBigNumber();
   const _resolvedAt = source.readBigNumber();
   const _finalPriceE9 = source.readBigNumber();
   const _totalYes = source.readBigNumber();
+  source = source.readTuple();
   const _totalNo = source.readBigNumber();
   const _positions = Dictionary.loadDirect(
     Dictionary.Keys.BigUint(256),
@@ -1496,10 +1436,6 @@ export function loadTupleTonForecastMarket$Data(source: TupleReader) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1520,10 +1456,6 @@ export function loadGetterTupleTonForecastMarket$Data(source: TupleReader) {
   const _resolver = source.readAddress();
   const _treasury = source.readAddress();
   const _token = source.readAddress();
-  const _tokenSymbol = source.readString();
-  const _marketId = source.readString();
-  const _marketTitle = source.readString();
-  const _timeframeId = source.readString();
   const _timeframeSeconds = source.readBigNumber();
   const _thresholdBps = source.readBigNumber();
   const _referencePriceE9 = source.readBigNumber();
@@ -1546,10 +1478,6 @@ export function loadGetterTupleTonForecastMarket$Data(source: TupleReader) {
     resolver: _resolver,
     treasury: _treasury,
     token: _token,
-    tokenSymbol: _tokenSymbol,
-    marketId: _marketId,
-    marketTitle: _marketTitle,
-    timeframeId: _timeframeId,
     timeframeSeconds: _timeframeSeconds,
     thresholdBps: _thresholdBps,
     referencePriceE9: _referencePriceE9,
@@ -1573,10 +1501,6 @@ export function storeTupleTonForecastMarket$Data(
   builder.writeAddress(source.resolver);
   builder.writeAddress(source.treasury);
   builder.writeAddress(source.token);
-  builder.writeString(source.tokenSymbol);
-  builder.writeString(source.marketId);
-  builder.writeString(source.marketTitle);
-  builder.writeString(source.timeframeId);
   builder.writeNumber(source.timeframeSeconds);
   builder.writeNumber(source.thresholdBps);
   builder.writeNumber(source.referencePriceE9);
@@ -1621,10 +1545,6 @@ type TonForecastMarket_init_args = {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -1641,17 +1561,13 @@ function initTonForecastMarket_init_args(src: TonForecastMarket_init_args) {
     b_0.storeAddress(src.treasury);
     const b_1 = new Builder();
     b_1.storeAddress(src.token);
-    b_1.storeStringRefTail(src.tokenSymbol);
-    b_1.storeStringRefTail(src.marketId);
-    b_1.storeStringRefTail(src.marketTitle);
+    b_1.storeInt(src.timeframeSeconds, 257);
+    b_1.storeInt(src.thresholdBps, 257);
     const b_2 = new Builder();
-    b_2.storeStringRefTail(src.timeframeId);
-    b_2.storeInt(src.timeframeSeconds, 257);
-    b_2.storeInt(src.thresholdBps, 257);
     b_2.storeInt(src.referencePriceE9, 257);
+    b_2.storeInt(src.protocolFeeBps, 257);
+    b_2.storeInt(src.createdAt, 257);
     const b_3 = new Builder();
-    b_3.storeInt(src.protocolFeeBps, 257);
-    b_3.storeInt(src.createdAt, 257);
     b_3.storeInt(src.closeTime, 257);
     b_2.storeRef(b_3.endCell());
     b_1.storeRef(b_2.endCell());
@@ -1664,10 +1580,6 @@ async function TonForecastMarket_init(
   resolver: Address,
   treasury: Address,
   token: Address,
-  tokenSymbol: string,
-  marketId: string,
-  marketTitle: string,
-  timeframeId: string,
   timeframeSeconds: bigint,
   thresholdBps: bigint,
   referencePriceE9: bigint,
@@ -1676,7 +1588,7 @@ async function TonForecastMarket_init(
   closeTime: bigint,
 ) {
   const __code = Cell.fromHex(
-    "b5ee9c7241022101000abb00022cff008e88f4a413f4bcf2c80bed53208e8130e1ed43d901060205946ac0020403bba023b513434800063abb6cf03b4554320802812c9b0803cbd205f680970bffcbd2058588930803cbd208025e494c4af3cbd1c151c00081b78c34444c4450444c4448444c44484444444844444440444444403c44403d543b6cf1b3cdb14e0708030166db3c8307220259f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e21703dfa3a7b513434800063abb6cf03b4554320802812c9b0803cbd205f680970bffcbd2058588930803cbd208025e494c4af3cbd1c151c00081b78c376cf15c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c4d5c515c484440444444403c44403d543a070805004c561356135613561356135613561356135613561356135613561356135613561356135613561304f401d072d721d200d200fa4021103450666f04f86102f862ed44d0d200018eaedb3c0ed1550c8200a04b26c200f2f4817da025c2fff2f481616224c200f2f4820097925312bcf2f470547000206de30d1115945f0f5f06e0705614d74920c21f97311114d31f1115de21821054465931bae30221821054464e31ba0708090a008cfa40fa40fa40d401d0fa40d401d001d401d001d401d001d430d0d401d001810101d700810101d700810101d700d430d0810101d700810101d700810101d7003010be10bd10bc00c6fa40fa40fa40d401d0fa40d401d001d401d001d401d001d430d0d401d001d31fd30fd33fd30fd31fd31fd307d31fd33ffa00fa00f4043011111114111111111113111111111112111157141112111311121111111211111110111111100f11100f550e02fe5b57131111111311111110111211100f11110f0e11100e10df551cdb3c7fdb3cc87f01ca001114111311121111111055e0011113011114ce01111101ce1fce0dc8ce0cc8ce1ccd0ac8ce1acd08c8ce18cdc807c8ce17cd15cb1f13cb0fcb3fcb0fcb1f12cb1f12cb0712cb1f13cb3f5003fa025003fa0213f400cdcdc9ed540c0d04bce30221821054464c31ba8ebf5b5713820093d1f82326bef2f48200bd3e04c00014f2f41110111211100f11110f0e11100e10df10ce10bd10ac109b108a1079106810571046103571443512e021821054465231bae30221821054464331ba0b1e101302fe5b57131111111311111110111211100f11110f0e11100e10df551cdb3c70db3cc87f01ca001114111311121111111055e0011113011114ce01111101ce1fce0dc8ce0cc8ce1ccd0ac8ce1acd08c8ce18cdc807c8ce17cd15cb1f13cb0fcb3fcb0fcb1f12cb1f12cb0712cb1f13cb3f5003fa025003fa0213f400cdcdc9ed540c0d0040817f76f8416f24135f03c200f2f48200bd3e26c000f2f4811ce5f82328b9f2f402d6f8421114111511141113111511131112111511121111111511111110111511100f11150f0e11150e0d11150d0c11150c0b11150b0a11150a091115090811150807111507061115060511150504111504031115030211150201111501db3c2183072259f40f6fa192306ddf170e01fa206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e211188e12f8416f24135f0316a0f8416f24135f0312a08e14f8416f24135f0315a0f8416f24135f0315a05055e2018307111816c855205afa0258fa02ca00c9102302111602206e953059f45b30944133f417e21112111311120f00541111111211111110111111100f11100f10ef10de10cd10bc10ab109a108910781067105610451034413002fc5b1113d33fd31f308200a3def8425614c705f2f4820093d1f82328bef2f4815f1526c000917f9326c001e2f2f40111140111155614db3c34343421c0029320c0009170e2917f9a21c0039323c0009170e2e2927432de5613c200965713f8231113df1111111311111110111211100f11110f0e11100e10df10ce10bd10ac1112004c8127102ca052b0a8812710a9048127102da152c0a8812710a9045222be925b72e0bb9173e07400de109b108a107910681057104650521413c87f01ca001114111311121111111055e0011113011114ce01111101ce1fce0dc8ce0cc8ce1ccd0ac8ce1acd08c8ce18cdc807c8ce17cd15cb1f13cb0fcb3fcb0fcb1f12cb1f12cb0712cb1f13cb3f5003fa025003fa0213f400cdcdc9ed5404a88f3a5b5713f8421112111411121111111311111110111211100f11110f0e11100e10df10ce10bd10ac109b108a10791068105710461035443012db3ce021821054464631bae3025715c0001114c12101111401b0151e141f02765b1113fa40301112111411121111111311111110111211100f11110f0e11100e10df10ce10bd10ac109b108a10791068105710461035443012db3c151e03f61112111411121111111311111110111411100f11130f0e11140e0d11130d0c11140c0b11130b0a11140a091113090811140807111307061114060511130504111404031113030211140201111301111482009fd91114db3c01111501f2f41112111311121111111211111110111111100f11100f550e5614db3c21161718002225c002917f9325c003e2917f9325c004e2000ec801cf16c9f90001fe83072259f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f420206ef2d0806f231116111811161115111711151114111811141113111711131112111811121111111711111110111811100f11170f0e11180e0d11170d0c11180c0b11170b1903f80a11180a09111709081118080711170706111806051117050411180403111703db3c8160fe21c200f2f45615206ef2d0806f23307f0283075023c855205afa0258fa02ca00c91201111801206e953059f45b30944133f417e225c004e30225c0029a1114206ef2d0806f235b9b1114206ef2d0806f233031e225c0021a1b1c00863027c00491a0e027c00291309131e28200b2cf21c200f2f426c00291239122e227c00291239124e28200f62a22c200f2f45220a801a904530aa8812710a90459a001a100b05714011115011114726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb001110111311100f11120f0e11110e0d11100d10cf10be552a01fe91229121e226c00291229123e212a801a90428a8812710a90420c2008e3b561101726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb009130e2011115011114726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e011d00666eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb001110111311100f11120f0e11110e0d11100d10cf10be552a00bec87f01ca001114111311121111111055e0011113011114ce01111101ce1fce0dc8ce0cc8ce1ccd0ac8ce1acd08c8ce18cdc807c8ce17cd15cb1f13cb0fcb3fcb0fcb1f12cb1f12cb0712cb1f13cb3f5003fa025003fa0213f400cdcdc9ed5401fc8e771111111311111110111211100f11110f0e11100e10df551cc87f01ca001114111311121111111055e0011113011114ce01111101ce1fce0dc8ce0cc8ce1ccd0ac8ce1acd08c8ce18cdc807c8ce17cd15cb1f13cb0fcb3fcb0fcb1f12cb1f12cb0712cb1f13cb3f5003fa025003fa0213f400cdcdc9ed54e05f0f5f05200006f2c082084149a6",
+    "b5ee9c7241021e010008e200025aff008e88f4a413f4bcf2c80bed53208e983001d072d721d200d200fa4021103450666f04f86102f862e1ed43d901070205946ac0020402f3a023b51343480006398be903e903e903500743e9020404075c020404075c0350c3420404075c020404075c020404075c0350c3420404075c00c041e841e441e02b4554220802812c9b0803cbd205f680970bffcbd2058588930803cbd208025e494c4af3cbd1c151c00081b78c343c44403d543b6cf1b30db10e08030166db3c8307220259f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e21703f9a3a7b51343480006398be903e903e903500743e9020404075c020404075c0350c3420404075c020404075c020404075c0350c3420404075c00c041e841e441e02b4554220802812c9b0803cbd205f680970bffcbd2058588930803cbd208025e494c4af3cbd1c151c00081b78c376cf0fcfcfcfcfcfcfcfcfcfcfcfcfe080506001e547fed547fed547fed547fed547fed000a3f57106c1e03fced44d0d200018e62fa40fa40fa40d401d0fa40810101d700810101d700d430d0810101d700810101d700810101d700d430d0810101d70030107a107910780ad155088200a04b26c200f2f4817da025c2fff2f481616224c200f2f4820097925312bcf2f470547000206de30d1111935f0f5be0705610d74920c21fe3002108090a0060fa40fa40fa40d401d0fa40d31fd30fd33fd30fd31fd31fd307d31fd33ffa00fa00f404300d11100d10df10de5710550e000e311110d31f111104be821054465931ba8f435b3f10df551cdb3c7fdb3cc87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed54e021821054464e31bae30221821054464c31ba0c0d0b0f02865b3f10df551cdb3c70db3cc87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed540c0d0040817f76f8416f24135f03c200f2f48200bd3e26c000f2f4811ce5f82328b9f2f402f2f8421110111111100f11110f0e11110e0d11110d0c11110c0b11110b0a11110a091111090811110807111107061111060511110504111104031111030211110201111101db3c2183072259f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2206e943070207097206ef2d0806f23e21114170e00d68e12f8416f24135f0316a0f8416f24135f0312a08e14f8416f24135f0315a0f8416f24135f0315a05055e2018307111416c855205afa0258fa02ca00c9102302111202206e953059f45b30944133f417e210ef10de10cd10bc10ab109a108910781067105610451034413003fc8e665b3f820093d1f82326bef2f48200bd3e04c00014f2f410ce10bd10ac109b108a1079106810571046103571443512c87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed54e021821054465231bae30221821054464331bae3022110131402ec5b0fd33fd31f308200a3def8425610c705f2f4820093d1f82328bef2f4815f1526c000917f9326c001e2f2f40111100111115610db3c34343421c0029320c0009170e2917f9a21c0039323c0009170e2e2927432de2fc200943ff8230fdf10df10ce10bd10ac109b108a1079106810571046505214131112004c8127102ca052b0a8812710a9048127102da152c0a8812710a9045222be925b72e0bb9173e0740070c87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed5401b65b3ff8420e11100e10df10ce10bd10ac109b108a10791068105710461035443012db3cc87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed541502f6821054464631ba8edc5b0ffa40300e11100e10df10ce10bd10ac109b108a10791068105710461035443012db3cc87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed54e05711c0001110c12101111001b0e3025f0f30f2c082151d03f40e11100e5e3c10bf0a11100a109f08111008107f06111006105f04111004103f111050f282009fd91110db3c01111101f2f4550e5610db3c2183072259f40f6fa192306ddf206e92306d9dd0fa00fa00d20055206c136f03e2814dbc216eb3f2f48200b24221206ef2d0806f236c21b3f2f420206ef2d0806f23161718002225c002917f9325c003e2917f9325c004e2000ec801cf16c9f90002fe1112111411121111111311111110111411100f11130f0e11140e0d11130d0c11140c0b11130b0a11140a09111309081114080711130706111406051113050411140403111303db3c8160fe21c200f2f45611206ef2d0806f23307f0283075023c855205afa0258fa02ca00c91201111401206e953059f45b30944133f417e2191a00863027c00491a0e027c00291309131e28200b2cf21c200f2f426c00291239122e227c00291239124e28200f62a22c200f2f45220a801a904530aa8812710a90459a001a101fe25c0048e425710011111011110726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb00552ce025c0029a1110206ef2d0806f235b9b1110206ef2d0806f233031e225c00291229121e226c00291229123e212a801a90428a8812710a9041b01fc20c2008e3a52d0726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb009130e2011111011110726d5a6d6d40037fc8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c9011c0008fb00552c007810df551cc87f01ca00111055e011101fce1dce1bce09c8ce18cb1f16cb0f14cb3f12cb0fcb1fcb1fcb07cb1f12cb3f58fa0258fa0212f400cdc9ed54ca735059",
   );
   const builder = beginCell();
   builder.storeUint(0, 1);
@@ -1686,10 +1598,6 @@ async function TonForecastMarket_init(
     resolver,
     treasury,
     token,
-    tokenSymbol,
-    marketId,
-    marketTitle,
-    timeframeId,
     timeframeSeconds,
     thresholdBps,
     referencePriceE9,
@@ -2070,22 +1978,6 @@ const TonForecastMarket_types: ABIType[] = [
         type: { kind: "simple", type: "address", optional: false },
       },
       {
-        name: "tokenSymbol",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "marketId",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "marketTitle",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "timeframeId",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
         name: "timeframeSeconds",
         type: { kind: "simple", type: "uint", optional: false, format: 32 },
       },
@@ -2160,22 +2052,6 @@ const TonForecastMarket_types: ABIType[] = [
       {
         name: "token",
         type: { kind: "simple", type: "address", optional: false },
-      },
-      {
-        name: "tokenSymbol",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "marketId",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "marketTitle",
-        type: { kind: "simple", type: "string", optional: false },
-      },
-      {
-        name: "timeframeId",
-        type: { kind: "simple", type: "string", optional: false },
       },
       {
         name: "timeframeSeconds",
@@ -2299,10 +2175,6 @@ export class TonForecastMarket implements Contract {
     resolver: Address,
     treasury: Address,
     token: Address,
-    tokenSymbol: string,
-    marketId: string,
-    marketTitle: string,
-    timeframeId: string,
     timeframeSeconds: bigint,
     thresholdBps: bigint,
     referencePriceE9: bigint,
@@ -2315,10 +2187,6 @@ export class TonForecastMarket implements Contract {
       resolver,
       treasury,
       token,
-      tokenSymbol,
-      marketId,
-      marketTitle,
-      timeframeId,
       timeframeSeconds,
       thresholdBps,
       referencePriceE9,
@@ -2333,10 +2201,6 @@ export class TonForecastMarket implements Contract {
     resolver: Address,
     treasury: Address,
     token: Address,
-    tokenSymbol: string,
-    marketId: string,
-    marketTitle: string,
-    timeframeId: string,
     timeframeSeconds: bigint,
     thresholdBps: bigint,
     referencePriceE9: bigint,
@@ -2349,10 +2213,6 @@ export class TonForecastMarket implements Contract {
       resolver,
       treasury,
       token,
-      tokenSymbol,
-      marketId,
-      marketTitle,
-      timeframeId,
       timeframeSeconds,
       thresholdBps,
       referencePriceE9,

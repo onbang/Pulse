@@ -36,10 +36,10 @@ tuple $Position$_as_optional((int, int, int) v) inline;
 tuple $Position$_load_opt(cell cl) inline;
 
 ;; $TonForecastMarket$_store
-builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) inline;
+builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) inline;
 
 ;; $TonForecastMarket$_load
-(slice, ((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell))) $TonForecastMarket$_load(slice sc_0) inline;
+(slice, ((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell))) $TonForecastMarket$_load(slice sc_0) inline;
 
 ;; $Context$_get_value
 _ $Context$_get_value((int, slice, int, slice) v) inline;
@@ -60,55 +60,55 @@ _ $Position$_get_claimed((int, int, int) v) inline;
 (int, int, int) $Position$_to_external(((int, int, int)) v) inline;
 
 ;; $MarketState$_to_external
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int) $MarketState$_to_external(((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) v) inline;
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int) $MarketState$_to_external(((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) v) inline;
 
 ;; $TonForecastMarket$init$_load
-(slice, ((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int))) $TonForecastMarket$init$_load(slice sc_0) inline_ref;
+(slice, ((slice, slice, slice, slice, int, int, int, int, int, int))) $TonForecastMarket$init$_load(slice sc_0) inline;
 
 ;; $TonForecastMarket$_contract_init
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_init(slice $owner, slice $resolver, slice $treasury, slice $token, slice $tokenSymbol, slice $marketId, slice $marketTitle, slice $timeframeId, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) impure inline;
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_init(slice $owner, slice $resolver, slice $treasury, slice $token, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) impure inline;
 
 ;; $TonForecastMarket$_contract_load
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_load() impure inline;
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_load() impure inline;
 
 ;; $TonForecastMarket$_contract_store
-() $TonForecastMarket$_contract_store((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) impure inline;
+() $TonForecastMarket$_contract_store((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) impure inline;
 
 ;; $SendParameters$_constructor_to_value_mode
 ((int, cell, cell, cell, int, slice, int)) $SendParameters$_constructor_to_value_mode(slice $to, int $value, int $mode) inline;
 
 ;; $TonForecastMarket$_fun_isResolved
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_isResolved((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_isResolved((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_derivePositionKey
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_derivePositionKey((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_derivePositionKey((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_calculatePayout
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_calculatePayout((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, (int, int, int) $position) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_calculatePayout((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, (int, int, int) $position) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_claimFor
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_claimFor((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $recipient) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_claimFor((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $recipient) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_ensureMarketOpen
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_ensureMarketOpen((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_ensureMarketOpen((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
 
 ;; $Position$_constructor_yesStake_noStake_claimed
 ((int, int, int)) $Position$_constructor_yesStake_noStake_claimed(int $yesStake, int $noStake, int $claimed) inline;
 
 ;; $TonForecastMarket$_fun_placeStake
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_computeOutcome
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_computeOutcome((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $finalPriceE9) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_computeOutcome((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $finalPriceE9) impure inline_ref;
 
-;; $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo(slice $owner, slice $resolver, slice $treasury, slice $token, slice $tokenSymbol, slice $marketId, slice $marketTitle, slice $timeframeId, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime, int $status, int $resolvedAt, int $finalPriceE9, int $totalYes, int $totalNo) inline;
+;; $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo(slice $owner, slice $resolver, slice $treasury, slice $token, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime, int $status, int $resolvedAt, int $finalPriceE9, int $totalYes, int $totalNo) inline;
 
 ;; $TonForecastMarket$_fun_getMarketState
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $TonForecastMarket$_fun_getMarketState((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $TonForecastMarket$_fun_getMarketState((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_getPosition
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (int, int, int)) $TonForecastMarket$_fun_getPosition((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (int, int, int)) $TonForecastMarket$_fun_getPosition((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref;
 
 
 ;; tact_TonForecastMarket.stdlib.fc
@@ -337,113 +337,98 @@ _ $Position$_get_claimed((int, int, int) v) inline {
 
 ;;
 ;; Type: MarketState
-;; TLB: _ owner:address resolver:address treasury:address token:address tokenSymbol:^string marketId:^string marketTitle:^string timeframeId:^string timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins = MarketState
+;; TLB: _ owner:address resolver:address treasury:address token:address timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins = MarketState
 ;;
 
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int) $MarketState$_to_external(((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) v) inline {
-    var (v'owner, v'resolver, v'treasury, v'token, v'tokenSymbol, v'marketId, v'marketTitle, v'timeframeId, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo) = v; 
-    return (v'owner, v'resolver, v'treasury, v'token, v'tokenSymbol, v'marketId, v'marketTitle, v'timeframeId, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo);
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int) $MarketState$_to_external(((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) v) inline {
+    var (v'owner, v'resolver, v'treasury, v'token, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo) = v; 
+    return (v'owner, v'resolver, v'treasury, v'token, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo(slice $owner, slice $resolver, slice $treasury, slice $token, slice $tokenSymbol, slice $marketId, slice $marketTitle, slice $timeframeId, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime, int $status, int $resolvedAt, int $finalPriceE9, int $totalYes, int $totalNo) inline {
-    return ($owner, $resolver, $treasury, $token, $tokenSymbol, $marketId, $marketTitle, $timeframeId, $timeframeSeconds, $thresholdBps, $referencePriceE9, $protocolFeeBps, $createdAt, $closeTime, $status, $resolvedAt, $finalPriceE9, $totalYes, $totalNo);
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo(slice $owner, slice $resolver, slice $treasury, slice $token, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime, int $status, int $resolvedAt, int $finalPriceE9, int $totalYes, int $totalNo) inline {
+    return ($owner, $resolver, $treasury, $token, $timeframeSeconds, $thresholdBps, $referencePriceE9, $protocolFeeBps, $createdAt, $closeTime, $status, $resolvedAt, $finalPriceE9, $totalYes, $totalNo);
 }
 
 ;;
 ;; Type: TonForecastMarket
-;; TLB: _ owner:address resolver:address treasury:address token:address tokenSymbol:^string marketId:^string marketTitle:^string timeframeId:^string timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}> = TonForecastMarket
+;; TLB: _ owner:address resolver:address treasury:address token:address timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}> = TonForecastMarket
 ;;
 
-builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) inline {
-    var (v'owner, v'resolver, v'treasury, v'token, v'tokenSymbol, v'marketId, v'marketTitle, v'timeframeId, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo, v'positions) = v;
+builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) inline {
+    var (v'owner, v'resolver, v'treasury, v'token, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo, v'positions) = v;
     build_0 = build_0.store_slice(v'owner);
     build_0 = build_0.store_slice(v'resolver);
     build_0 = build_0.store_slice(v'treasury);
     var build_1 = begin_cell();
     build_1 = build_1.store_slice(v'token);
-    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'tokenSymbol));
-    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketId));
-    build_1 = build_1.store_builder_ref(begin_cell().store_slice(v'marketTitle));
-    var build_2 = begin_cell();
-    build_2 = build_2.store_builder_ref(begin_cell().store_slice(v'timeframeId));
-    build_2 = build_2.store_uint(v'timeframeSeconds, 32);
-    build_2 = build_2.store_uint(v'thresholdBps, 16);
-    build_2 = build_2.store_uint(v'referencePriceE9, 64);
-    build_2 = build_2.store_uint(v'protocolFeeBps, 16);
-    build_2 = build_2.store_uint(v'createdAt, 32);
-    build_2 = build_2.store_uint(v'closeTime, 32);
-    build_2 = build_2.store_uint(v'status, 8);
-    build_2 = build_2.store_uint(v'resolvedAt, 32);
-    build_2 = build_2.store_uint(v'finalPriceE9, 64);
-    build_2 = build_2.store_varuint16(v'totalYes);
-    build_2 = build_2.store_varuint16(v'totalNo);
-    build_2 = build_2.store_dict(v'positions);
-    build_1 = store_builder_ref(build_1, build_2);
+    build_1 = build_1.store_uint(v'timeframeSeconds, 32);
+    build_1 = build_1.store_uint(v'thresholdBps, 16);
+    build_1 = build_1.store_uint(v'referencePriceE9, 64);
+    build_1 = build_1.store_uint(v'protocolFeeBps, 16);
+    build_1 = build_1.store_uint(v'createdAt, 32);
+    build_1 = build_1.store_uint(v'closeTime, 32);
+    build_1 = build_1.store_uint(v'status, 8);
+    build_1 = build_1.store_uint(v'resolvedAt, 32);
+    build_1 = build_1.store_uint(v'finalPriceE9, 64);
+    build_1 = build_1.store_varuint16(v'totalYes);
+    build_1 = build_1.store_varuint16(v'totalNo);
+    build_1 = build_1.store_dict(v'positions);
     build_0 = store_builder_ref(build_0, build_1);
     return build_0;
 }
 
-(slice, ((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell))) $TonForecastMarket$_load(slice sc_0) inline {
+(slice, ((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell))) $TonForecastMarket$_load(slice sc_0) inline {
     var v'owner = sc_0~load_msg_addr();
     var v'resolver = sc_0~load_msg_addr();
     var v'treasury = sc_0~load_msg_addr();
     slice sc_1 = sc_0~load_ref().begin_parse();
     var v'token = sc_1~load_msg_addr();
-    var v'tokenSymbol = sc_1~load_ref().begin_parse();
-    var v'marketId = sc_1~load_ref().begin_parse();
-    var v'marketTitle = sc_1~load_ref().begin_parse();
-    slice sc_2 = sc_1~load_ref().begin_parse();
-    var v'timeframeId = sc_2~load_ref().begin_parse();
-    var v'timeframeSeconds = sc_2~load_uint(32);
-    var v'thresholdBps = sc_2~load_uint(16);
-    var v'referencePriceE9 = sc_2~load_uint(64);
-    var v'protocolFeeBps = sc_2~load_uint(16);
-    var v'createdAt = sc_2~load_uint(32);
-    var v'closeTime = sc_2~load_uint(32);
-    var v'status = sc_2~load_uint(8);
-    var v'resolvedAt = sc_2~load_uint(32);
-    var v'finalPriceE9 = sc_2~load_uint(64);
-    var v'totalYes = sc_2~load_varuint16();
-    var v'totalNo = sc_2~load_varuint16();
-    var v'positions = sc_2~load_dict();
-    return (sc_0, (v'owner, v'resolver, v'treasury, v'token, v'tokenSymbol, v'marketId, v'marketTitle, v'timeframeId, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo, v'positions));
+    var v'timeframeSeconds = sc_1~load_uint(32);
+    var v'thresholdBps = sc_1~load_uint(16);
+    var v'referencePriceE9 = sc_1~load_uint(64);
+    var v'protocolFeeBps = sc_1~load_uint(16);
+    var v'createdAt = sc_1~load_uint(32);
+    var v'closeTime = sc_1~load_uint(32);
+    var v'status = sc_1~load_uint(8);
+    var v'resolvedAt = sc_1~load_uint(32);
+    var v'finalPriceE9 = sc_1~load_uint(64);
+    var v'totalYes = sc_1~load_varuint16();
+    var v'totalNo = sc_1~load_varuint16();
+    var v'positions = sc_1~load_dict();
+    return (sc_0, (v'owner, v'resolver, v'treasury, v'token, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime, v'status, v'resolvedAt, v'finalPriceE9, v'totalYes, v'totalNo, v'positions));
 }
 
-(slice, ((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int))) $TonForecastMarket$init$_load(slice sc_0) inline_ref {
+(slice, ((slice, slice, slice, slice, int, int, int, int, int, int))) $TonForecastMarket$init$_load(slice sc_0) inline {
     var v'owner = sc_0~load_msg_addr();
     var v'resolver = sc_0~load_msg_addr();
     var v'treasury = sc_0~load_msg_addr();
     slice sc_1 = sc_0~load_ref().begin_parse();
     var v'token = sc_1~load_msg_addr();
-    var v'tokenSymbol = sc_1~load_ref().begin_parse();
-    var v'marketId = sc_1~load_ref().begin_parse();
-    var v'marketTitle = sc_1~load_ref().begin_parse();
+    var v'timeframeSeconds = sc_1~load_int(257);
+    var v'thresholdBps = sc_1~load_int(257);
     slice sc_2 = sc_1~load_ref().begin_parse();
-    var v'timeframeId = sc_2~load_ref().begin_parse();
-    var v'timeframeSeconds = sc_2~load_int(257);
-    var v'thresholdBps = sc_2~load_int(257);
     var v'referencePriceE9 = sc_2~load_int(257);
+    var v'protocolFeeBps = sc_2~load_int(257);
+    var v'createdAt = sc_2~load_int(257);
     slice sc_3 = sc_2~load_ref().begin_parse();
-    var v'protocolFeeBps = sc_3~load_int(257);
-    var v'createdAt = sc_3~load_int(257);
     var v'closeTime = sc_3~load_int(257);
-    return (sc_0, (v'owner, v'resolver, v'treasury, v'token, v'tokenSymbol, v'marketId, v'marketTitle, v'timeframeId, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime));
+    return (sc_0, (v'owner, v'resolver, v'treasury, v'token, v'timeframeSeconds, v'thresholdBps, v'referencePriceE9, v'protocolFeeBps, v'createdAt, v'closeTime));
 }
 
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_load() impure inline {
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_load() impure inline {
     slice $sc = get_data().begin_parse();
     int $loaded = $sc~load_int(1);
     if ($loaded) {
         return $sc~$TonForecastMarket$_load();
     }
     else {
-        (slice $owner, slice $resolver, slice $treasury, slice $token, slice $tokenSymbol, slice $marketId, slice $marketTitle, slice $timeframeId, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) = $sc~$TonForecastMarket$init$_load();
+        (slice $owner, slice $resolver, slice $treasury, slice $token, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) = $sc~$TonForecastMarket$init$_load();
         $sc.end_parse();
-        return $TonForecastMarket$_contract_init($owner, $resolver, $treasury, $token, $tokenSymbol, $marketId, $marketTitle, $timeframeId, $timeframeSeconds, $thresholdBps, $referencePriceE9, $protocolFeeBps, $createdAt, $closeTime);
+        return $TonForecastMarket$_contract_init($owner, $resolver, $treasury, $token, $timeframeSeconds, $thresholdBps, $referencePriceE9, $protocolFeeBps, $createdAt, $closeTime);
     }
 }
 
-() $TonForecastMarket$_contract_store((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) impure inline {
+() $TonForecastMarket$_contract_store((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) v) impure inline {
     builder b = begin_cell();
     b = b.store_int(true, 1);
     b = $TonForecastMarket$_store(b, v);
@@ -454,8 +439,8 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
 ;; Contract TonForecastMarket functions
 ;;
 
-(slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_init(slice $owner, slice $resolver, slice $treasury, slice $token, slice $tokenSymbol, slice $marketId, slice $marketTitle, slice $timeframeId, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) impure inline {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
+(slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $TonForecastMarket$_contract_init(slice $owner, slice $resolver, slice $treasury, slice $token, int $timeframeSeconds, int $thresholdBps, int $referencePriceE9, int $protocolFeeBps, int $createdAt, int $closeTime) impure inline {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
     throw_unless(41035, ($timeframeSeconds > 0));
     throw_unless(32160, ($thresholdBps >= 0));
     throw_unless(24930, ($referencePriceE9 > 0));
@@ -464,10 +449,6 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
     $self'resolver = $resolver;
     $self'treasury = $treasury;
     $self'token = $token;
-    $self'tokenSymbol = $tokenSymbol;
-    $self'marketId = $marketId;
-    $self'marketTitle = $marketTitle;
-    $self'timeframeId = $timeframeId;
     $self'timeframeSeconds = $timeframeSeconds;
     $self'thresholdBps = $thresholdBps;
     $self'referencePriceE9 = $referencePriceE9;
@@ -480,27 +461,27 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
     $self'totalYes = 0;
     $self'totalNo = 0;
     $self'positions = null();
-    return ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions);
+    return ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_isResolved((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_isResolved((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
     var $fresh$ret_6 = ( (( (($self'status == 2)) ? (true) : (($self'status == 3)) )) ? (true) : (($self'status == 4)) );
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_6);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_6);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_derivePositionKey((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_derivePositionKey((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
     var $fresh$ret_5 = $Cell$_fun_hash($Builder$_fun_endCell($Builder$_fun_storeAddress($global_beginCell(), $wallet)));
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_5);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_5);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_calculatePayout((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, (int, int, int) $position) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_calculatePayout((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, (int, int, int) $position) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
     var (($position'yesStake, $position'noStake, $position'claimed)) = $position;
     if (($self'status == 4)) {
         var $fresh$ret_3 = ($position'yesStake + $position'noStake);
-        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_3);
+        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_3);
     }
     int $winningStake = (($self'status == 2) ? $position'yesStake : $position'noStake);
     throw_unless(45775, ($winningStake > 0));
@@ -510,24 +491,24 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
     int $grossProfit = (($winningStake * $loserPool) / $winnerPool);
     int $protocolFee = (($grossProfit * $self'protocolFeeBps) / 10000);
     var $fresh$ret_4 = (($winningStake + $grossProfit) - $protocolFee);
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_4);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_4);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_claimFor((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $recipient) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
-    throw_unless(40921, ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_isResolved());
-    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey($recipient);
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_claimFor((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $recipient) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+    throw_unless(40921, ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_isResolved());
+    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey($recipient);
     tuple $position = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
     throw_unless(19900, (~ null?($position)));
     throw_unless(45634, (~ $Position$_get_claimed($Position$_not_null($position))));
-    int $payout = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_calculatePayout($Position$_tensor_cast($Position$_not_null($position)));
+    int $payout = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_calculatePayout($Position$_tensor_cast($Position$_not_null($position)));
     throw_unless(24830, ($payout > 0));
     var ($updatedPosition'yesStake, $updatedPosition'noStake, $updatedPosition'claimed) = $Position$_not_null($position);
     $updatedPosition'claimed = true;
     $self'positions~__tact_dict_set_uint_cell(256, $positionKey, $Position$_store_cell(($updatedPosition'yesStake, $updatedPosition'noStake, $updatedPosition'claimed), begin_cell()));
     if (($self'status == 4)) {
         $global_send($SendParameters$_constructor_to_value_mode($recipient, $payout, 2));
-        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
+        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
     }
     int $winningStake = (($self'status == 2) ? $Position$_get_yesStake($Position$_not_null($position)) : $Position$_get_noStake($Position$_not_null($position)));
     int $winnerPool = (($self'status == 2) ? $self'totalYes : $self'totalNo);
@@ -538,20 +519,20 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
         $global_send($SendParameters$_constructor_to_value_mode($self'treasury, $protocolFee, 2));
     }
     $global_send($SendParameters$_constructor_to_value_mode($recipient, $payout, 2));
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_ensureMarketOpen((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_ensureMarketOpen((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
     throw_unless(32630, ($Context$_get_value(__tact_context_get()) > 0));
     throw_unless(48446, ($self'status == 0));
     throw_unless(7397, ($global_now() < $self'closeTime));
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
-    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey(__tact_context_get_sender());
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey(__tact_context_get_sender());
     tuple $existingPosition = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
     var ($position'yesStake, $position'noStake, $position'claimed) = (null?($existingPosition) ? $Position$_constructor_yesStake_noStake_claimed(0, 0, false) : $Position$_not_null($existingPosition));
     if ($isYes) {
@@ -562,37 +543,37 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
         $position'noStake = ($position'noStake + $Context$_get_value(__tact_context_get()));
     }
     $self'positions~__tact_dict_set_uint_cell(256, $positionKey, $Position$_store_cell(($position'yesStake, $position'noStake, $position'claimed), begin_cell()));
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_computeOutcome((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $finalPriceE9) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_computeOutcome((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $finalPriceE9) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
     int $upperTarget = (($self'referencePriceE9 * (10000 + $self'thresholdBps)) / 10000);
     int $lowerTarget = (($self'referencePriceE9 * (10000 - $self'thresholdBps)) / 10000);
     if (($finalPriceE9 >= $upperTarget)) {
         var $fresh$ret_0 = 2;
-        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_0);
+        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_0);
     }
     if (($finalPriceE9 <= $lowerTarget)) {
         var $fresh$ret_1 = 3;
-        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_1);
+        return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_1);
     }
     var $fresh$ret_2 = 4;
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_2);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_2);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $TonForecastMarket$_fun_getMarketState((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
-    var $fresh$ret_7 = $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo);
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_7);
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int)) $TonForecastMarket$_fun_getMarketState((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+    var $fresh$ret_7 = $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_7);
 }
 
-((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (int, int, int)) $TonForecastMarket$_fun_getPosition((slice, slice, slice, slice, slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref {
-    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
-    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey($wallet);
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), (int, int, int)) $TonForecastMarket$_fun_getPosition((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, slice $wallet) impure inline_ref {
+    var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+    int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey($wallet);
     tuple $position = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
     var $fresh$ret_8 = (null?($position) ? $Position$_constructor_yesStake_noStake_claimed(0, 0, false) : $Position$_not_null($position));
-    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_8);
+    return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), $fresh$ret_8);
 }
 
 ;;
@@ -632,7 +613,7 @@ _ %getPosition(slice $wallet) method_id(109064) {
     __tact_context_sender = msg_sender_addr;
     
     ;; Load contract data
-    var ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions) = $TonForecastMarket$_contract_load();
+    var ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions) = $TonForecastMarket$_contract_load();
     
     ;; Handle bounced messages
     if (msg_bounced) { return (); }
@@ -644,18 +625,18 @@ _ %getPosition(slice $wallet) method_id(109064) {
     ;; Receive BetYes message
     if (op == 0x54465931) {
         var $msg = empty_tuple();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(true);
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(true);
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
     ;; Receive BetNo message
     if (op == 0x54464e31) {
         var $msg = empty_tuple();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(false);
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(false);
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
@@ -665,7 +646,7 @@ _ %getPosition(slice $wallet) method_id(109064) {
         throw_unless(37841, ($global_now() >= $self'closeTime));
         throw_unless(48446, ($self'status == 0));
         $self'status = 1;
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
@@ -676,36 +657,36 @@ _ %getPosition(slice $wallet) method_id(109064) {
         throw_unless(41950, ( equal_slices_bits(__tact_context_get_sender(), $self'resolver) ));
         throw_unless(37841, ($global_now() >= $self'closeTime));
         throw_unless(24341, ( (($self'status == 0)) ? (true) : (($self'status == 1)) ));
-        int $outcome = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_computeOutcome($msg'finalPriceE9);
+        int $outcome = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_computeOutcome($msg'finalPriceE9);
         if (( (( (($outcome == 2)) ? (($self'totalYes == 0)) : (false) )) ? (true) : (( (($outcome == 3)) ? (($self'totalNo == 0)) : (false) )) )) {
             $outcome = 4;
         }
         $self'status = $outcome;
         $self'finalPriceE9 = $msg'finalPriceE9;
         $self'resolvedAt = (($msg'resolvedAt > 0) ? $msg'resolvedAt : $global_now());
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
     ;; Receive ClaimReward message
     if (op == 0x54464331) {
         var $msg = empty_tuple();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_claimFor(__tact_context_get_sender());
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_claimFor(__tact_context_get_sender());
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
     ;; Receive ClaimRewardFor message
     if (op == 0x54464631) {
         var $msg'wallet = in_msg~load_msg_addr();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_claimFor($msg'wallet);
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_claimFor($msg'wallet);
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
     ;; Receive empty message
     if ((op == 0) & (in_msg_length <= 32)) {
-        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'tokenSymbol, $self'marketId, $self'marketTitle, $self'timeframeId, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
+        $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     ;; Throw if not handled

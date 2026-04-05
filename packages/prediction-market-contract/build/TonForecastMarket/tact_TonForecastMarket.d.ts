@@ -483,10 +483,6 @@ export type MarketState = {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -508,10 +504,6 @@ export declare function loadMarketState(slice: Slice): {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -530,10 +522,6 @@ export declare function loadTupleMarketState(source: TupleReader): {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -552,10 +540,6 @@ export declare function loadGetterTupleMarketState(source: TupleReader): {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -576,10 +560,6 @@ export type TonForecastMarket$Data = {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -602,10 +582,6 @@ export declare function loadTonForecastMarket$Data(slice: Slice): {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -625,10 +601,6 @@ export declare function loadTupleTonForecastMarket$Data(source: TupleReader): {
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -650,10 +622,6 @@ export declare function loadGetterTupleTonForecastMarket$Data(
   resolver: Address;
   treasury: Address;
   token: Address;
-  tokenSymbol: string;
-  marketId: string;
-  marketTitle: string;
-  timeframeId: string;
   timeframeSeconds: bigint;
   thresholdBps: bigint;
   referencePriceE9: bigint;
@@ -955,10 +923,6 @@ export declare class TonForecastMarket implements Contract {
     resolver: Address,
     treasury: Address,
     token: Address,
-    tokenSymbol: string,
-    marketId: string,
-    marketTitle: string,
-    timeframeId: string,
     timeframeSeconds: bigint,
     thresholdBps: bigint,
     referencePriceE9: bigint,
@@ -974,10 +938,6 @@ export declare class TonForecastMarket implements Contract {
     resolver: Address,
     treasury: Address,
     token: Address,
-    tokenSymbol: string,
-    marketId: string,
-    marketTitle: string,
-    timeframeId: string,
     timeframeSeconds: bigint,
     thresholdBps: bigint,
     referencePriceE9: bigint,
@@ -1021,10 +981,6 @@ export declare class TonForecastMarket implements Contract {
     resolver: Address;
     treasury: Address;
     token: Address;
-    tokenSymbol: string;
-    marketId: string;
-    marketTitle: string;
-    timeframeId: string;
     timeframeSeconds: bigint;
     thresholdBps: bigint;
     referencePriceE9: bigint;

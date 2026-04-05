@@ -31,7 +31,7 @@ PROGRAM{
   DECLPROC $Position$_constructor_yesStake_noStake_claimed
   DECLPROC $TonForecastMarket$_fun_placeStake
   DECLPROC $TonForecastMarket$_fun_computeOutcome
-  DECLPROC $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo
+  DECLPROC $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo
   DECLPROC $TonForecastMarket$_fun_getMarketState
   DECLPROC $TonForecastMarket$_fun_getPosition
   109545 DECLMETHOD %getMarketState
@@ -107,59 +107,36 @@ PROGRAM{
     }>
   }>
   $TonForecastMarket$_store PROCINLINE:<{
-    s1 19 s() XCHG
-    s0 20 s() XCHG
-    STSLICE
-    s1 17 s() XCHG
-    STSLICE
+    s0 16 s() XCHG
     s1 s15 XCHG
     STSLICE
-    s0 s13 XCHG
-    NEWC
+    s1 s13 XCHG
     STSLICE
-    s0 s12 XCHG
-    NEWC
+    s1 s11 XCHG
     STSLICE
-    s1 s12 XCHG
-    STBREFR
-    s0 s10 XCHG
-    NEWC
-    STSLICE
-    s1 s10 XCHG
-    STBREFR
-    s0 s8 XCHG
+    s0 s9 XCHG
     NEWC
     STSLICE
     s1 s8 XCHG
-    STBREFR
-    NEWC
-    s0 s7 XCHG
-    NEWC
-    STSLICE
-    s1 s7 XCHG
-    STBREFR
-    s1 s5 XCHG
     32 STU
-    s1 s3 XCHG
+    s1 s6 XCHG
     16 STU
+    s1 s4 XCHG
     64 STU
+    s1 s2 XCHG
     16 STU
     32 STU
-    s1 s2 XCHG
     32 STU
-    s1 s2 XCHG
     8 STU
-    s1 s2 XCHG
     32 STU
-    s1 s3 XCHG
+    s1 s2 XCHG
     64 STU
-    s0 s3 XCHG2
+    ROT
     STVARUINT16
-    s0 s3 XCHG2
+    ROT
     STVARUINT16
-    s1 s3 XCHG
+    s1 s2 XCHG
     STDICT
-    STBREFR
     STBREFR
   }>
   $TonForecastMarket$_load PROCINLINE:<{
@@ -170,25 +147,6 @@ PROGRAM{
     SWAP
     CTOS
     LDMSGADDR
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    DROP
-    CTOS
-    LDREF
-    SWAP
-    CTOS
-    SWAP
     32 LDU
     16 LDU
     64 LDU
@@ -202,9 +160,9 @@ PROGRAM{
     LDVARUINT16
     LDDICT
     DROP
-    17 s() 20 s() XCHG
-    17 s() 19 s() XCHG
-    17 s() 18 s() XCHG
+    s13 16 s() XCHG
+    s13 s15 XCHG
+    s13 s14 XCHG
   }>
   $Context$_get_value PROCINLINE:<{
     s1 s3 XCHG
@@ -230,7 +188,7 @@ PROGRAM{
   }>
   $MarketState$_to_external PROCINLINE:<{
   }>
-  $TonForecastMarket$init$_load PROCREF:<{
+  $TonForecastMarket$init$_load PROCINLINE:<{
     LDMSGADDR
     LDMSGADDR
     LDMSGADDR
@@ -238,27 +196,6 @@ PROGRAM{
     SWAP
     CTOS
     LDMSGADDR
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    LDREF
-    DROP
-    CTOS
-    LDREF
-    SWAP
-    CTOS
-    SWAP
-    257 PUSHINT
-    LDIX
     257 PUSHINT
     LDIX
     257 PUSHINT
@@ -272,10 +209,15 @@ PROGRAM{
     LDIX
     257 PUSHINT
     LDIX
+    LDREF
     DROP
-    s11 s14 XCHG
-    s11 s13 XCHG
-    s11 s12 XCHG
+    CTOS
+    257 PUSHINT
+    LDIX
+    DROP
+    s7 s10 XCHG
+    s7 s9 XCHG
+    s7 s8 XCHG
   }>
   $TonForecastMarket$_contract_init PROCINLINE:<{
     41035 PUSHINT
@@ -306,17 +248,13 @@ PROGRAM{
     SWAP
     IF:<{
       $TonForecastMarket$_load INLINECALLDICT
-      20 s() POP
-      18 s() 19 s() XCHG
-      17 s() 18 s() XCHG
-      16 s() 17 s() XCHG
-      s15 16 s() XCHG
+      16 s() POP
       15 ROLL
     }>ELSE<{
       $TonForecastMarket$init$_load INLINECALLDICT
-      s0 s14 XCHG
+      s0 s10 XCHG
       ENDS
-      13 ROLL
+      9 ROLL
       $TonForecastMarket$_contract_init INLINECALLDICT
     }>
   }>
@@ -325,10 +263,6 @@ PROGRAM{
     TRUE
     SWAP
     1 STI
-    s0 20 s() XCHG
-    s0 19 s() XCHG
-    s0 18 s() XCHG
-    s0 17 s() XCHG
     s0 16 s() XCHG
     15 -ROLL
     $TonForecastMarket$_store INLINECALLDICT
@@ -416,36 +350,26 @@ PROGRAM{
     SUB
   }>
   $TonForecastMarket$_fun_claimFor PROCREF:<{
-    18 s() 20 s() XCHG
-    17 s() 19 s() XCHG
-    16 s() 20 s() XCHG
-    s15 19 s() XCHG
-    s14 20 s() XCHG
-    s13 19 s() XCHG
-    s12 20 s() XCHG
-    s11 19 s() XCHG
-    s10 20 s() XCHG
-    s9 19 s() XCHG
-    s8 20 s() XCHG
-    s7 19 s() XCHG
-    s6 20 s() XCHG
-    s5 19 s() XCHG
-    s4 20 s() XCHG
-    s3 19 s() XCHG
-    s2 20 s() XCHG
-    s1 19 s() XCHG
-    s0 20 s() XCHG
+    s14 16 s() XCHG
+    5 12 REVERSE
+    s11 s15 XCHG
+    s10 16 s() XCHG
+    s9 s15 XCHG
+    s8 16 s() XCHG
+    s7 s15 XCHG
+    s6 16 s() XCHG
+    s5 s15 XCHG
+    s4 16 s() XCHG
+    s3 s15 XCHG
+    s0 16 s() XCHG
+    s15 s2 XCHG2
     40921 PUSHINT
-    s0 20 s() XCHG
+    s0 16 s() XCHG
     $TonForecastMarket$_fun_isResolved INLINECALLDICT
-    s1 21 s() XCHG
+    s1 17 s() XCHG
     THROWANYIFNOT
-    18 s() 19 s() XCHG
-    17 s() 18 s() XCHG
-    16 s() 17 s() XCHG
-    s15 16 s() XCHG
     15 ROLL
-    20 s() PUSH
+    16 s() PUSH
     $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
     OVER
     8 PUSHPOW2
@@ -465,32 +389,28 @@ PROGRAM{
     THROWANYIFNOT
     DUP
     $Position$_not_null INLINECALLDICT
-    22 s() 24 s() XCHG
-    21 s() 23 s() XCHG
-    20 s() 24 s() XCHG
-    19 s() 23 s() XCHG
-    18 s() 24 s() XCHG
-    17 s() 23 s() XCHG
-    16 s() 24 s() XCHG
-    s15 23 s() XCHG
-    s14 24 s() XCHG
-    s13 23 s() XCHG
-    s12 24 s() XCHG
-    s11 23 s() XCHG
-    s10 24 s() XCHG
-    s9 23 s() XCHG
-    s8 24 s() XCHG
-    s7 23 s() XCHG
-    s6 24 s() XCHG
-    s5 23 s() XCHG
-    s4 24 s() XCHG
-    s3 23 s() XCHG
+    18 s() 20 s() XCHG
+    17 s() 19 s() XCHG
+    16 s() 20 s() XCHG
+    s15 19 s() XCHG
+    s14 20 s() XCHG
+    s13 19 s() XCHG
+    s12 20 s() XCHG
+    s11 19 s() XCHG
+    s10 20 s() XCHG
+    s9 19 s() XCHG
+    s8 20 s() XCHG
+    s7 19 s() XCHG
+    s6 20 s() XCHG
+    s5 19 s() XCHG
+    s4 20 s() XCHG
+    s3 19 s() XCHG
     $TonForecastMarket$_fun_calculatePayout INLINECALLDICT
     24830 PUSHINT
     OVER
     0 GTINT
     THROWANYIFNOT
-    21 s() PUSH
+    17 s() PUSH
     $Position$_not_null INLINECALLDICT
     DROP
     TRUE
@@ -500,14 +420,14 @@ PROGRAM{
     NEWC
     $Position$_store_cell INLINECALLDICT
     s1 s2 XCHG
-    s1 24 s() XCHG
+    s1 20 s() XCHG
     __tact_dict_set_uint_cell INLINECALLDICT
     s5 PUSH
     4 EQINT
     IFJMP:<{
-      20 s() POP
-      s1 21 s() XCHG
-      s0 20 s() XCHG
+      16 s() POP
+      s1 17 s() XCHG
+      s0 16 s() XCHG
       2 PUSHINT
       $SendParameters$_constructor_to_value_mode INLINECALLDICT
           NEWC
@@ -576,22 +496,16 @@ PROGRAM{
           // Group 5: Sending the message, with `mode` on top
           SWAP
           SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-      16 s() 19 s() XCHG
-      s15 18 s() XCHG
-      s14 17 s() XCHG
-      s13 16 s() XCHG
-      s12 s15 XCHG
-      s11 s14 XCHG
-      3 11 BLKSWAP
+      3 13 BLKSWAP
     }>
     s5 PUSH
     2 EQINT
     IF:<{
-      s0 20 s() XCHG
+      s0 16 s() XCHG
       $Position$_not_null INLINECALLDICT
       $Position$_get_yesStake INLINECALLDICT
     }>ELSE<{
-      s0 20 s() XCHG
+      s0 16 s() XCHG
       $Position$_not_null INLINECALLDICT
       $Position$_get_noStake INLINECALLDICT
     }>
@@ -620,8 +534,7 @@ PROGRAM{
     DUP
     0 GTINT
     IF:<{
-      17 s() PUSH
-      SWAP
+      s13 s(-1) PUXC
       2 PUSHINT
       $SendParameters$_constructor_to_value_mode INLINECALLDICT
           NEWC
@@ -693,8 +606,8 @@ PROGRAM{
     }>ELSE<{
       DROP
     }>
-    s1 21 s() XCHG
-    s0 20 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
     2 PUSHINT
     $SendParameters$_constructor_to_value_mode INLINECALLDICT
         NEWC
@@ -763,13 +676,7 @@ PROGRAM{
         // Group 5: Sending the message, with `mode` on top
         SWAP
         SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-    16 s() 19 s() XCHG
-    s15 18 s() XCHG
-    s14 17 s() XCHG
-    s13 16 s() XCHG
-    s12 s15 XCHG
-    s11 s14 XCHG
-    3 11 BLKSWAP
+    3 13 BLKSWAP
   }>
   $TonForecastMarket$_fun_ensureMarketOpen PROCREF:<{
     32630 PUSHINT
@@ -791,26 +698,22 @@ PROGRAM{
   }>
   $TonForecastMarket$_fun_placeStake PROCREF:<{
     __tact_context_get_sender INLINECALLDICT
-    20 s() 21 s() XCHG
-    19 s() 21 s() XCHG
-    18 s() 21 s() XCHG
-    17 s() 21 s() XCHG
-    16 s() 21 s() XCHG
-    s15 21 s() XCHG
-    s14 21 s() XCHG
-    s13 21 s() XCHG
-    s12 21 s() XCHG
-    s11 21 s() XCHG
-    s10 21 s() XCHG
-    s9 21 s() XCHG
-    s8 21 s() XCHG
-    s7 21 s() XCHG
-    s6 21 s() XCHG
-    s5 21 s() XCHG
-    s4 21 s() XCHG
-    s3 21 s() XCHG
-    s2 21 s() XCHG
-    s1 21 s() XCHG
+    16 s() 17 s() XCHG
+    s15 17 s() XCHG
+    s14 17 s() XCHG
+    s13 17 s() XCHG
+    s12 17 s() XCHG
+    s11 17 s() XCHG
+    s10 17 s() XCHG
+    s9 17 s() XCHG
+    s8 17 s() XCHG
+    s7 17 s() XCHG
+    s6 17 s() XCHG
+    s5 17 s() XCHG
+    s4 17 s() XCHG
+    s3 17 s() XCHG
+    s2 17 s() XCHG
+    s1 17 s() XCHG
     $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
     OVER
     8 PUSHPOW2
@@ -828,7 +731,7 @@ PROGRAM{
     }>ELSE<{
       $Position$_not_null INLINECALLDICT
     }>
-    s0 24 s() XCHG
+    s0 20 s() XCHG
     IF:<{
       __tact_context_get INLINECALLDICT
       $Context$_get_value INLINECALLDICT
@@ -851,17 +754,13 @@ PROGRAM{
     }>
     SWAP
     8 PUSHPOW2
-    s0 24 s() XCHG
+    s0 20 s() XCHG
     s1 s6 XCHG
     NEWC
     $Position$_store_cell INLINECALLDICT
     s2 s3 XCHG
-    s2 22 s() XCHG
+    s2 18 s() XCHG
     __tact_dict_set_uint_cell INLINECALLDICT
-    18 s() 19 s() XCHG
-    17 s() 18 s() XCHG
-    16 s() 17 s() XCHG
-    s15 16 s() XCHG
     s14 s15 XCHG
     s13 s14 XCHG
     s12 s13 XCHG
@@ -903,29 +802,15 @@ PROGRAM{
     }>
     4 PUSHINT
   }>
-  $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo PROCINLINE:<{
+  $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo PROCINLINE:<{
   }>
   $TonForecastMarket$_fun_getMarketState PROCREF:<{
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    19 s() PUSH
-    $MarketState$_constructor_owner_resolver_treasury_token_tokenSymbol_marketId_marketTitle_timeframeId_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo INLINECALLDICT
+    s15 s14 s13 PUSH3
+    s15 s14 s13 PUSH3
+    s15 s14 s13 PUSH3
+    s15 s14 s13 PUSH3
+    s15 s14 s13 PUSH3
+    $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo INLINECALLDICT
   }>
   $TonForecastMarket$_fun_getPosition PROCREF:<{
     $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
@@ -949,42 +834,31 @@ PROGRAM{
   %getMarketState PROC:<{
     $TonForecastMarket$_contract_load INLINECALLDICT
     $TonForecastMarket$_fun_getMarketState INLINECALLDICT
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    19 s() POP
-    20 s() POP
-    18 s() POP
-    16 s() 17 s() XCHG
-    s15 16 s() XCHG
-    15 ROLL
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    s15 POP
+    16 s() POP
+    1 14 BLKDROP2
     $MarketState$_to_external INLINECALLDICT
   }>
   %getPosition PROC:<{
     $TonForecastMarket$_contract_load INLINECALLDICT
-    19 s() 20 s() XCHG
-    18 s() 19 s() XCHG
-    17 s() 18 s() XCHG
-    16 s() 17 s() XCHG
     s15 16 s() XCHG
     15 ROLL
     $TonForecastMarket$_fun_getPosition INLINECALLDICT
-    15 3 BLKDROP2
-    5 3 BLKDROP2
+    12 3 BLKDROP2
+    4 3 BLKDROP2
     $Position$_to_external INLINECALLDICT
   }>
   recv_internal PROC:<{
@@ -1003,32 +877,28 @@ PROGRAM{
     s0 s2 XCHG
     __tact_context_sender SETGLOB
     $TonForecastMarket$_contract_load INLINECALLDICT
-    s0 21 s() XCHG
+    s0 17 s() XCHG
     IFJMP:<{
       15 BLKDROP
-      6 BLKDROP
+      2DROP
     }>
     0 PUSHINT
-    20 s() PUSH
+    16 s() PUSH
     SBITS
     DUP
     31 GTINT
     IF:<{
       NIP
-      s0 20 s() XCHG
+      s0 16 s() XCHG
       32 LDU
-      s0 21 s() XCHG
+      s0 17 s() XCHG
     }>
     OVER
     1413896497 PUSHINT
     EQUAL
     IFJMP:<{
       2DROP
-      19 s() POP
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
-      s14 16 s() XCHG
+      s15 POP
       s13 s15 XCHG
       2 13 BLKSWAP
       $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
@@ -1041,11 +911,7 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      19 s() POP
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
-      s14 16 s() XCHG
+      s15 POP
       s13 s15 XCHG
       2 13 BLKSWAP
       $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
@@ -1058,7 +924,7 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      19 s() POP
+      s15 POP
       37841 PUSHINT
           NOW
       s6 PUSH
@@ -1069,10 +935,6 @@ PROGRAM{
       0 EQINT
       s1 s4 XCHG
       THROWANYIFNOT
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
-      s14 16 s() XCHG
-      s13 s15 XCHG
       s12 s14 XCHG
       s11 s13 XCHG
       s10 s12 XCHG
@@ -1093,13 +955,13 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      s0 19 s() XCHG
+      s0 s15 XCHG
       64 LDU
       32 LDU
       DROP
       41950 PUSHINT
       __tact_context_get_sender INLINECALLDICT
-      20 s() PUSH
+      16 s() PUSH
       SDEQ
       THROWANYIFNOT
       37841 PUSHINT
@@ -1117,9 +979,9 @@ PROGRAM{
         1 EQINT
       }>
       THROWANYIFNOT
-      s1 20 s() XCHG
-      s0 21 s() XCHG
-      20 s() PUSH
+      s1 16 s() XCHG
+      s0 17 s() XCHG
+      16 s() PUSH
       $TonForecastMarket$_fun_computeOutcome INLINECALLDICT
       s4 POP
       s4 POP
@@ -1148,18 +1010,14 @@ PROGRAM{
         4 PUSHINT
         s2 POP
       }>
-      19 s() PUSH
+      s15 PUSH
       0 GTINT
       IF:<{
       }>ELSE<{
-        19 s() POP
+        s15 POP
             NOW
-        s0 19 s() XCHG
+        s0 s15 XCHG
       }>
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
-      s14 16 s() XCHG
       s13 s15 XCHG
       s12 s14 XCHG
       s11 s13 XCHG
@@ -1180,12 +1038,8 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      19 s() POP
+      s15 POP
       __tact_context_get_sender INLINECALLDICT
-      18 s() 20 s() XCHG
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
       s14 16 s() XCHG
       s13 s15 XCHG
       s12 s14 XCHG
@@ -1208,13 +1062,9 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      s0 19 s() XCHG
+      s0 s15 XCHG
       LDMSGADDR
       DROP
-      18 s() 20 s() XCHG
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
       s14 16 s() XCHG
       s13 s15 XCHG
       s12 s14 XCHG
@@ -1232,23 +1082,19 @@ PROGRAM{
       $TonForecastMarket$_fun_claimFor INLINECALLDICT
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>
-    21 s() POP
+    17 s() POP
     0 EQINT
-    s0 20 s() XCHG
+    s0 16 s() XCHG
     33 LESSINT
-    s1 20 s() XCHG
+    s1 16 s() XCHG
     AND
     IFJMP:<{
-      17 s() 19 s() XCHG
-      16 s() 18 s() XCHG
-      s15 17 s() XCHG
-      s14 16 s() XCHG
       s13 s15 XCHG
       2 13 BLKSWAP
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>
     15 BLKDROP
-    5 BLKDROP
+    DROP
     130 THROW
   }>
   __tact_selector_hack PROC:<{

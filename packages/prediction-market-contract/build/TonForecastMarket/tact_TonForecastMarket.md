@@ -1,6 +1,6 @@
 # Tact compilation report
 Contract: TonForecastMarket
-BoC Size: 2759 bytes
+BoC Size: 2286 bytes
 
 ## Structures (Structs and Messages)
 Total structures: 19
@@ -74,12 +74,12 @@ TL-B: `_ yesStake:coins noStake:coins claimed:bool = Position`
 Signature: `Position{yesStake:coins,noStake:coins,claimed:bool}`
 
 ### MarketState
-TL-B: `_ owner:address resolver:address treasury:address token:address tokenSymbol:^string marketId:^string marketTitle:^string timeframeId:^string timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins = MarketState`
-Signature: `MarketState{owner:address,resolver:address,treasury:address,token:address,tokenSymbol:^string,marketId:^string,marketTitle:^string,timeframeId:^string,timeframeSeconds:uint32,thresholdBps:uint16,referencePriceE9:uint64,protocolFeeBps:uint16,createdAt:uint32,closeTime:uint32,status:uint8,resolvedAt:uint32,finalPriceE9:uint64,totalYes:coins,totalNo:coins}`
+TL-B: `_ owner:address resolver:address treasury:address token:address timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins = MarketState`
+Signature: `MarketState{owner:address,resolver:address,treasury:address,token:address,timeframeSeconds:uint32,thresholdBps:uint16,referencePriceE9:uint64,protocolFeeBps:uint16,createdAt:uint32,closeTime:uint32,status:uint8,resolvedAt:uint32,finalPriceE9:uint64,totalYes:coins,totalNo:coins}`
 
 ### TonForecastMarket$Data
-TL-B: `_ owner:address resolver:address treasury:address token:address tokenSymbol:^string marketId:^string marketTitle:^string timeframeId:^string timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}> = TonForecastMarket`
-Signature: `TonForecastMarket{owner:address,resolver:address,treasury:address,token:address,tokenSymbol:^string,marketId:^string,marketTitle:^string,timeframeId:^string,timeframeSeconds:uint32,thresholdBps:uint16,referencePriceE9:uint64,protocolFeeBps:uint16,createdAt:uint32,closeTime:uint32,status:uint8,resolvedAt:uint32,finalPriceE9:uint64,totalYes:coins,totalNo:coins,positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}>}`
+TL-B: `_ owner:address resolver:address treasury:address token:address timeframeSeconds:uint32 thresholdBps:uint16 referencePriceE9:uint64 protocolFeeBps:uint16 createdAt:uint32 closeTime:uint32 status:uint8 resolvedAt:uint32 finalPriceE9:uint64 totalYes:coins totalNo:coins positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}> = TonForecastMarket`
+Signature: `TonForecastMarket{owner:address,resolver:address,treasury:address,token:address,timeframeSeconds:uint32,thresholdBps:uint16,referencePriceE9:uint64,protocolFeeBps:uint16,createdAt:uint32,closeTime:uint32,status:uint8,resolvedAt:uint32,finalPriceE9:uint64,totalYes:coins,totalNo:coins,positions:dict<uint256, ^Position{yesStake:coins,noStake:coins,claimed:bool}>}`
 
 ## Get methods
 Total get methods: 2
