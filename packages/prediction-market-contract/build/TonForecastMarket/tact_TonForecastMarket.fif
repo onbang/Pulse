@@ -679,11 +679,6 @@ PROGRAM{
     3 13 BLKSWAP
   }>
   $TonForecastMarket$_fun_ensureMarketOpen PROCREF:<{
-    32630 PUSHINT
-    __tact_context_get INLINECALLDICT
-    $Context$_get_value INLINECALLDICT
-    0 GTINT
-    THROWANYIFNOT
     48446 PUSHINT
     s6 PUSH
     0 EQINT
@@ -697,22 +692,31 @@ PROGRAM{
   $Position$_constructor_yesStake_noStake_claimed PROCINLINE:<{
   }>
   $TonForecastMarket$_fun_placeStake PROCREF:<{
+    32630 PUSHINT
+    OVER
+    0 GTINT
+    THROWANYIFNOT
+    47621 PUSHINT
+    __tact_context_get INLINECALLDICT
+    $Context$_get_value INLINECALLDICT
+    s2 PUSH
+    GEQ
+    THROWANYIFNOT
     __tact_context_get_sender INLINECALLDICT
-    16 s() 17 s() XCHG
-    s15 17 s() XCHG
-    s14 17 s() XCHG
+    16 s() 18 s() XCHG
+    5 14 REVERSE
     s13 17 s() XCHG
-    s12 17 s() XCHG
+    s12 18 s() XCHG
     s11 17 s() XCHG
-    s10 17 s() XCHG
+    s10 18 s() XCHG
     s9 17 s() XCHG
-    s8 17 s() XCHG
+    s8 18 s() XCHG
     s7 17 s() XCHG
-    s6 17 s() XCHG
+    s6 18 s() XCHG
     s5 17 s() XCHG
-    s4 17 s() XCHG
+    s4 18 s() XCHG
     s3 17 s() XCHG
-    s2 17 s() XCHG
+    s2 18 s() XCHG
     s1 17 s() XCHG
     $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
     OVER
@@ -731,49 +735,45 @@ PROGRAM{
     }>ELSE<{
       $Position$_not_null INLINECALLDICT
     }>
-    s0 20 s() XCHG
+    s0 21 s() XCHG
     IF:<{
-      __tact_context_get INLINECALLDICT
-      $Context$_get_value INLINECALLDICT
-      s1 s6 XCHG
+      s0 s5 XCHG
+      19 s() PUSH
       ADD
-      __tact_context_get INLINECALLDICT
-      $Context$_get_value INLINECALLDICT
-      s1 s2 XCHG
+      s0 19 s() XCHG
       ADD
     }>ELSE<{
-      __tact_context_get INLINECALLDICT
-      $Context$_get_value INLINECALLDICT
-      s1 s5 XCHG
+      s0 s4 XCHG
+      19 s() PUSH
       ADD
-      __tact_context_get INLINECALLDICT
-      $Context$_get_value INLINECALLDICT
-      s1 s5 XCHG
+      s0 19 s() XCHG
+      s1 s4 XCHG
       ADD
-      s5 s5 XCHG2
+      s0 s4 XCHG
+      s0 18 s() XCHG
+      s0 s3 XCHG
     }>
     SWAP
     8 PUSHPOW2
     s0 20 s() XCHG
-    s1 s6 XCHG
+    s1 s5 XCHG
     NEWC
     $Position$_store_cell INLINECALLDICT
-    s2 s3 XCHG
+    s1 s3 XCHG
     s2 18 s() XCHG
     __tact_dict_set_uint_cell INLINECALLDICT
-    s14 s15 XCHG
-    s13 s14 XCHG
-    s12 s13 XCHG
-    s11 s12 XCHG
-    s10 s11 XCHG
-    s9 s10 XCHG
-    s8 s9 XCHG
-    s7 s8 XCHG
-    s6 s7 XCHG
-    s5 s6 XCHG
-    s4 s5 XCHG
-    s3 s4 XCHG
-    s1 s3 s0 XCHG3
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s3 s5 XCHG
+    s4 s3 s0 XCHG3
   }>
   $TonForecastMarket$_fun_computeOutcome PROCREF:<{
     10000 PUSHINT
@@ -898,11 +898,28 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      s15 POP
-      s13 s15 XCHG
-      2 13 BLKSWAP
+      s0 s15 XCHG
+      LDVARUINT16
+      DROP
+      s14 s15 XCHG
+      s13 s14 XCHG
+      s12 s13 XCHG
+      s11 s12 XCHG
+      s10 s11 XCHG
+      s9 s10 XCHG
+      s8 s9 XCHG
+      s7 s8 XCHG
+      s6 s7 XCHG
+      s5 s6 XCHG
+      s4 s5 XCHG
+      s3 s4 XCHG
+      s0 16 s() XCHG
+      s1 s3 s0 XCHG3
       $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
+      s15 16 s() XCHG
+      15 ROLL
       TRUE
+      SWAP
       $TonForecastMarket$_fun_placeStake INLINECALLDICT
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>
@@ -911,11 +928,28 @@ PROGRAM{
     EQUAL
     IFJMP:<{
       2DROP
-      s15 POP
-      s13 s15 XCHG
-      2 13 BLKSWAP
+      s0 s15 XCHG
+      LDVARUINT16
+      DROP
+      s14 s15 XCHG
+      s13 s14 XCHG
+      s12 s13 XCHG
+      s11 s12 XCHG
+      s10 s11 XCHG
+      s9 s10 XCHG
+      s8 s9 XCHG
+      s7 s8 XCHG
+      s6 s7 XCHG
+      s5 s6 XCHG
+      s4 s5 XCHG
+      s3 s4 XCHG
+      s0 16 s() XCHG
+      s1 s3 s0 XCHG3
       $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
+      s15 16 s() XCHG
+      15 ROLL
       FALSE
+      SWAP
       $TonForecastMarket$_fun_placeStake INLINECALLDICT
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>

@@ -336,31 +336,39 @@ export declare function storeTupleBasechainAddress(
 export declare function dictValueParserBasechainAddress(): DictionaryValue<BasechainAddress>;
 export type BetYes = {
   $$type: "BetYes";
+  stakeAmount: bigint;
 };
 export declare function storeBetYes(src: BetYes): (builder: Builder) => void;
 export declare function loadBetYes(slice: Slice): {
   $$type: "BetYes";
+  stakeAmount: bigint;
 };
 export declare function loadTupleBetYes(source: TupleReader): {
   $$type: "BetYes";
+  stakeAmount: bigint;
 };
 export declare function loadGetterTupleBetYes(source: TupleReader): {
   $$type: "BetYes";
+  stakeAmount: bigint;
 };
 export declare function storeTupleBetYes(source: BetYes): TupleItem[];
 export declare function dictValueParserBetYes(): DictionaryValue<BetYes>;
 export type BetNo = {
   $$type: "BetNo";
+  stakeAmount: bigint;
 };
 export declare function storeBetNo(src: BetNo): (builder: Builder) => void;
 export declare function loadBetNo(slice: Slice): {
   $$type: "BetNo";
+  stakeAmount: bigint;
 };
 export declare function loadTupleBetNo(source: TupleReader): {
   $$type: "BetNo";
+  stakeAmount: bigint;
 };
 export declare function loadGetterTupleBetNo(source: TupleReader): {
   $$type: "BetNo";
+  stakeAmount: bigint;
 };
 export declare function storeTupleBetNo(source: BetNo): TupleItem[];
 export declare function dictValueParserBetNo(): DictionaryValue<BetNo>;
@@ -790,6 +798,9 @@ export declare const TonForecastMarket_errors: {
   readonly 45775: {
     readonly message: "no_winning_position";
   };
+  readonly 47621: {
+    readonly message: "insufficient_message_value";
+  };
   readonly 48446: {
     readonly message: "market_not_open";
   };
@@ -848,6 +859,7 @@ export declare const TonForecastMarket_errors_backward: {
   readonly resolver_only: 41950;
   readonly already_claimed: 45634;
   readonly no_winning_position: 45775;
+  readonly insufficient_message_value: 47621;
   readonly market_not_open: 48446;
   readonly invalid_winner_pool: 63018;
 };
@@ -907,6 +919,7 @@ export declare class TonForecastMarket implements Contract {
     readonly resolver_only: 41950;
     readonly already_claimed: 45634;
     readonly no_winning_position: 45775;
+    readonly insufficient_message_value: 47621;
     readonly market_not_open: 48446;
     readonly invalid_winner_pool: 63018;
   };

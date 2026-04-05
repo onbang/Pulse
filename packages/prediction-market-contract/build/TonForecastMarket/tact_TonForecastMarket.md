@@ -1,6 +1,6 @@
 # Tact compilation report
 Contract: TonForecastMarket
-BoC Size: 2286 bytes
+BoC Size: 2336 bytes
 
 ## Structures (Structs and Messages)
 Total structures: 19
@@ -46,12 +46,12 @@ TL-B: `_ hash:Maybe int257 = BasechainAddress`
 Signature: `BasechainAddress{hash:Maybe int257}`
 
 ### BetYes
-TL-B: `bet_yes#54465931  = BetYes`
-Signature: `BetYes{}`
+TL-B: `bet_yes#54465931 stakeAmount:coins = BetYes`
+Signature: `BetYes{stakeAmount:coins}`
 
 ### BetNo
-TL-B: `bet_no#54464e31  = BetNo`
-Signature: `BetNo{}`
+TL-B: `bet_no#54464e31 stakeAmount:coins = BetNo`
+Signature: `BetNo{stakeAmount:coins}`
 
 ### LockMarket
 TL-B: `lock_market#54464c31  = LockMarket`
@@ -141,6 +141,7 @@ Argument: wallet
 * 41950: resolver_only
 * 45634: already_claimed
 * 45775: no_winning_position
+* 47621: insufficient_message_value
 * 48446: market_not_open
 * 63018: invalid_winner_pool
 

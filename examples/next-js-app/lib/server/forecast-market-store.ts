@@ -200,9 +200,10 @@ async function buildPendingForecastDeployBetIntent(input: {
             toNano(String(input.amountTon))
           ).toString(),
           stateInit: serializeStateInit(contract.init!),
-          payload: buildTonForecastBetPayloadBase64(
-            predictionDirectionToForecast(input.direction),
-          ),
+          payload: buildTonForecastBetPayloadBase64({
+            direction: predictionDirectionToForecast(input.direction),
+            amountTon: input.amountTon,
+          }),
         },
       ],
     },
@@ -1050,9 +1051,10 @@ async function syncForecastMarketTransactions(
         const direction = forecastDirectionToPrediction(
           incomingPayload.type === "bet_yes" ? "yes" : "no",
         );
-        const amount = Number(
-          extractMessageTonValue(incomingMessage).toFixed(6),
-        );
+        const amountSource =
+          incomingPayload.stakeAmountTon ??
+          extractMessageTonValue(incomingMessage);
+        const amount = Number(amountSource.toFixed(6));
 
         if (!Number.isFinite(amount) || amount <= 0) {
           continue;
@@ -1831,9 +1833,10 @@ export async function createForecastMarketIntent(input: {
             toNano(String(input.amountTon))
           ).toString(),
           stateInit: serializeStateInit(contract.init!),
-          payload: buildTonForecastBetPayloadBase64(
-            predictionDirectionToForecast(input.direction),
-          ),
+          payload: buildTonForecastBetPayloadBase64({
+            direction: predictionDirectionToForecast(input.direction),
+            amountTon: input.amountTon,
+          }),
         },
       ],
     },

@@ -1,4 +1,4 @@
-import { Address, beginCell, Cell, toNano } from "@ton/core";
+import { Address, beginCell, Cell, fromNano, toNano } from "@ton/core";
 
 import {
   DEFAULT_PREDICTION_TREASURY_ADDRESS,
@@ -358,14 +358,27 @@ export function parsePredictionContractPayloadBase64(
   }
 }
 
-export function buildTonForecastBetPayloadBase64(
-  direction: TonForecastDirection,
-) {
+export function buildTonForecastBetPayloadBase64(input: {
+  direction: TonForecastDirection;
+  amountTon: number | string;
+}) {
+  const numericAmount =
+    typeof input.amountTon === "string"
+      ? Number(input.amountTon)
+      : input.amountTon;
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    throw new Error("Forecast stake amount must be a positive TON value.");
+  }
+
   return beginCell()
     .storeUint(
-      direction === "yes" ? TON_FORECAST_OP_BET_YES : TON_FORECAST_OP_BET_NO,
+      input.direction === "yes"
+        ? TON_FORECAST_OP_BET_YES
+        : TON_FORECAST_OP_BET_NO,
       32,
     )
+    .storeCoins(toNano(numericAmount))
     .endCell()
     .toBoc()
     .toString("base64");
@@ -388,7 +401,10 @@ export function buildTonForecastBetTransferMessage(input: {
   return {
     address: input.contractAddress,
     amount: toNano(numericAmount).toString(),
-    payload: buildTonForecastBetPayloadBase64(input.direction),
+    payload: buildTonForecastBetPayloadBase64({
+      direction: input.direction,
+      amountTon: numericAmount,
+    }),
   };
 }
 
@@ -444,11 +460,15 @@ export function parseTonForecastPayloadBase64(
     const opcode = slice.loadUint(32);
 
     if (opcode === TON_FORECAST_OP_BET_YES) {
-      return { type: "bet_yes" };
+      const stakeAmountTon =
+        slice.remainingBits > 0 ? Number(fromNano(slice.loadCoins())) : null;
+      return { type: "bet_yes", stakeAmountTon };
     }
 
     if (opcode === TON_FORECAST_OP_BET_NO) {
-      return { type: "bet_no" };
+      const stakeAmountTon =
+        slice.remainingBits > 0 ? Number(fromNano(slice.loadCoins())) : null;
+      return { type: "bet_no", stakeAmountTon };
     }
 
     if (opcode === TON_FORECAST_OP_LOCK_MARKET) {

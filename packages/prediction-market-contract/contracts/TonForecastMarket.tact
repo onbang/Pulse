@@ -1,6 +1,10 @@
-message(0x54465931) BetYes {}
+message(0x54465931) BetYes {
+    stakeAmount: Int as coins;
+}
 
-message(0x54464E31) BetNo {}
+message(0x54464E31) BetNo {
+    stakeAmount: Int as coins;
+}
 
 message(0x54464C31) LockMarket {}
 
@@ -98,12 +102,12 @@ contract TonForecastMarket {
 
     receive(msg: BetYes) {
         self.ensureMarketOpen();
-        self.placeStake(true);
+        self.placeStake(true, msg.stakeAmount);
     }
 
     receive(msg: BetNo) {
         self.ensureMarketOpen();
-        self.placeStake(false);
+        self.placeStake(false, msg.stakeAmount);
     }
 
     receive(msg: LockMarket) {
@@ -182,12 +186,14 @@ contract TonForecastMarket {
     }
 
     fun ensureMarketOpen() {
-        require(context().value > 0, "stake_required");
         require(self.status == 0, "market_not_open");
         require(now() < self.closeTime, "market_locked");
     }
 
-    fun placeStake(isYes: Bool) {
+    fun placeStake(isYes: Bool, stakeAmount: Int) {
+        require(stakeAmount > 0, "stake_required");
+        require(context().value >= stakeAmount, "insufficient_message_value");
+
         let positionKey = self.derivePositionKey(sender());
         let existingPosition = self.positions.get(positionKey);
         let position = existingPosition == null
@@ -195,11 +201,11 @@ contract TonForecastMarket {
             : existingPosition!!;
 
         if (isYes) {
-            self.totalYes = self.totalYes + context().value;
-            position.yesStake = position.yesStake + context().value;
+            self.totalYes = self.totalYes + stakeAmount;
+            position.yesStake = position.yesStake + stakeAmount;
         } else {
-            self.totalNo = self.totalNo + context().value;
-            position.noStake = position.noStake + context().value;
+            self.totalNo = self.totalNo + stakeAmount;
+            position.noStake = position.noStake + stakeAmount;
         }
 
         self.positions.set(positionKey, position);

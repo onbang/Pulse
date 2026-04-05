@@ -89,9 +89,11 @@ export type ParsedPredictionContractPayload =
 export type ParsedTonForecastContractPayload =
   | {
       type: "bet_yes";
+      stakeAmountTon: number | null;
     }
   | {
       type: "bet_no";
+      stakeAmountTon: number | null;
     }
   | {
       type: "lock_market";

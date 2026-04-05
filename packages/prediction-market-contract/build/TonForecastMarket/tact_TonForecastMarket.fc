@@ -96,7 +96,7 @@ _ $Position$_get_claimed((int, int, int) v) inline;
 ((int, int, int)) $Position$_constructor_yesStake_noStake_claimed(int $yesStake, int $noStake, int $claimed) inline;
 
 ;; $TonForecastMarket$_fun_placeStake
-((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref;
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes, int $stakeAmount) impure inline_ref;
 
 ;; $TonForecastMarket$_fun_computeOutcome
 ((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), int) $TonForecastMarket$_fun_computeOutcome((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $finalPriceE9) impure inline_ref;
@@ -524,23 +524,24 @@ builder $TonForecastMarket$_store(builder build_0, (slice, slice, slice, slice, 
 
 ((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_ensureMarketOpen((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self) impure inline_ref {
     var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
-    throw_unless(32630, ($Context$_get_value(__tact_context_get()) > 0));
     throw_unless(48446, ($self'status == 0));
     throw_unless(7397, ($global_now() < $self'closeTime));
     return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
 }
 
-((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes) impure inline_ref {
+((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell), ()) $TonForecastMarket$_fun_placeStake((slice, slice, slice, slice, int, int, int, int, int, int, int, int, int, int, int, cell) $self, int $isYes, int $stakeAmount) impure inline_ref {
     var (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)) = $self;
+    throw_unless(32630, ($stakeAmount > 0));
+    throw_unless(47621, ($Context$_get_value(__tact_context_get()) >= $stakeAmount));
     int $positionKey = ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_derivePositionKey(__tact_context_get_sender());
     tuple $existingPosition = $Position$_load_opt(__tact_dict_get_uint_cell($self'positions, 256, $positionKey));
     var ($position'yesStake, $position'noStake, $position'claimed) = (null?($existingPosition) ? $Position$_constructor_yesStake_noStake_claimed(0, 0, false) : $Position$_not_null($existingPosition));
     if ($isYes) {
-        $self'totalYes = ($self'totalYes + $Context$_get_value(__tact_context_get()));
-        $position'yesStake = ($position'yesStake + $Context$_get_value(__tact_context_get()));
+        $self'totalYes = ($self'totalYes + $stakeAmount);
+        $position'yesStake = ($position'yesStake + $stakeAmount);
     } else {
-        $self'totalNo = ($self'totalNo + $Context$_get_value(__tact_context_get()));
-        $position'noStake = ($position'noStake + $Context$_get_value(__tact_context_get()));
+        $self'totalNo = ($self'totalNo + $stakeAmount);
+        $position'noStake = ($position'noStake + $stakeAmount);
     }
     $self'positions~__tact_dict_set_uint_cell(256, $positionKey, $Position$_store_cell(($position'yesStake, $position'noStake, $position'claimed), begin_cell()));
     return (($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions), ());
@@ -624,18 +625,18 @@ _ %getPosition(slice $wallet) method_id(109064) {
     }
     ;; Receive BetYes message
     if (op == 0x54465931) {
-        var $msg = empty_tuple();
+        var $msg'stakeAmount = in_msg~load_varuint16();
         ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(true);
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(true, $msg'stakeAmount);
         $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
     
     ;; Receive BetNo message
     if (op == 0x54464e31) {
-        var $msg = empty_tuple();
+        var $msg'stakeAmount = in_msg~load_varuint16();
         ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_ensureMarketOpen();
-        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(false);
+        ($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions)~$TonForecastMarket$_fun_placeStake(false, $msg'stakeAmount);
         $TonForecastMarket$_contract_store(($self'owner, $self'resolver, $self'treasury, $self'token, $self'timeframeSeconds, $self'thresholdBps, $self'referencePriceE9, $self'protocolFeeBps, $self'createdAt, $self'closeTime, $self'status, $self'resolvedAt, $self'finalPriceE9, $self'totalYes, $self'totalNo, $self'positions));
         return ();
     }
