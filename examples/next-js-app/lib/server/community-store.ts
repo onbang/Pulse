@@ -558,6 +558,92 @@ function isNextDateKey(previousDateKey: string | null, nextDateKey: string) {
   return previous.toISOString().slice(0, 10) === nextDateKey;
 }
 
+function calculateCheckInMetrics(dateKeys: string[]) {
+  if (dateKeys.length === 0) {
+    return {
+      streak: 0,
+      longestStreak: 0,
+      totalCheckIns: 0,
+      lastCheckInDate: null as string | null,
+      normalizedDates: [] as string[],
+    };
+  }
+
+  const normalizedDates = Array.from(new Set(dateKeys.filter(Boolean))).sort();
+
+  let longestStreak = 1;
+  let currentRun = 1;
+
+  for (let index = 1; index < normalizedDates.length; index += 1) {
+    if (
+      isNextDateKey(normalizedDates[index - 1] ?? null, normalizedDates[index]!)
+    ) {
+      currentRun += 1;
+    } else {
+      currentRun = 1;
+    }
+
+    longestStreak = Math.max(longestStreak, currentRun);
+  }
+
+  let activeStreak = 1;
+
+  for (let index = normalizedDates.length - 1; index > 0; index -= 1) {
+    if (
+      isNextDateKey(normalizedDates[index - 1] ?? null, normalizedDates[index]!)
+    ) {
+      activeStreak += 1;
+      continue;
+    }
+
+    break;
+  }
+
+  return {
+    streak: activeStreak,
+    longestStreak,
+    totalCheckIns: normalizedDates.length,
+    lastCheckInDate: normalizedDates.at(-1) ?? null,
+    normalizedDates,
+  };
+}
+
+function reconcileProfileCheckInState(db: DatabaseSync, walletAddress: string) {
+  const confirmedDateRows = db
+    .prepare(
+      `
+      SELECT date_key
+      FROM check_in_events
+      WHERE wallet_address = ? AND status = 'confirmed'
+      ORDER BY date_key ASC
+    `,
+    )
+    .all(walletAddress) as Array<{ date_key: string }>;
+
+  const metrics = calculateCheckInMetrics(
+    confirmedDateRows.map((row) => row.date_key),
+  );
+
+  db.prepare(`
+    UPDATE profiles
+    SET streak = ?,
+        longest_streak = ?,
+        total_check_ins = ?,
+        last_check_in_date = ?,
+        check_in_dates_json = ?
+    WHERE wallet_address = ?
+  `).run(
+    metrics.streak,
+    metrics.longestStreak,
+    metrics.totalCheckIns,
+    metrics.lastCheckInDate,
+    JSON.stringify(metrics.normalizedDates),
+    walletAddress,
+  );
+
+  return metrics;
+}
+
 function buildRewardEntries(input: {
   walletAddress: string;
   eventId: string;
@@ -1624,6 +1710,11 @@ async function syncOnchainCheckInTransactions(
   const normalizedWalletAddress = normalizeTonAddress(walletAddress);
   const normalizedTargetMessageHash =
     options?.targetMessageHash?.trim() || null;
+  const walletsToReconcile = new Set<string>();
+
+  if (normalizedWalletAddress) {
+    walletsToReconcile.add(normalizedWalletAddress);
+  }
 
   try {
     const response = await fetch(
@@ -1646,7 +1737,20 @@ async function syncOnchainCheckInTransactions(
       transactions?: Array<Record<string, unknown>>;
     };
 
-    for (const transaction of payload.transactions ?? []) {
+    const transactions = [...(payload.transactions ?? [])].sort(
+      (left, right) => {
+        const leftTime = Date.parse(extractTransactionCreatedAt(left));
+        const rightTime = Date.parse(extractTransactionCreatedAt(right));
+
+        if (!Number.isFinite(leftTime) || !Number.isFinite(rightTime)) {
+          return 0;
+        }
+
+        return leftTime - rightTime;
+      },
+    );
+
+    for (const transaction of transactions) {
       const chainTxHash = extractTxHash(transaction);
       const incomingMessage = (transaction.in_msg ??
         transaction.inMessage) as Record<string, unknown> | null;
@@ -1693,6 +1797,10 @@ async function syncOnchainCheckInTransactions(
         normalizedSourceAddress !== normalizedWalletAddress
       ) {
         continue;
+      }
+
+      if (normalizedSourceAddress) {
+        walletsToReconcile.add(normalizedSourceAddress);
       }
 
       const parsedComment = parseCheckInTransferComment(
@@ -1748,10 +1856,6 @@ async function syncOnchainCheckInTransactions(
           : isNextDateKey(previousDate, confirmedDateKey)
             ? current.streak + 1
             : 1;
-      const nextLongestStreak = Math.max(
-        current.longest_streak,
-        streakAfterCheckIn,
-      );
       const nextCheckInDates = currentDates.includes(confirmedDateKey)
         ? currentDates
         : [...currentDates, confirmedDateKey].sort();
@@ -1839,6 +1943,11 @@ async function syncOnchainCheckInTransactions(
         }
 
         if (!alreadyConfirmedForDay) {
+          const nextLongestStreak = Math.max(
+            current.longest_streak,
+            streakAfterCheckIn,
+          );
+
           db.prepare(`
             UPDATE profiles
             SET total_points = total_points + ?,
@@ -1877,10 +1986,16 @@ async function syncOnchainCheckInTransactions(
           });
         }
 
+        reconcileProfileCheckInState(db, normalizedSourceAddress);
+
         db.exec("COMMIT");
       } catch {
         db.exec("ROLLBACK");
       }
+    }
+
+    for (const reconciledWallet of walletsToReconcile) {
+      reconcileProfileCheckInState(db, reconciledWallet);
     }
   } catch {
     return;
