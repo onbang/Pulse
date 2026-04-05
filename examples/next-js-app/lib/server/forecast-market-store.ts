@@ -150,6 +150,88 @@ function createForecastMarketId(input: {
   ].join(":");
 }
 
+function toUnixSeconds(value: string) {
+  return Math.floor(new Date(value).getTime() / 1000);
+}
+
+function isPendingUndeployedMarket(market: ForecastMarketRow | null) {
+  return Boolean(
+    market && market.status === "pending" && !market.deployment_tx_hash,
+  );
+}
+
+async function buildPendingForecastDeployBetIntent(input: {
+  market: ForecastMarketRow;
+  direction: PredictionDirection;
+  amountTon: number;
+}) {
+  if (!isPredictionTimeframeId(input.market.timeframe_id)) {
+    throw new Error("Unsupported forecast timeframe.");
+  }
+
+  const createdAtUnix = toUnixSeconds(input.market.created_at);
+  const closeTimeUnix = toUnixSeconds(input.market.close_time);
+  const marketId = createForecastMarketId({
+    tokenAddress: input.market.token_address,
+    timeframeId: input.market.timeframe_id,
+    createdAtUnix,
+  });
+  const marketTitle = createForecastMarketTitle(
+    input.market.token_symbol,
+    input.market.timeframe_id,
+  );
+  const contract = await TonForecastMarket.fromInit(
+    Address.parse(input.market.owner_address),
+    Address.parse(input.market.resolver_address),
+    Address.parse(input.market.treasury_address),
+    Address.parse(input.market.token_address),
+    input.market.token_symbol,
+    marketId,
+    marketTitle,
+    input.market.timeframe_id,
+    BigInt(input.market.timeframe_seconds),
+    BigInt(input.market.threshold_bps),
+    BigInt(input.market.reference_price_e9),
+    BigInt(input.market.protocol_fee_bps),
+    BigInt(createdAtUnix),
+    BigInt(closeTimeUnix),
+  );
+
+  return {
+    market: {
+      contractAddress: contract.address.toString(),
+      pairId: input.market.pair_id,
+      label: input.market.pair_label,
+      tokenAddress: input.market.token_address,
+      tokenSymbol: input.market.token_symbol,
+      timeframeId: input.market.timeframe_id,
+      timeframeSeconds: input.market.timeframe_seconds,
+      thresholdBps: input.market.threshold_bps,
+      referencePriceE9: input.market.reference_price_e9,
+      createdAt: input.market.created_at,
+      closeTime: input.market.close_time,
+      status: "pending" as const,
+    },
+    tonConnect: {
+      validUntil: Math.floor(Date.now() / 1000) + 600,
+      messages: [
+        {
+          address: contract.address.toString(),
+          amount: (
+            toNano(getForecastDeployReserveTon()) +
+            toNano(String(input.amountTon))
+          ).toString(),
+          stateInit: serializeStateInit(contract.init!),
+          payload: buildTonForecastBetPayloadBase64(
+            predictionDirectionToForecast(input.direction),
+          ),
+        },
+      ],
+    },
+    syncCursor: new Date().toISOString(),
+  };
+}
+
 function parseMnemonicWords(value: string) {
   return value
     .split(/[\s,]+/)
@@ -1668,8 +1750,23 @@ export async function createForecastMarketIntent(input: {
     tokenAddress,
     timeframeId: input.timeframeId,
   });
+  const activeMarketRow = getActiveForecastMarketRow(db, context.pairId);
 
   if (context.activeMarket) {
+    if (isPendingUndeployedMarket(activeMarketRow)) {
+      const pendingIntent = await buildPendingForecastDeployBetIntent({
+        market: activeMarketRow!,
+        direction: input.direction,
+        amountTon: input.amountTon,
+      });
+
+      return {
+        ok: true,
+        ...pendingIntent,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
     return {
       ok: false,
       reason: "active_market_exists" as const,
@@ -1791,10 +1888,31 @@ export async function createForecastBetIntent(input: {
   await runForecastAutoCycle({ pairId: input.pairId });
   const activeMarket = getActiveForecastMarketRow(db, input.pairId);
 
-  if (!walletAddress || !activeMarket || activeMarket.status !== "open") {
+  if (!walletAddress || !activeMarket) {
     return {
       ok: false,
       state: await getCommunityState(walletAddress || null),
+    };
+  }
+
+  if (isPendingUndeployedMarket(activeMarket)) {
+    const pendingIntent = await buildPendingForecastDeployBetIntent({
+      market: activeMarket,
+      direction: input.direction,
+      amountTon: input.amountTon,
+    });
+
+    return {
+      ok: true,
+      ...pendingIntent,
+      state: await getCommunityState(walletAddress),
+    };
+  }
+
+  if (activeMarket.status !== "open") {
+    return {
+      ok: false,
+      state: await getCommunityState(walletAddress),
     };
   }
 
