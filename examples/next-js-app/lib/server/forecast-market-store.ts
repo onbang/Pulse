@@ -117,6 +117,14 @@ function shortAddress(value: string) {
   return `${value.slice(0, 4)}…${value.slice(-4)}`;
 }
 
+function toTonConnectDeployAddress(address: Address) {
+  return address.toString({
+    bounceable: false,
+    urlSafe: true,
+    testOnly: false,
+  });
+}
+
 function predictionDirectionToForecast(
   value: PredictionDirection,
 ): TonForecastDirection {
@@ -186,7 +194,7 @@ async function buildPendingForecastDeployBetIntent(input: {
       validUntil: Math.floor(Date.now() / 1000) + 600,
       messages: [
         {
-          address: contract.address.toString(),
+          address: toTonConnectDeployAddress(contract.address),
           amount: (
             toNano(getForecastDeployReserveTon()) +
             toNano(String(input.amountTon))
@@ -1817,7 +1825,7 @@ export async function createForecastMarketIntent(input: {
       validUntil: Math.floor(Date.now() / 1000) + 600,
       messages: [
         {
-          address: contractAddress,
+          address: toTonConnectDeployAddress(contract.address),
           amount: (
             toNano(getForecastDeployReserveTon()) +
             toNano(String(input.amountTon))
