@@ -99,20 +99,6 @@ export function DailyCheckInCard() {
       ) ?? null
     );
   }, [normalizedProfileWallet, rewardLedger]);
-
-  if (!profile) {
-    return null;
-  }
-
-  const streakTarget =
-    profile.streak >= 30 ? 90 : profile.streak >= 14 ? 30 : 7;
-  const streakProgress = Math.min((profile.streak / streakTarget) * 100, 100);
-  const nextMilestoneLabel =
-    streakTarget === 7
-      ? t("checkin.goal7")
-      : streakTarget === 30
-        ? t("checkin.goal30")
-        : t("checkin.goal90");
   const isBusy =
     status === "sending" ||
     status === "waiting_confirmation" ||
@@ -140,7 +126,7 @@ export function DailyCheckInCard() {
           : t("checkin.claim");
 
   useEffect(() => {
-    if (!pendingToday || isBusy) {
+    if (!profile || !pendingToday || isBusy) {
       return;
     }
 
@@ -204,6 +190,20 @@ export function DailyCheckInCard() {
     t,
     todayKey,
   ]);
+
+  if (!profile) {
+    return null;
+  }
+
+  const streakTarget =
+    profile.streak >= 30 ? 90 : profile.streak >= 14 ? 30 : 7;
+  const streakProgress = Math.min((profile.streak / streakTarget) * 100, 100);
+  const nextMilestoneLabel =
+    streakTarget === 7
+      ? t("checkin.goal7")
+      : streakTarget === 30
+        ? t("checkin.goal30")
+        : t("checkin.goal90");
 
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
