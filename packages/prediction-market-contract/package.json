@@ -29,7 +29,7 @@
     }
   },
   "scripts": {
-    "build": "blueprint build PulsePredictionMarket && blueprint build TonForecastMarket && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/PulsePredictionMarket && pnpm exec tsc build/TonForecastMarket/tact_TonForecastMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/TonForecastMarket",
+    "build": "node ./scripts/build-contracts.cjs && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/PulsePredictionMarket && pnpm exec tsc build/TonForecastMarket/tact_TonForecastMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/TonForecastMarket",
     "lint": "tsc --noEmit --pretty",
     "deploy": "blueprint run deployPulsePredictionMarket",
     "close-round": "blueprint run closePredictionRound",
