@@ -25,6 +25,29 @@
         "STON_PULSE_DEBUG_LOG_SECRET"
       ]
     },
+    "lint:tsc": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "env": [
+        "CRON_SECRET",
+        "DEBUG_LOG_SECRET",
+        "FORECAST_CLAIM_TRIGGER_TON",
+        "FORECAST_CRON_SECRET",
+        "FORECAST_DEPLOY_RESERVE_TON",
+        "FORECAST_RESOLVER_ADDRESS",
+        "FORECAST_RESOLVER_MNEMONIC",
+        "FORECAST_PROTOCOL_FEE_BPS",
+        "FORECAST_THRESHOLD_PRESETS_BPS",
+        "NEXT_PUBLIC_FORECAST_AUTO_CYCLE_ENABLED",
+        "NEXT_PUBLIC_FORECAST_CLAIM_TRIGGER_TON",
+        "NEXT_PUBLIC_FORECAST_DEPLOY_RESERVE_TON",
+        "NEXT_PUBLIC_FORECAST_PROTOCOL_FEE_BPS",
+        "NEXT_PUBLIC_FORECAST_RESOLVER_ADDRESS",
+        "NEXT_PUBLIC_FORECAST_THRESHOLD_PRESETS_BPS",
+        "NEXT_PUBLIC_FORECAST_TREASURY_ADDRESS",
+        "STON_PULSE_DEBUG_LOG_SECRET"
+      ]
+    },
     "dev": {
       "dependsOn": ["^build"]
     },

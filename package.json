@@ -10,7 +10,7 @@
     "test": "turbo run test",
     "build": "turbo run build",
     "dev": "turbo dev --filter=@ston-fi/sdk-example-next-js-app...",
-    "ci:web": "pnpm --filter @ston-fi/sdk-example-next-js-app lint:tsc && pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack",
+    "ci:web": "pnpm exec turbo run lint:tsc --filter=@ston-fi/sdk-example-next-js-app && pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack",
     "ci:bot": "pnpm --filter @ston-pulse/telegram-bot build",
     "ci": "pnpm lint && pnpm ci:web && pnpm ci:bot",
     "verify": "pnpm lint && pnpm ci:web && pnpm ci:bot"

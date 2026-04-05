@@ -34,7 +34,7 @@ jobs:
         run: pnpm lint
 
       - name: Typecheck web app
-        run: pnpm --filter @ston-fi/sdk-example-next-js-app lint:tsc
+        run: pnpm exec turbo run lint:tsc --filter=@ston-fi/sdk-example-next-js-app
 
       - name: Build web app
         run: pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
