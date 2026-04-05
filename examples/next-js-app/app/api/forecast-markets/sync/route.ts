@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { syncForecastMarket } from "@/lib/server/forecast-market-store";
 
 export async function PUT(request: Request) {
@@ -27,14 +28,11 @@ export async function PUT(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to sync forecast market",
-      },
-      { status: 500 },
-    );
+    return jsonRouteError({
+      request,
+      scope: "api.forecast-markets.sync",
+      error,
+      fallbackMessage: "Failed to sync forecast market",
+    });
   }
 }

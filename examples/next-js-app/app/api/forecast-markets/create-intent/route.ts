@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { createForecastMarketIntent } from "@/lib/server/forecast-market-store";
 import { isPredictionTimeframeId } from "@/lib/prediction-timeframes";
 import type { PredictionDirection } from "@/lib/community";
@@ -40,14 +41,11 @@ export async function POST(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create forecast market intent",
-      },
-      { status: 500 },
-    );
+    return jsonRouteError({
+      request,
+      scope: "api.forecast-markets.create-intent",
+      error,
+      fallbackMessage: "Failed to create forecast market intent",
+    });
   }
 }

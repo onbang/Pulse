@@ -17,6 +17,10 @@ function resolveWritableDataRoot() {
   return join(process.cwd(), ".data");
 }
 
+export function resolveWritableDataRootPath() {
+  return resolveWritableDataRoot();
+}
+
 export function resolveCommunityDatabaseFile() {
   return (
     process.env.STON_PULSE_DB_FILE ??
@@ -28,5 +32,12 @@ export function resolveLegacyCommunityJsonFile() {
   return (
     process.env.STON_PULSE_DATA_FILE ??
     join(resolveWritableDataRoot(), "community.json")
+  );
+}
+
+export function resolveRuntimeLogFile() {
+  return (
+    process.env.STON_PULSE_LOG_FILE ??
+    join(resolveWritableDataRoot(), "runtime-errors.log")
   );
 }

@@ -55,6 +55,8 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `POST /api/telegram/auth`
 - `GET /api/ton/profile/[wallet]`
 - `GET /api/tonconnect-manifest`
+- `GET /api/debug/runtime-logs`
+- `POST /api/debug/runtime-logs`
 - `GET /api/forecast-markets/context`
 - `POST /api/forecast-markets/create-intent`
 - `POST /api/forecast-markets/bet-intent`
@@ -76,6 +78,37 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `FORECAST_RESOLVER_MNEMONIC`
 - `FORECAST_CRON_SECRET`
 - `STON_PULSE_DB_FILE`
+- `STON_PULSE_LOG_FILE`
+- `STON_PULSE_DEBUG_LOG_SECRET`
+
+## Runtime logs
+
+- Server route failures are now written to a runtime log file
+- Client-side crashes and unhandled promise rejections are also reported automatically
+- Local default log path: `.data/runtime-errors.log`
+- Serverless default log path: `/tmp/ston-pulse/runtime-errors.log`
+- To override the file location, set `STON_PULSE_LOG_FILE`
+- To protect log reads in production, set `STON_PULSE_DEBUG_LOG_SECRET`
+
+Read the latest entries from the app:
+
+```sh
+curl -s "http://localhost:3000/api/debug/runtime-logs?limit=100&secret=your-secret"
+```
+
+or on production:
+
+```sh
+curl -s "https://your-domain.example/api/debug/runtime-logs?limit=100&secret=your-secret"
+```
+
+The response includes:
+
+- `file`: the active runtime log file path
+- `count`: how many entries were returned
+- `entries`: recent log events in JSON form
+
+Each entry includes timestamp, scope, message, stack trace, route path, and extra metadata when available.
 
 ## Deployment notes
 
@@ -83,6 +116,7 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - The app uses SQLite storage through `node:sqlite`
 - In local development the default storage path is `.data/community.sqlite`
 - In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
+- Runtime logs follow the same writable storage rule and default to `.data/runtime-errors.log` locally or `/tmp/ston-pulse/runtime-errors.log` on serverless
 - For durable production persistence, provide a custom `STON_PULSE_DB_FILE` backed by writable storage instead of relying on ephemeral `/tmp`
 - `GET /api/health` can be used as a lightweight health endpoint
 - Token forecasts use one `TonForecastMarket` contract per `token + timeframe + roundStart`

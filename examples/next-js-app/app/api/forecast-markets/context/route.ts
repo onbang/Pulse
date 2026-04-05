@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { getForecastMarketContext } from "@/lib/server/forecast-market-store";
 
 export async function GET(request: Request) {
@@ -22,14 +23,11 @@ export async function GET(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to build forecast market context",
-      },
-      { status: 500 },
-    );
+    return jsonRouteError({
+      request,
+      scope: "api.forecast-markets.context",
+      error,
+      fallbackMessage: "Failed to build forecast market context",
+    });
   }
 }

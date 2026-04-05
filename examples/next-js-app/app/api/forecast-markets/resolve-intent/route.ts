@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { createForecastResolveIntent } from "@/lib/server/forecast-market-store";
 
 export async function POST(request: Request) {
@@ -31,14 +32,11 @@ export async function POST(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create forecast resolve intent",
-      },
-      { status: 500 },
-    );
+    return jsonRouteError({
+      request,
+      scope: "api.forecast-markets.resolve-intent",
+      error,
+      fallbackMessage: "Failed to create forecast resolve intent",
+    });
   }
 }

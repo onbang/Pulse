@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getForecastCronSecret } from "@/lib/forecast-market-config";
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { runForecastAutoCycle } from "@/lib/server/forecast-market-store";
 
 export const dynamic = "force-dynamic";
@@ -34,15 +35,16 @@ async function handleAutoCycle(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to run forecast auto-cycle",
+    return jsonRouteError({
+      request,
+      scope: "api.forecast-markets.auto-cycle",
+      error,
+      fallbackMessage: "Failed to run forecast auto-cycle",
+      metadata: {
+        pairId,
+        marketAddress,
       },
-      { status: 500 },
-    );
+    });
   }
 }
 

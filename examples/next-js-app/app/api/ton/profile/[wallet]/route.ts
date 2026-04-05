@@ -1,6 +1,7 @@
 import { Address } from "@ton/core";
 import { NextResponse } from "next/server";
 
+import { jsonRouteError } from "@/lib/server/api-route-error";
 import { tonConsoleClient } from "@/lib/ton-console-client";
 
 export async function GET(
@@ -54,13 +55,14 @@ export async function GET(
       })),
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          error instanceof Error ? error.message : "Failed to load TON profile",
+    return jsonRouteError({
+      request: _request,
+      scope: "api.ton.profile.get",
+      error,
+      fallbackMessage: "Failed to load TON profile",
+      metadata: {
+        wallet,
       },
-      { status: 500 },
-    );
+    });
   }
 }

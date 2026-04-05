@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 
 import { Header } from "@/components/header";
 import { NavBar } from "@/components/nav-bar";
+import { RuntimeErrorReporter } from "@/components/runtime-error-reporter";
 import { Toaster } from "@/components/ui/toaster";
 import { ROUTES } from "@/constants";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn("flex min-h-[100svh] flex-col overflow-x-hidden")}>
         <Providers>
+          <RuntimeErrorReporter />
           <Header />
           <NavBar className="mx-auto" links={navBarLinks} />
           <main className="container relative flex h-full flex-1 flex-col pb-12 pt-6 md:pb-16 md:pt-8">

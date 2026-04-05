@@ -23,6 +23,7 @@ import {
 
 import type { PredictionDirection } from "@/lib/community";
 import { getCommunityState } from "@/lib/server/community-store";
+import { logRuntimeError } from "@/lib/server/runtime-logger";
 import { stonApiClient } from "@/lib/ston-api-client";
 import {
   getForecastAutoCycleEnabled,
@@ -1278,7 +1279,16 @@ async function syncForecastMarketTransactions(
     }
 
     return sawContractActivity;
-  } catch {
+  } catch (error) {
+    await logRuntimeError({
+      scope: "forecast-market-store.sync-transactions",
+      error,
+      fallbackMessage: "Failed to sync forecast market transactions",
+      path: contractAddress,
+      metadata: {
+        contractAddress,
+      },
+    });
     return false;
   }
 }
@@ -1669,6 +1679,16 @@ async function autoClaimForecastMarket(
         );
       }
     } catch (error) {
+      await logRuntimeError({
+        scope: "forecast-market-store.auto-claim",
+        error,
+        fallbackMessage: "Failed to auto-claim forecast payout",
+        path: market.contract_address,
+        metadata: {
+          marketAddress: market.contract_address,
+          walletAddress: normalizedWallet,
+        },
+      });
       markForecastAutoClaimError(
         db,
         market.contract_address,
