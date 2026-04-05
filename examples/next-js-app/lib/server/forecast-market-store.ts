@@ -426,7 +426,9 @@ async function waitForResolverSeqnoIncrement(
 async function sendResolverMessage(input: {
   to: string;
   valueTon: string;
-  payloadBase64: string;
+  payloadBase64?: string | null;
+  bounce?: boolean;
+  init?: { code: Cell; data: Cell } | null;
 }) {
   const resolverWallet = await getResolverWalletContext();
 
@@ -443,8 +445,11 @@ async function sendResolverMessage(input: {
       internal({
         to: Address.parse(input.to),
         value: toNano(input.valueTon),
-        bounce: true,
-        body: encodeForecastBody(input.payloadBase64),
+        bounce: input.bounce ?? true,
+        init: input.init ?? undefined,
+        body: input.payloadBase64
+          ? encodeForecastBody(input.payloadBase64)
+          : Cell.EMPTY,
       }),
     ],
   });
@@ -455,6 +460,69 @@ async function sendResolverMessage(input: {
     ok: true as const,
     resolverAddress: resolverWallet.address,
   };
+}
+
+async function ensureForecastMarketDeployed(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+) {
+  if (market.deployment_tx_hash) {
+    return market;
+  }
+
+  const existingOnchainState = await readForecastMarketOnchainState(
+    market.contract_address,
+  );
+
+  if (existingOnchainState) {
+    await syncForecastMarketTransactions(db, market.contract_address);
+    return getForecastMarketRow(db, market.contract_address) ?? market;
+  }
+
+  if (!isPredictionTimeframeId(market.timeframe_id)) {
+    return market;
+  }
+
+  const resolverWallet = await getResolverWalletContext();
+
+  if (
+    !resolverWallet ||
+    normalizeTonAddress(market.resolver_address) !==
+      normalizeTonAddress(resolverWallet.address)
+  ) {
+    return market;
+  }
+
+  const contract = await TonForecastMarket.fromInit(
+    Address.parse(market.owner_address),
+    Address.parse(market.resolver_address),
+    Address.parse(market.treasury_address),
+    Address.parse(market.token_address),
+    BigInt(market.timeframe_seconds),
+    BigInt(market.threshold_bps),
+    BigInt(market.reference_price_e9),
+    BigInt(market.protocol_fee_bps),
+    BigInt(toUnixSeconds(market.created_at)),
+    BigInt(toUnixSeconds(market.close_time)),
+  );
+
+  await sendResolverMessage({
+    to: contract.address.toString(),
+    valueTon: getForecastDeployReserveTon(),
+    bounce: false,
+    init: contract.init,
+  });
+
+  await waitForForecastStatus(contract.address.toString(), [
+    "open",
+    "locked",
+    "resolved_yes",
+    "resolved_no",
+    "resolved_draw",
+  ]);
+  await syncForecastMarketTransactions(db, contract.address.toString());
+
+  return getForecastMarketRow(db, contract.address.toString()) ?? market;
 }
 
 function shouldSkipAutoClaim(row: ForecastAutoClaimRow | null) {
@@ -1734,8 +1802,35 @@ export async function createForecastMarketIntent(input: {
 
   if (context.activeMarket) {
     if (isPendingUndeployedMarket(activeMarketRow)) {
+      const deployedMarket = await ensureForecastMarketDeployed(
+        db,
+        activeMarketRow!,
+      );
+
+      if (
+        deployedMarket.deployment_tx_hash ||
+        deployedMarket.status !== "pending"
+      ) {
+        return {
+          ok: true,
+          market: toMarketSummary(deployedMarket),
+          tonConnect: {
+            validUntil: Math.floor(Date.now() / 1000) + 600,
+            messages: [
+              buildTonForecastBetTransferMessage({
+                contractAddress: deployedMarket.contract_address,
+                direction: predictionDirectionToForecast(input.direction),
+                amountTon: input.amountTon,
+              }),
+            ],
+          },
+          syncCursor: new Date().toISOString(),
+          state: await getCommunityState(walletAddress),
+        };
+      }
+
       const pendingIntent = await buildPendingForecastDeployBetIntent({
-        market: activeMarketRow!,
+        market: deployedMarket,
         direction: input.direction,
         amountTon: input.amountTon,
       });
@@ -1807,6 +1902,33 @@ export async function createForecastMarketIntent(input: {
     new Date(closeTimeUnix * 1000).toISOString(),
   );
 
+  const insertedMarket = getForecastMarketRow(db, contractAddress);
+  const deployedMarket = insertedMarket
+    ? await ensureForecastMarketDeployed(db, insertedMarket)
+    : null;
+
+  if (
+    deployedMarket &&
+    (deployedMarket.deployment_tx_hash || deployedMarket.status !== "pending")
+  ) {
+    return {
+      ok: true,
+      market: toMarketSummary(deployedMarket),
+      tonConnect: {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [
+          buildTonForecastBetTransferMessage({
+            contractAddress: deployedMarket.contract_address,
+            direction: predictionDirectionToForecast(input.direction),
+            amountTon: input.amountTon,
+          }),
+        ],
+      },
+      syncCursor,
+      state: await getCommunityState(walletAddress),
+    };
+  }
+
   return {
     ok: true,
     market: {
@@ -1864,8 +1986,32 @@ export async function createForecastBetIntent(input: {
   }
 
   if (isPendingUndeployedMarket(activeMarket)) {
+    const deployedMarket = await ensureForecastMarketDeployed(db, activeMarket);
+
+    if (
+      deployedMarket.deployment_tx_hash ||
+      deployedMarket.status !== "pending"
+    ) {
+      return {
+        ok: true,
+        market: toMarketSummary(deployedMarket),
+        tonConnect: {
+          validUntil: Math.floor(Date.now() / 1000) + 600,
+          messages: [
+            buildTonForecastBetTransferMessage({
+              contractAddress: deployedMarket.contract_address,
+              direction: predictionDirectionToForecast(input.direction),
+              amountTon: input.amountTon,
+            }),
+          ],
+        },
+        syncCursor: new Date().toISOString(),
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
     const pendingIntent = await buildPendingForecastDeployBetIntent({
-      market: activeMarket,
+      market: deployedMarket,
       direction: input.direction,
       amountTon: input.amountTon,
     });
