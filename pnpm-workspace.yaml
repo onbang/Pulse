@@ -8,8 +8,14 @@ minimumReleaseAgeExclude:
 
 onlyBuiltDependencies:
 - '@biomejs/biome'
+- '@ston-fi/api'
 - '@ston-fi/*'
+- '@tailwindcss/oxide'
+- core-js-pure
+- esbuild
 - 'lefthook'
+- sharp
+- unrs-resolver
 
 packages:
   - 'examples/*'
