@@ -4,21 +4,13 @@ import {
   DEFAULT_PREDICTION_TREASURY_ADDRESS,
   PREDICTION_COMMENT_PREFIX,
 } from "./constants";
-import {
-  PREDICTION_OP_CLAIM,
-  PREDICTION_OP_CLOSE_ROUND,
-  PREDICTION_OP_PLACE_BET,
-  PREDICTION_OP_SETTLE_ROUND,
-} from "./opcodes";
+import { PREDICTION_OP_PLACE_BET } from "./opcodes";
 import type {
   ParsedTonForecastContractPayload,
   ParsedPredictionContractPayload,
-  PredictionClaimInput,
-  PredictionCloseRoundInput,
   ParsedPredictionBetTransfer,
   PredictionBetTransferInput,
   PredictionDirection,
-  PredictionSettleRoundInput,
   TonForecastDirection,
 } from "./types";
 
@@ -208,47 +200,6 @@ export function buildPredictionPlaceBetTransferMessage(input: {
   };
 }
 
-export function buildPredictionCloseRoundPayloadBase64(
-  input: PredictionCloseRoundInput,
-) {
-  return beginCell()
-    .storeUint(PREDICTION_OP_CLOSE_ROUND, 32)
-    .storeStringRefTail(input.roundId)
-    .storeAddress(Address.parse(input.tokenAddress))
-    .storeUint(input.timeframeCode, 8)
-    .storeUint(input.roundStartTimestamp, 32)
-    .endCell()
-    .toBoc()
-    .toString("base64");
-}
-
-export function buildPredictionSettleRoundPayloadBase64(
-  input: PredictionSettleRoundInput,
-) {
-  return beginCell()
-    .storeUint(PREDICTION_OP_SETTLE_ROUND, 32)
-    .storeStringRefTail(input.roundId)
-    .storeAddress(Address.parse(input.tokenAddress))
-    .storeUint(input.timeframeCode, 8)
-    .storeUint(input.roundStartTimestamp, 32)
-    .storeUint(input.result === "up" ? 1 : 0, 8)
-    .endCell()
-    .toBoc()
-    .toString("base64");
-}
-
-export function buildPredictionClaimPayloadBase64(input: PredictionClaimInput) {
-  return beginCell()
-    .storeUint(PREDICTION_OP_CLAIM, 32)
-    .storeStringRefTail(input.roundId)
-    .storeAddress(Address.parse(input.tokenAddress))
-    .storeUint(input.timeframeCode, 8)
-    .storeUint(input.roundStartTimestamp, 32)
-    .endCell()
-    .toBoc()
-    .toString("base64");
-}
-
 export function parsePredictionContractPayloadBase64(
   value?: string | null,
 ): ParsedPredictionContractPayload | null {
@@ -297,59 +248,6 @@ export function parsePredictionContractPayloadBase64(
         roundStartTimestamp,
         direction,
       };
-    }
-
-    if (opcode === PREDICTION_OP_CLOSE_ROUND) {
-      const roundId = slice.loadStringRefTail();
-      const tokenAddress = slice.loadAddress().toString();
-      const timeframeCode = Number(slice.loadUint(8));
-      const roundStartTimestamp = Number(slice.loadUint(32));
-
-      return roundId && tokenAddress
-        ? {
-            type: "close_round",
-            roundId,
-            tokenAddress,
-            timeframeCode,
-            roundStartTimestamp,
-          }
-        : null;
-    }
-
-    if (opcode === PREDICTION_OP_SETTLE_ROUND) {
-      const roundId = slice.loadStringRefTail();
-      const tokenAddress = slice.loadAddress().toString();
-      const timeframeCode = Number(slice.loadUint(8));
-      const roundStartTimestamp = Number(slice.loadUint(32));
-      const result = slice.loadUint(8) === 1 ? "up" : "down";
-
-      return roundId && tokenAddress
-        ? {
-            type: "settle_round",
-            roundId,
-            tokenAddress,
-            timeframeCode,
-            roundStartTimestamp,
-            result,
-          }
-        : null;
-    }
-
-    if (opcode === PREDICTION_OP_CLAIM) {
-      const roundId = slice.loadStringRefTail();
-      const tokenAddress = slice.loadAddress().toString();
-      const timeframeCode = Number(slice.loadUint(8));
-      const roundStartTimestamp = Number(slice.loadUint(32));
-
-      return roundId && tokenAddress
-        ? {
-            type: "claim",
-            roundId,
-            tokenAddress,
-            timeframeCode,
-            roundStartTimestamp,
-          }
-        : null;
     }
 
     return null;

@@ -1,7 +1,7 @@
 {
   "name": "@ston-pulse/prediction-market-contract",
   "version": "0.1.0",
-  "description": "Deployment workflow for the STON Pulse prediction market smart contract",
+  "description": "Build artifacts for the STON Pulse TonForecastMarket smart contract",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -19,22 +19,14 @@
   ],
   "exports": {
     "./package.json": "./package.json",
-    "./pulse-prediction-market": {
-      "types": "./build/PulsePredictionMarket/tact_PulsePredictionMarket.d.ts",
-      "default": "./build/PulsePredictionMarket/tact_PulsePredictionMarket.js"
-    },
     "./ton-forecast-market": {
       "types": "./build/TonForecastMarket/tact_TonForecastMarket.d.ts",
       "default": "./build/TonForecastMarket/tact_TonForecastMarket.js"
     }
   },
   "scripts": {
-    "build": "node ./scripts/build-contracts.cjs && pnpm exec tsc build/PulsePredictionMarket/tact_PulsePredictionMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/PulsePredictionMarket && pnpm exec tsc build/TonForecastMarket/tact_TonForecastMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/TonForecastMarket",
-    "lint": "tsc --noEmit --pretty",
-    "deploy": "blueprint run deployPulsePredictionMarket",
-    "close-round": "blueprint run closePredictionRound",
-    "settle-round": "blueprint run settlePredictionRound",
-    "claim": "blueprint run claimPredictionRound"
+    "build": "node ./scripts/build-contracts.cjs && pnpm exec tsc build/TonForecastMarket/tact_TonForecastMarket.ts --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --declaration --emitDeclarationOnly false --outDir build/TonForecastMarket",
+    "lint": "tsc --noEmit --pretty"
   },
   "dependencies": {
     "@ston-pulse/prediction-sdk": "workspace:*",

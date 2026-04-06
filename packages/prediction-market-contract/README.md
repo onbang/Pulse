@@ -1,15 +1,14 @@
 # @ston-pulse/prediction-market-contract
 
-Deployment-oriented workspace package for the `PulsePredictionMarket` smart
-contract. This package is responsible for:
+Build-oriented workspace package for the `TonForecastMarket` smart contract.
+This package is responsible for:
 
 - compiling the Tact contract through Blueprint,
-- preparing deployment and admin scripts,
-- keeping the onchain contract workflow separate from the app UI package.
+- exposing generated TypeScript wrappers for the app and backend,
+- keeping the onchain contract workflow separate from the UI package.
 
-## Planned workflow
+Current package scope:
 
 1. `pnpm --filter @ston-pulse/prediction-market-contract build`
-2. `pnpm --filter @ston-pulse/prediction-market-contract deploy`
-3. Set `NEXT_PUBLIC_PREDICTION_MARKET_ADDRESS` in the app environment.
-4. Use admin scripts to close and settle rounds, and wallet-side `claim`.
+2. import `@ston-pulse/prediction-market-contract/ton-forecast-market`
+3. use the generated wrapper from the app or backend forecast flow

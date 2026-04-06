@@ -28,63 +28,18 @@ export type ParsedPredictionBetTransfer = {
   source: PredictionMessageSource;
 };
 
-export type PredictionClaimInput = {
+export type ParsedPredictionContractPayload = {
+  type: "place_bet";
   roundId: string;
+  marketId: string;
+  label: string;
   tokenAddress: string;
+  timeframeId: string;
   timeframeCode: number;
+  roundDurationSeconds: number;
   roundStartTimestamp: number;
+  direction: PredictionDirection;
 };
-
-export type PredictionCloseRoundInput = {
-  roundId: string;
-  tokenAddress: string;
-  timeframeCode: number;
-  roundStartTimestamp: number;
-};
-
-export type PredictionSettleRoundInput = {
-  roundId: string;
-  tokenAddress: string;
-  timeframeCode: number;
-  roundStartTimestamp: number;
-  result: PredictionDirection;
-};
-
-export type ParsedPredictionContractPayload =
-  | {
-      type: "place_bet";
-      roundId: string;
-      marketId: string;
-      label: string;
-      tokenAddress: string;
-      timeframeId: string;
-      timeframeCode: number;
-      roundDurationSeconds: number;
-      roundStartTimestamp: number;
-      direction: PredictionDirection;
-    }
-  | {
-      type: "close_round";
-      roundId: string;
-      tokenAddress: string;
-      timeframeCode: number;
-      roundStartTimestamp: number;
-    }
-  | {
-      type: "settle_round";
-      roundId: string;
-      tokenAddress: string;
-      timeframeCode: number;
-      roundStartTimestamp: number;
-      result: PredictionDirection;
-    }
-  | {
-      type: "claim";
-      roundId: string;
-      tokenAddress: string;
-      timeframeCode: number;
-      roundStartTimestamp: number;
-    };
 
 export type ParsedTonForecastContractPayload =
   | {

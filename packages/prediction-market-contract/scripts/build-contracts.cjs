@@ -33,7 +33,7 @@ const silentUi = {
 };
 
 async function main() {
-  for (const contract of ["PulsePredictionMarket", "TonForecastMarket"]) {
+  for (const contract of ["TonForecastMarket"]) {
     await buildOne(contract, silentUi);
   }
 }
