@@ -287,16 +287,20 @@ export function getAllUserLevels() {
   return USER_LEVELS;
 }
 
+export const DEFAULT_PROFILE_BIO = "Liquidity explorer on TON.";
+
+export function getDefaultProfileDisplayName(walletAddress: string) {
+  return `STON ${walletAddress.slice(0, 4)}`;
+}
+
 export function createDefaultProfile(
   walletAddress: string,
   displayName?: string,
 ): UserProfile {
-  const compact = walletAddress.slice(0, 4);
-
   return {
     walletAddress,
-    displayName: displayName || `STON ${compact}`,
-    bio: "Liquidity explorer on TON.",
+    displayName: displayName || getDefaultProfileDisplayName(walletAddress),
+    bio: DEFAULT_PROFILE_BIO,
     joinedAt: new Date().toISOString(),
     totalPoints: 0,
     streak: 0,

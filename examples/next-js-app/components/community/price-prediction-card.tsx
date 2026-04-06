@@ -1,6 +1,6 @@
 "use client";
 
-import { useTonConnectUI } from "@tonconnect/ui-react";
+import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { useEffect, useMemo, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
@@ -32,6 +32,24 @@ type PredictionSubmissionState =
   | "synced"
   | "failed";
 
+type PredictionClaimState =
+  | "idle"
+  | "requesting"
+  | "waiting_confirmation"
+  | "syncing"
+  | "claimed"
+  | "failed";
+
+type PredictionOperatorAction = "lock" | "resolve";
+
+type PredictionOperatorState =
+  | "idle"
+  | "requesting"
+  | "waiting_confirmation"
+  | "syncing"
+  | "completed"
+  | "failed";
+
 type ForecastTonConnectMessage = {
   address: string;
   amount: string;
@@ -56,10 +74,30 @@ type ForecastMarketSummary = {
   resolvedAt: string | null;
 };
 
+type ForecastViewerState = {
+  walletAddress: string;
+  hasPosition: boolean;
+  yesStakeTon: number;
+  noStakeTon: number;
+  totalStakeTon: number;
+  claimed: boolean;
+  claimable: boolean;
+  winningSide: "up" | "down" | "draw" | null;
+  isResolver: boolean;
+  canLock: boolean;
+  canResolve: boolean;
+};
+
 type ForecastIntentResponse = {
   ok: boolean;
   reason?: string;
   market?: ForecastMarketSummary | null;
+  viewer?: ForecastViewerState | null;
+  resolution?: {
+    finalPriceE9: number;
+    finalPriceUsd?: number | null;
+    resolvedAt: number;
+  };
   tonConnect?: {
     validUntil: number;
     messages: ForecastTonConnectMessage[];
@@ -71,6 +109,7 @@ type ForecastSyncResponse = {
   result: boolean;
   syncStatus: "pending" | "confirmed" | "missing";
   market?: ForecastMarketSummary | null;
+  viewer?: ForecastViewerState | null;
 };
 
 function wait(ms: number) {
@@ -127,7 +166,15 @@ export function PricePredictionCard(props: {
   const [internalStakeAmount, setInternalStakeAmount] = useState("10");
   const [submissionState, setSubmissionState] =
     useState<PredictionSubmissionState>("idle");
+  const [claimState, setClaimState] = useState<PredictionClaimState>("idle");
+  const [operatorState, setOperatorState] =
+    useState<PredictionOperatorState>("idle");
+  const [operatorAction, setOperatorAction] =
+    useState<PredictionOperatorAction | null>(null);
+  const [forecastViewer, setForecastViewer] =
+    useState<ForecastViewerState | null>(null);
   const [tonConnectUI] = useTonConnectUI();
+  const tonConnectFromAddress = useTonAddress(false);
   const { toast } = useToast();
   const {
     getPrediction,
@@ -189,6 +236,17 @@ export function PricePredictionCard(props: {
     [confirmedBets],
   );
   const topPayouts = (prediction?.payoutPreviews ?? []).slice(0, 5);
+  const myPayoutPreview = useMemo(() => {
+    if (!walletAddress) {
+      return null;
+    }
+
+    return (
+      prediction?.payoutPreviews.find(
+        (item) => item.walletAddress === walletAddress,
+      ) ?? null
+    );
+  }, [prediction?.payoutPreviews, walletAddress]);
   const myBets = useMemo(
     () => confirmedBets.filter((bet) => bet.walletAddress === walletAddress),
     [confirmedBets, walletAddress],
@@ -257,6 +315,14 @@ export function PricePredictionCard(props: {
   const predictionEntryAddress = getPredictionEntryAddress();
   const isTokenPrediction = props.pairId.startsWith("prediction:");
   const canAutoReopenRound = isTokenPrediction && (!round || isRoundSettled);
+  const isClaimBusy =
+    claimState === "requesting" ||
+    claimState === "waiting_confirmation" ||
+    claimState === "syncing";
+  const isOperatorBusy =
+    operatorState === "requesting" ||
+    operatorState === "waiting_confirmation" ||
+    operatorState === "syncing";
   const hasPredictionTransport = isTokenPrediction
     ? Boolean(parsedMarket)
     : Boolean(predictionEntryAddress);
@@ -284,6 +350,12 @@ export function PricePredictionCard(props: {
                 submissionState === "syncing"
               ? "submitting"
               : null;
+  useEffect(() => {
+    setForecastViewer(null);
+    setClaimState("idle");
+    setOperatorState("idle");
+    setOperatorAction(null);
+  }, [props.pairId, round?.id, walletAddress]);
   const [clockNow, setClockNow] = useState(() => Date.now());
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -295,6 +367,9 @@ export function PricePredictionCard(props: {
   const timeLeftMs = round
     ? Math.max(new Date(round.closesAt).getTime() - clockNow, 0)
     : 0;
+  const roundClosePassed = round
+    ? clockNow >= new Date(round.closesAt).getTime()
+    : false;
   const countdownLabel = round
     ? formatCountdown(timeLeftMs)
     : t("prediction.pending");
@@ -313,7 +388,16 @@ export function PricePredictionCard(props: {
       return;
     }
 
-    if (!(isRoundClosed || isRoundSettled || hasPendingConfirmation)) {
+    if (
+      !(
+        isRoundClosed ||
+        isRoundSettled ||
+        hasPendingConfirmation ||
+        roundClosePassed ||
+        isClaimBusy ||
+        isOperatorBusy
+      )
+    ) {
       return;
     }
 
@@ -321,16 +405,20 @@ export function PricePredictionCard(props: {
 
     const pollRoundState = async () => {
       try {
-        await requestJson<ForecastSyncResponse>("/api/forecast-markets/sync", {
-          method: "PUT",
-          body: JSON.stringify({
-            walletAddress,
-            pairId: props.pairId,
-            marketAddress: round.id,
-          }),
-        });
+        const syncResponse = await requestJson<ForecastSyncResponse>(
+          "/api/forecast-markets/sync",
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              walletAddress,
+              pairId: props.pairId,
+              marketAddress: round.id,
+            }),
+          },
+        );
 
         if (!disposed) {
+          setForecastViewer(syncResponse.viewer ?? null);
           await refresh();
         }
       } catch {
@@ -349,6 +437,9 @@ export function PricePredictionCard(props: {
     };
   }, [
     hasPendingConfirmation,
+    isClaimBusy,
+    isOperatorBusy,
+    roundClosePassed,
     isRoundClosed,
     isRoundSettled,
     props.pairId,
@@ -384,7 +475,35 @@ export function PricePredictionCard(props: {
   const marketTimeframeLabel =
     parsedMarket?.timeframe ?? timeframeLabelPart ?? t("prediction.pending");
   const currentMarketSplit = `${upSplitWidth}% / ${downSplitWidth}%`;
-  const statusText =
+  const claimStatusText =
+    claimState === "requesting"
+      ? t("prediction.claimOpeningWallet")
+      : claimState === "waiting_confirmation"
+        ? t("prediction.claimWaitingConfirmation")
+        : claimState === "syncing"
+          ? t("prediction.claimSyncing")
+          : claimState === "claimed"
+            ? t("prediction.claimedStatus")
+            : null;
+  const operatorStatusText =
+    operatorState === "requesting"
+      ? operatorAction === "lock"
+        ? t("prediction.manualLockOpeningWallet")
+        : t("prediction.manualResolveOpeningWallet")
+      : operatorState === "waiting_confirmation"
+        ? operatorAction === "lock"
+          ? t("prediction.manualLockWaitingConfirmation")
+          : t("prediction.manualResolveWaitingConfirmation")
+        : operatorState === "syncing"
+          ? operatorAction === "lock"
+            ? t("prediction.manualLockSyncing")
+            : t("prediction.manualResolveSyncing")
+          : operatorState === "completed"
+            ? operatorAction === "lock"
+              ? t("prediction.manualLockSynced")
+              : t("prediction.manualResolveSynced")
+            : null;
+  const betStatusText =
     submissionState === "sending"
       ? t("prediction.txSending")
       : submissionState === "waiting_confirmation"
@@ -396,6 +515,59 @@ export function PricePredictionCard(props: {
             : hasPendingConfirmation
               ? t("prediction.txPendingRefresh")
               : null;
+  const statusText = claimStatusText ?? operatorStatusText ?? betStatusText;
+  const winningSideLabel =
+    forecastViewer?.winningSide === "up"
+      ? t("prediction.up")
+      : forecastViewer?.winningSide === "down"
+        ? t("prediction.down")
+        : forecastViewer?.winningSide === "draw"
+          ? t("prediction.draw")
+          : t("prediction.pending");
+  const showClaimCard =
+    Boolean(walletAddress) &&
+    isTokenPrediction &&
+    isRoundSettled &&
+    ((forecastViewer?.hasPosition ?? false) || myStake > 0);
+  const showManualSettlementCard =
+    Boolean(walletAddress) &&
+    isTokenPrediction &&
+    Boolean(forecastViewer) &&
+    ((forecastViewer?.canLock ?? false) ||
+      (forecastViewer?.canResolve ?? false));
+  const claimCardTitle =
+    forecastViewer == null
+      ? t("prediction.claimCheckingTitle")
+      : forecastViewer.claimed
+        ? t("prediction.claimedTitle")
+        : forecastViewer.claimable
+          ? t("prediction.claimReadyTitle")
+          : t("prediction.claimNoRewardTitle");
+  const claimCardBody =
+    forecastViewer == null
+      ? t("prediction.claimCheckingBody")
+      : forecastViewer.claimed
+        ? t("prediction.claimedBody")
+        : forecastViewer.claimable
+          ? t("prediction.claimReadyBody")
+          : t("prediction.claimNoRewardBody");
+  const claimCardBadgeLabel =
+    forecastViewer == null
+      ? t("prediction.claimCheckingBadge")
+      : forecastViewer.claimed
+        ? t("prediction.claimedBadge")
+        : forecastViewer.claimable
+          ? t("prediction.claimReadyBadge")
+          : t("prediction.claimUnavailableBadge");
+  const manualSettlementBody =
+    forecastViewer?.canLock && forecastViewer?.canResolve
+      ? `${t("prediction.manualLockReadyBody")} ${t("prediction.manualResolveReadyBody")}`
+      : forecastViewer?.canResolve
+        ? t("prediction.manualResolveReadyBody")
+        : t("prediction.manualLockReadyBody");
+  const manualSettlementBadgeLabel = forecastViewer?.canResolve
+    ? t("prediction.resolverBadge")
+    : t("prediction.manualLockBadge");
 
   const placePrediction = async (direction: "up" | "down") => {
     if (!walletAddress) {
@@ -515,6 +687,7 @@ export function PricePredictionCard(props: {
         try {
           await tonConnectUI.sendTransaction({
             validUntil: intent.tonConnect.validUntil,
+            ...(tonConnectFromAddress ? { from: tonConnectFromAddress } : {}),
             messages: intent.tonConnect.messages,
           });
         } catch {
@@ -548,6 +721,7 @@ export function PricePredictionCard(props: {
             );
 
             syncStatus = syncResponse.syncStatus;
+            setForecastViewer(syncResponse.viewer ?? null);
           } catch {
             syncStatus = "pending";
           }
@@ -678,6 +852,7 @@ export function PricePredictionCard(props: {
       try {
         const txResult = await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+          ...(tonConnectFromAddress ? { from: tonConnectFromAddress } : {}),
           messages: [message],
         });
 
@@ -775,6 +950,303 @@ export function PricePredictionCard(props: {
       toast({
         title: t("prediction.txFailed"),
         description: t("prediction.txUnexpectedFailure"),
+      });
+    }
+  };
+
+  const claimReward = async () => {
+    if (!walletAddress) {
+      tonConnectUI.openModal();
+      toast({
+        title: t("swap.button.connect"),
+        description: t("prediction.connectToVote"),
+      });
+      return;
+    }
+
+    if (!round?.id || isClaimBusy) {
+      return;
+    }
+
+    try {
+      setClaimState("requesting");
+
+      const intent = await requestJson<ForecastIntentResponse>(
+        "/api/forecast-markets/claim-intent",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            walletAddress,
+            marketAddress: round.id,
+          }),
+        },
+      );
+
+      setForecastViewer(intent.viewer ?? null);
+
+      if (!intent.ok || !intent.tonConnect || !intent.market) {
+        const description =
+          intent.reason === "already_claimed"
+            ? t("prediction.claimAlreadyClaimed")
+            : intent.reason === "position_not_found"
+              ? t("prediction.claimPositionMissing")
+              : intent.reason === "no_winning_position"
+                ? t("prediction.claimNoRewardBody")
+                : intent.reason === "market_not_resolved"
+                  ? t("prediction.awaitingSettlement")
+                  : t("prediction.claimFailedBody");
+
+        setClaimState(
+          intent.reason === "already_claimed" ? "claimed" : "failed",
+        );
+        toast({
+          title:
+            intent.reason === "already_claimed"
+              ? t("prediction.claimedTitle")
+              : t("prediction.claimFailedTitle"),
+          description,
+        });
+        return;
+      }
+
+      try {
+        await tonConnectUI.sendTransaction({
+          validUntil: intent.tonConnect.validUntil,
+          ...(tonConnectFromAddress ? { from: tonConnectFromAddress } : {}),
+          messages: intent.tonConnect.messages,
+        });
+      } catch {
+        setClaimState("failed");
+        toast({
+          title: t("prediction.claimFailedTitle"),
+          description: t("prediction.txFailedBody"),
+        });
+        return;
+      }
+
+      setClaimState("waiting_confirmation");
+      let viewer = intent.viewer ?? null;
+
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        await wait(2500);
+
+        try {
+          const syncResponse = await requestJson<ForecastSyncResponse>(
+            "/api/forecast-markets/sync",
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                walletAddress,
+                pairId: props.pairId,
+                marketAddress: round.id,
+              }),
+            },
+          );
+
+          viewer = syncResponse.viewer ?? viewer;
+          setForecastViewer(viewer);
+        } catch {
+          // Keep waiting for the next sync tick.
+        }
+
+        if (viewer?.claimed) {
+          break;
+        }
+      }
+
+      if (viewer?.claimed) {
+        setClaimState("syncing");
+        await refresh();
+        setClaimState("claimed");
+        toast({
+          title: t("prediction.claimedTitle"),
+          description: t("prediction.claimedBody"),
+        });
+        return;
+      }
+
+      setClaimState("waiting_confirmation");
+      toast({
+        title: t("prediction.claimSentTitle"),
+        description: t("prediction.claimSentBody"),
+      });
+    } catch (error) {
+      setClaimState("failed");
+      toast({
+        title: t("prediction.claimFailedTitle"),
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : t("prediction.claimFailedBody"),
+      });
+    }
+  };
+
+  const settleMarketManually = async (action: PredictionOperatorAction) => {
+    if (!walletAddress) {
+      tonConnectUI.openModal();
+      toast({
+        title: t("swap.button.connect"),
+        description: t("prediction.connectToVote"),
+      });
+      return;
+    }
+
+    if (!round?.id || isOperatorBusy) {
+      return;
+    }
+
+    try {
+      setOperatorAction(action);
+      setOperatorState("requesting");
+
+      const intent = await requestJson<ForecastIntentResponse>(
+        action === "lock"
+          ? "/api/forecast-markets/lock-intent"
+          : "/api/forecast-markets/resolve-intent",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            walletAddress,
+            marketAddress: round.id,
+          }),
+        },
+      );
+
+      setForecastViewer(intent.viewer ?? null);
+
+      if (!intent.ok || !intent.tonConnect || !intent.market) {
+        const description =
+          action === "lock"
+            ? intent.reason === "market_still_open"
+              ? t("prediction.manualSettlementNotReady")
+              : t("prediction.manualSettlementAlreadyHandled")
+            : intent.reason === "resolver_only"
+              ? t("prediction.operatorResolverOnly")
+              : intent.reason === "price_unavailable"
+                ? t("prediction.operatorPriceUnavailable")
+                : intent.reason === "market_still_open"
+                  ? t("prediction.manualSettlementNotReady")
+                  : t("prediction.manualSettlementAlreadyHandled");
+
+        setOperatorState("failed");
+        toast({
+          title:
+            action === "lock"
+              ? t("prediction.manualLockFailedTitle")
+              : t("prediction.manualResolveFailedTitle"),
+          description,
+        });
+        return;
+      }
+
+      try {
+        await tonConnectUI.sendTransaction({
+          validUntil: intent.tonConnect.validUntil,
+          ...(tonConnectFromAddress ? { from: tonConnectFromAddress } : {}),
+          messages: intent.tonConnect.messages,
+        });
+      } catch {
+        setOperatorState("failed");
+        toast({
+          title:
+            action === "lock"
+              ? t("prediction.manualLockFailedTitle")
+              : t("prediction.manualResolveFailedTitle"),
+          description: t("prediction.txFailedBody"),
+        });
+        return;
+      }
+
+      setOperatorState("waiting_confirmation");
+      let marketStatus = intent.market.status;
+      let viewer = intent.viewer ?? null;
+
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        await wait(2500);
+
+        try {
+          const syncResponse = await requestJson<ForecastSyncResponse>(
+            "/api/forecast-markets/sync",
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                walletAddress,
+                pairId: props.pairId,
+                marketAddress: round.id,
+              }),
+            },
+          );
+
+          marketStatus = syncResponse.market?.status ?? marketStatus;
+          viewer = syncResponse.viewer ?? viewer;
+          setForecastViewer(viewer);
+        } catch {
+          // Keep polling for the next confirmation tick.
+        }
+
+        const settled =
+          marketStatus === "resolved_yes" ||
+          marketStatus === "resolved_no" ||
+          marketStatus === "resolved_draw";
+        const completed = action === "lock" ? marketStatus !== "open" : settled;
+
+        if (completed) {
+          break;
+        }
+      }
+
+      const settled =
+        marketStatus === "resolved_yes" ||
+        marketStatus === "resolved_no" ||
+        marketStatus === "resolved_draw";
+      const completed = action === "lock" ? marketStatus !== "open" : settled;
+
+      if (completed) {
+        setOperatorState("syncing");
+        await refresh();
+        setOperatorState("completed");
+        toast({
+          title:
+            action === "lock"
+              ? t("prediction.manualLockDoneTitle")
+              : t("prediction.manualResolveDoneTitle"),
+          description:
+            action === "lock"
+              ? t("prediction.manualLockDoneBody")
+              : t("prediction.manualResolveDoneBody"),
+        });
+        window.setTimeout(() => {
+          setOperatorState("idle");
+          setOperatorAction(null);
+        }, 1800);
+        return;
+      }
+
+      setOperatorState("waiting_confirmation");
+      toast({
+        title:
+          action === "lock"
+            ? t("prediction.manualLockSentTitle")
+            : t("prediction.manualResolveSentTitle"),
+        description:
+          action === "lock"
+            ? t("prediction.manualLockSentBody")
+            : t("prediction.manualResolveSentBody"),
+      });
+    } catch (error) {
+      setOperatorState("failed");
+      toast({
+        title:
+          action === "lock"
+            ? t("prediction.manualLockFailedTitle")
+            : t("prediction.manualResolveFailedTitle"),
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : action === "lock"
+              ? t("prediction.manualLockFailedBody")
+              : t("prediction.manualResolveFailedBody"),
       });
     }
   };
@@ -1122,6 +1594,108 @@ export function PricePredictionCard(props: {
                 {t("prediction.awaitingSettlement")}
               </Badge>
             </div>
+          </div>
+        ) : null}
+        {showManualSettlementCard ? (
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">
+                  {t("prediction.manualSettlementTitle")}
+                </h4>
+                <p className="text-sm text-slate-600">{manualSettlementBody}</p>
+              </div>
+              <Badge variant="outline">{manualSettlementBadgeLabel}</Badge>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {forecastViewer?.canLock ? (
+                <Button
+                  variant="outline"
+                  className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
+                  disabled={isOperatorBusy}
+                  onClick={() => void settleMarketManually("lock")}
+                >
+                  {operatorAction === "lock" && isOperatorBusy
+                    ? t("prediction.manualLockButton")
+                    : t("prediction.manualLockButton")}
+                </Button>
+              ) : null}
+              {forecastViewer?.canResolve ? (
+                <Button
+                  className="rounded-full bg-slate-950 text-white hover:bg-slate-800"
+                  disabled={isOperatorBusy}
+                  onClick={() => void settleMarketManually("resolve")}
+                >
+                  {operatorAction === "resolve" && isOperatorBusy
+                    ? t("prediction.manualResolveButton")
+                    : t("prediction.manualResolveButton")}
+                </Button>
+              ) : null}
+              <p className="text-xs text-slate-500">
+                {t("prediction.manualSettlementHint")}
+              </p>
+            </div>
+          </div>
+        ) : null}
+        {showClaimCard ? (
+          <div
+            className={
+              forecastViewer?.claimed
+                ? "rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4"
+                : forecastViewer?.claimable
+                  ? "rounded-2xl border border-cyan-200 bg-cyan-50/70 p-4"
+                  : "rounded-2xl border border-slate-200 bg-slate-50 p-4"
+            }
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">
+                  {claimCardTitle}
+                </h4>
+                <p className="text-sm text-slate-600">{claimCardBody}</p>
+              </div>
+              <Badge variant="outline">{claimCardBadgeLabel}</Badge>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  {t("prediction.potentialPayout")}
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {myPayoutPreview
+                    ? `${myPayoutPreview.estimatedPayout.toFixed(2)} TON`
+                    : forecastViewer
+                      ? t("prediction.stakeLine", {
+                          amount: forecastViewer.totalStakeTon.toFixed(2),
+                        })
+                      : "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  {t("prediction.winner")}
+                </p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {winningSideLabel}
+                </p>
+              </div>
+            </div>
+            {forecastViewer?.claimable ? (
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button
+                  className="rounded-full bg-slate-950 text-white hover:bg-slate-800"
+                  disabled={isClaimBusy}
+                  onClick={() => void claimReward()}
+                >
+                  {isClaimBusy
+                    ? t("prediction.claimInProgress")
+                    : t("prediction.claimButton")}
+                </Button>
+                <p className="text-xs text-slate-500">
+                  {t("prediction.claimActionHint")}
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className="rounded-2xl border border-sky-100 bg-white p-4">

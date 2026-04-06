@@ -14,6 +14,7 @@ import {
 import { useTelegramMiniApp } from "@/components/telegram/telegram-mini-app-provider";
 import {
   COMMENT_REACTION_EMOJIS,
+  DEFAULT_PROFILE_BIO,
   type Achievement,
   type ActivityItem,
   type ActivityTrack,
@@ -31,6 +32,7 @@ import {
   type UserProfile,
   buildAchievements,
   defaultCommunityStore,
+  getDefaultProfileDisplayName,
 } from "@/lib/community";
 import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
 import type { TelegramMiniAppUser } from "@/lib/telegram-mini-app";
@@ -42,6 +44,12 @@ type CommunityStatePayload = {
   leaderboard: LeaderboardEntry[];
   recentActivity: ActivityItem[];
   settlements: PredictionSettlement[];
+};
+
+type StoredPublicProfile = {
+  displayName: string;
+  bio: string;
+  updatedAt: string;
 };
 
 type CommunityContextValue = {
@@ -110,6 +118,7 @@ type CommunityContextValue = {
 };
 
 const CommunityContext = createContext<CommunityContextValue | null>(null);
+const LOCAL_PROFILE_STORAGE_PREFIX = "ston-pulse:public-profile:";
 
 function createTelegramDisplayName(user?: TelegramMiniAppUser | null) {
   if (!user) {
@@ -152,6 +161,87 @@ function normalizeTonAddress(value?: string | null) {
   }
 }
 
+function resolvePayloadProfile(
+  payload: CommunityStatePayload,
+  requestedWalletAddress?: string | null,
+) {
+  const normalizedWalletAddress = normalizeTonAddress(requestedWalletAddress);
+
+  return (
+    payload.profile ??
+    (requestedWalletAddress
+      ? (payload.store.profiles[requestedWalletAddress] ??
+        (normalizedWalletAddress
+          ? (payload.store.profiles[normalizedWalletAddress] ?? null)
+          : null))
+      : null)
+  );
+}
+
+function getStoredPublicProfileKey(walletAddress: string) {
+  return `${LOCAL_PROFILE_STORAGE_PREFIX}${normalizeTonAddress(walletAddress) || walletAddress}`;
+}
+
+function readStoredPublicProfile(
+  walletAddress?: string | null,
+): StoredPublicProfile | null {
+  if (typeof window === "undefined" || !walletAddress) {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(
+      getStoredPublicProfileKey(walletAddress),
+    );
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<StoredPublicProfile>;
+
+    if (
+      typeof parsed.displayName !== "string" ||
+      typeof parsed.bio !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      displayName: parsed.displayName,
+      bio: parsed.bio,
+      updatedAt:
+        typeof parsed.updatedAt === "string"
+          ? parsed.updatedAt
+          : new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPublicProfile(
+  walletAddress: string,
+  input: { displayName: string; bio: string },
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      getStoredPublicProfileKey(walletAddress),
+      JSON.stringify({
+        displayName: input.displayName,
+        bio: input.bio,
+        updatedAt: new Date().toISOString(),
+      } satisfies StoredPublicProfile),
+    );
+  } catch {
+    // Ignore client storage failures and continue with server state.
+  }
+}
+
 export function CommunityProvider({ children }: { children: ReactNode }) {
   const walletAddress = useTonAddress();
   const { user: telegramUser } = useTelegramMiniApp();
@@ -183,15 +273,10 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     payload: CommunityStatePayload,
     requestedWalletAddress = walletAddress,
   ) => {
-    const normalizedWalletAddress = normalizeTonAddress(requestedWalletAddress);
-    const resolvedProfile =
-      payload.profile ??
-      (requestedWalletAddress
-        ? (payload.store.profiles[requestedWalletAddress] ??
-          (normalizedWalletAddress
-            ? (payload.store.profiles[normalizedWalletAddress] ?? null)
-            : null))
-        : null);
+    const resolvedProfile = resolvePayloadProfile(
+      payload,
+      requestedWalletAddress,
+    );
 
     setStore(payload.store);
     setProfile(resolvedProfile);
@@ -265,21 +350,61 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        const telegramDisplayName = createTelegramDisplayName(telegramUser);
         const payload = await postJson<CommunityStatePayload>(
           "/api/community/profile",
           {
             walletAddress,
-            displayName: "",
-            bio: "",
-            telegramDisplayName: createTelegramDisplayName(telegramUser),
+            telegramDisplayName,
           },
         );
+
+        let nextPayload = payload;
+        const storedPublicProfile = readStoredPublicProfile(walletAddress);
+        const currentProfile = resolvePayloadProfile(payload, walletAddress);
+        const defaultDisplayName = currentProfile
+          ? getDefaultProfileDisplayName(currentProfile.walletAddress)
+          : getDefaultProfileDisplayName(
+              normalizeTonAddress(walletAddress) || walletAddress,
+            );
+        const displayNameLooksDefault = Boolean(
+          currentProfile &&
+            (currentProfile.displayName === defaultDisplayName ||
+              (telegramDisplayName &&
+                currentProfile.displayName === telegramDisplayName) ||
+              !currentProfile.displayName.trim()),
+        );
+        const bioLooksDefault = Boolean(
+          currentProfile &&
+            (currentProfile.bio === DEFAULT_PROFILE_BIO ||
+              !currentProfile.bio.trim()),
+        );
+        const shouldRestoreStoredProfile = Boolean(
+          currentProfile &&
+            storedPublicProfile &&
+            ((displayNameLooksDefault &&
+              storedPublicProfile.displayName !== currentProfile.displayName) ||
+              (bioLooksDefault &&
+                storedPublicProfile.bio !== currentProfile.bio)),
+        );
+
+        if (shouldRestoreStoredProfile && storedPublicProfile) {
+          nextPayload = await postJson<CommunityStatePayload>(
+            "/api/community/profile",
+            {
+              walletAddress,
+              displayName: storedPublicProfile.displayName,
+              bio: storedPublicProfile.bio,
+              telegramDisplayName,
+            },
+          );
+        }
 
         if (latestRequestRef.current !== requestId) {
           return;
         }
 
-        applyPayload(payload, walletAddress);
+        applyPayload(nextPayload, walletAddress);
       } catch (error) {
         console.error("Failed to bootstrap community provider", error);
 
@@ -347,6 +472,11 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         },
       );
 
+      const resolvedProfile = resolvePayloadProfile(payload, walletAddress);
+      writeStoredPublicProfile(walletAddress, {
+        displayName: resolvedProfile?.displayName ?? input.displayName,
+        bio: resolvedProfile?.bio ?? input.bio,
+      });
       applyPayload(payload);
     } finally {
       setIsSyncing(false);

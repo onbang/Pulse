@@ -63,6 +63,22 @@ async function appendRuntimeLog(entry: RuntimeLogEntry) {
   await appendFile(runtimeLogFile, `${JSON.stringify(entry)}\n`, "utf8");
 }
 
+function mirrorRuntimeLogToConsole(entry: RuntimeLogEntry) {
+  const serializedEntry = JSON.stringify(entry);
+
+  if (entry.level === "error") {
+    console.error(serializedEntry);
+    return;
+  }
+
+  if (entry.level === "warn") {
+    console.warn(serializedEntry);
+    return;
+  }
+
+  console.log(serializedEntry);
+}
+
 function installRuntimeProcessErrorLogging() {
   if (globalThis.__stonPulseRuntimeErrorLoggingInstalled) {
     return;
@@ -121,7 +137,7 @@ export async function logRuntimeMessage(input: {
   stack?: string;
   metadata?: Record<string, unknown>;
 }) {
-  await appendRuntimeLog({
+  const entry = {
     timestamp: new Date().toISOString(),
     level: input.level ?? "info",
     scope: input.scope,
@@ -131,7 +147,10 @@ export async function logRuntimeMessage(input: {
     method: input.method,
     stack: input.stack,
     metadata: sanitizeMetadata(input.metadata),
-  });
+  } satisfies RuntimeLogEntry;
+
+  mirrorRuntimeLogToConsole(entry);
+  await appendRuntimeLog(entry);
 }
 
 export async function logRuntimeError(input: {

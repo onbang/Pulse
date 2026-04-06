@@ -8,8 +8,8 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       walletAddress?: string;
-      displayName?: string;
-      bio?: string;
+      displayName?: string | null;
+      bio?: string | null;
       telegramDisplayName?: string | null;
       notificationPreferences?: Partial<NotificationPreferences>;
     };
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       await upsertProfile({
         walletAddress: body.walletAddress,
-        displayName: body.displayName ?? "",
-        bio: body.bio ?? "",
+        displayName: body.displayName,
+        bio: body.bio,
         telegramDisplayName: body.telegramDisplayName ?? null,
         notificationPreferences: body.notificationPreferences ?? undefined,
       }),

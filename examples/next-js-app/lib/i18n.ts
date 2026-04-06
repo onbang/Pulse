@@ -212,6 +212,7 @@ export const messages = {
       "This round is not open for new bets yet. Wait for an active round or settle the previous one.",
     "prediction.up": "Up",
     "prediction.down": "Down",
+    "prediction.draw": "Draw",
     "prediction.pointsCommitted": "{amount} TON committed in this round.",
     "prediction.reputationHint":
       "Join the round to start earning prediction reputation.",
@@ -283,6 +284,94 @@ export const messages = {
     "prediction.pendingStakeLine":
       "{amount} TON sent. Waiting for onchain confirmation.",
     "prediction.pendingPayout": "Payout will appear after confirmation.",
+    "prediction.claimCheckingTitle": "Checking payout status",
+    "prediction.claimCheckingBody":
+      "The app is syncing the settled market and checking whether this wallet has a claimable position.",
+    "prediction.claimCheckingBadge": "Syncing",
+    "prediction.claimReadyTitle": "Payout ready",
+    "prediction.claimReadyBody":
+      "This wallet has a settled winning position. You can send a claim transaction to withdraw the payout from the market contract.",
+    "prediction.claimReadyBadge": "Claimable",
+    "prediction.claimUnavailableBadge": "No payout",
+    "prediction.claimNoRewardTitle": "No payout for this wallet",
+    "prediction.claimNoRewardBody":
+      "This wallet does not have a winning position in the settled round, so there is nothing to claim.",
+    "prediction.claimButton": "Claim payout",
+    "prediction.claimInProgress": "Claiming...",
+    "prediction.claimActionHint":
+      "If automatic payout has not reached this wallet yet, you can trigger the claim manually here.",
+    "prediction.claimOpeningWallet":
+      "Opening the wallet confirmation flow for the payout claim.",
+    "prediction.claimWaitingConfirmation":
+      "Claim transaction sent. Waiting for onchain confirmation.",
+    "prediction.claimSyncing": "Claim confirmed. Syncing payout status.",
+    "prediction.claimSentTitle": "Claim sent",
+    "prediction.claimSentBody":
+      "The claim transaction was sent. The payout status will update after confirmation.",
+    "prediction.claimFailedTitle": "Payout claim failed",
+    "prediction.claimFailedBody":
+      "The app could not prepare or confirm the payout claim. Refresh and try again.",
+    "prediction.claimPositionMissing":
+      "The settled market does not show a claimable position for the connected wallet.",
+    "prediction.claimAlreadyClaimed":
+      "This wallet already claimed the payout for the settled round.",
+    "prediction.claimedTitle": "Payout claimed",
+    "prediction.claimedBody":
+      "This wallet has already withdrawn the payout from the market contract.",
+    "prediction.claimedBadge": "Claimed",
+    "prediction.claimedStatus":
+      "Payout claim confirmed and synced with the market.",
+    "prediction.manualSettlementTitle": "Manual settlement fallback",
+    "prediction.manualLockReadyBody":
+      "Close time already passed. Anyone can send the onchain lock transaction if automation has not done it yet.",
+    "prediction.manualResolveReadyBody":
+      "The connected wallet is the resolver. The app will use the latest backend price snapshot to resolve the market onchain.",
+    "prediction.manualSettlementHint":
+      "Use these controls only when the automatic lock or resolve step is delayed.",
+    "prediction.manualLockButton": "Lock market",
+    "prediction.manualResolveButton": "Resolve market",
+    "prediction.manualLockBadge": "Lock ready",
+    "prediction.resolverBadge": "Resolver",
+    "prediction.manualSettlementNotReady":
+      "Close time has not passed yet, so the market cannot be settled manually.",
+    "prediction.manualSettlementAlreadyHandled":
+      "This market already moved past that settlement step.",
+    "prediction.manualLockOpeningWallet":
+      "Opening the wallet confirmation flow for market lock.",
+    "prediction.manualResolveOpeningWallet":
+      "Opening the wallet confirmation flow for market resolution.",
+    "prediction.manualLockWaitingConfirmation":
+      "Lock transaction sent. Waiting for onchain confirmation.",
+    "prediction.manualResolveWaitingConfirmation":
+      "Resolve transaction sent. Waiting for onchain confirmation.",
+    "prediction.manualLockSyncing":
+      "Market lock confirmed. Syncing updated status.",
+    "prediction.manualResolveSyncing":
+      "Market resolution confirmed. Syncing updated status.",
+    "prediction.manualLockSynced": "Market lock confirmed and synced.",
+    "prediction.manualResolveSynced": "Market resolution confirmed and synced.",
+    "prediction.manualLockSentTitle": "Lock sent",
+    "prediction.manualLockSentBody":
+      "The market lock transaction was sent. Status will update after confirmation.",
+    "prediction.manualResolveSentTitle": "Resolve sent",
+    "prediction.manualResolveSentBody":
+      "The resolve transaction was sent. Status will update after confirmation.",
+    "prediction.manualLockFailedTitle": "Could not lock market",
+    "prediction.manualLockFailedBody":
+      "The app could not prepare or confirm the market lock transaction.",
+    "prediction.manualResolveFailedTitle": "Could not resolve market",
+    "prediction.manualResolveFailedBody":
+      "The app could not prepare or confirm the market resolution transaction.",
+    "prediction.manualLockDoneTitle": "Market locked",
+    "prediction.manualLockDoneBody":
+      "The market is locked onchain and ready for resolution.",
+    "prediction.manualResolveDoneTitle": "Market resolved",
+    "prediction.manualResolveDoneBody":
+      "The market outcome is now published onchain.",
+    "prediction.operatorResolverOnly":
+      "Only the resolver wallet can send the resolve transaction.",
+    "prediction.operatorPriceUnavailable":
+      "The backend could not fetch the current price snapshot for resolution.",
     "prediction.treasuryMissing":
       "Prediction treasury address is not configured yet, so on-chain bet placement is unavailable.",
     "profile.walletGuard":
@@ -319,8 +408,26 @@ export const messages = {
     "profile.summary.editBody":
       "Your name and bio travel with Pulse activity so comments, check-ins, and predictions feel like one consistent identity.",
     "profile.summary.displayName": "Display name",
+    "profile.summary.displayNamePlaceholder": "How Pulse should show your name",
     "profile.summary.bio": "Bio",
+    "profile.summary.bioPlaceholder":
+      "Add a short line about your style, focus, or trading identity.",
     "profile.summary.save": "Save profile",
+    "profile.summary.saving": "Saving...",
+    "profile.summary.reset": "Reset",
+    "profile.summary.preview": "Profile preview",
+    "profile.summary.pulseId": "Pulse ID",
+    "profile.summary.editorSynced": "Synced",
+    "profile.summary.editorDirty": "Unsaved changes",
+    "profile.summary.editorHintTitle": "Public identity sync",
+    "profile.summary.editorHintBody":
+      "Saved values are mirrored locally too, so your profile can recover cleanly after a refresh or server restart.",
+    "profile.summary.saveSuccessTitle": "Profile updated",
+    "profile.summary.saveSuccessBody":
+      "Your public name and bio are now synced inside Pulse.",
+    "profile.summary.saveErrorTitle": "Unable to save profile",
+    "profile.summary.saveErrorBody":
+      "Pulse couldn't save the latest profile changes right now.",
     "profile.summary.level": "Level",
     "profile.summary.pointsCount": "{count} points collected",
     "profile.summary.wallet": "Wallet",
@@ -774,6 +881,7 @@ export const messages = {
       "Этот раунд пока не открыт для новых ставок. Дождись активного раунда или заверши предыдущий.",
     "prediction.up": "Вверх",
     "prediction.down": "Вниз",
+    "prediction.draw": "Ничья",
     "prediction.pointsCommitted": "{amount} TON в этом раунде.",
     "prediction.reputationHint":
       "Войди в раунд, чтобы начать накапливать prediction reputation.",
@@ -848,6 +956,95 @@ export const messages = {
       "{amount} TON отправлено. Ждем onchain-подтверждения.",
     "prediction.pendingPayout":
       "Выплата появится после подтверждения транзакции.",
+    "prediction.claimCheckingTitle": "Проверяем статус выплаты",
+    "prediction.claimCheckingBody":
+      "Приложение синхронизирует завершенный рынок и проверяет, есть ли у этого кошелька клеймируемая позиция.",
+    "prediction.claimCheckingBadge": "Синхронизация",
+    "prediction.claimReadyTitle": "Выплата готова",
+    "prediction.claimReadyBody":
+      "У этого кошелька есть выигравшая завершенная позиция. Можно отправить claim-транзакцию и забрать выплату из market-контракта.",
+    "prediction.claimReadyBadge": "Можно клеймить",
+    "prediction.claimUnavailableBadge": "Без выплаты",
+    "prediction.claimNoRewardTitle": "Для этого кошелька выплаты нет",
+    "prediction.claimNoRewardBody":
+      "У подключенного кошелька нет выигравшей позиции в завершенном раунде, поэтому клеймить нечего.",
+    "prediction.claimButton": "Забрать выплату",
+    "prediction.claimInProgress": "Клеймим...",
+    "prediction.claimActionHint":
+      "Если автоматическая выплата еще не дошла до кошелька, ее можно вручную забрать отсюда.",
+    "prediction.claimOpeningWallet":
+      "Открываем подтверждение выплаты в кошельке.",
+    "prediction.claimWaitingConfirmation":
+      "Claim-транзакция отправлена. Ждем onchain-подтверждения.",
+    "prediction.claimSyncing":
+      "Claim подтвержден. Синхронизируем статус выплаты.",
+    "prediction.claimSentTitle": "Claim отправлен",
+    "prediction.claimSentBody":
+      "Транзакция на получение выплаты отправлена. Статус обновится после подтверждения в сети.",
+    "prediction.claimFailedTitle": "Не удалось забрать выплату",
+    "prediction.claimFailedBody":
+      "Приложение не смогло подготовить или подтвердить claim выплаты. Обнови страницу и попробуй снова.",
+    "prediction.claimPositionMissing":
+      "В завершенном рынке не найдена позиция подключенного кошелька, которую можно клеймить.",
+    "prediction.claimAlreadyClaimed":
+      "Этот кошелек уже забрал выплату за завершенный раунд.",
+    "prediction.claimedTitle": "Выплата уже получена",
+    "prediction.claimedBody":
+      "Этот кошелек уже вывел выплату из market-контракта.",
+    "prediction.claimedBadge": "Получено",
+    "prediction.claimedStatus":
+      "Claim выплаты подтвержден и синхронизирован с рынком.",
+    "prediction.manualSettlementTitle": "Ручной fallback для settlement",
+    "prediction.manualLockReadyBody":
+      "Время закрытия уже прошло. Если автоматика еще не сработала, любой пользователь может отправить onchain-lock транзакцию.",
+    "prediction.manualResolveReadyBody":
+      "Подключенный кошелек является resolver. Приложение возьмет актуальный price snapshot на backend и отправит resolve onchain.",
+    "prediction.manualSettlementHint":
+      "Используй эти действия только если автоматический lock или resolve заметно задержался.",
+    "prediction.manualLockButton": "Lock market",
+    "prediction.manualResolveButton": "Resolve market",
+    "prediction.manualLockBadge": "Lock готов",
+    "prediction.resolverBadge": "Resolver",
+    "prediction.manualSettlementNotReady":
+      "Время закрытия еще не наступило, поэтому вручную завершить этот шаг рынка пока нельзя.",
+    "prediction.manualSettlementAlreadyHandled":
+      "Этот рынок уже прошел нужный settlement-шаг.",
+    "prediction.manualLockOpeningWallet":
+      "Открываем подтверждение lock-транзакции в кошельке.",
+    "prediction.manualResolveOpeningWallet":
+      "Открываем подтверждение resolve-транзакции в кошельке.",
+    "prediction.manualLockWaitingConfirmation":
+      "Lock-транзакция отправлена. Ждем onchain-подтверждения.",
+    "prediction.manualResolveWaitingConfirmation":
+      "Resolve-транзакция отправлена. Ждем onchain-подтверждения.",
+    "prediction.manualLockSyncing":
+      "Lock подтвержден. Синхронизируем новый статус рынка.",
+    "prediction.manualResolveSyncing":
+      "Resolve подтвержден. Синхронизируем settlement-статус.",
+    "prediction.manualLockSynced": "Lock рынка подтвержден и синхронизирован.",
+    "prediction.manualResolveSynced":
+      "Resolve рынка подтвержден и синхронизирован.",
+    "prediction.manualLockSentTitle": "Lock отправлен",
+    "prediction.manualLockSentBody":
+      "Транзакция на lock рынка отправлена. Статус обновится после подтверждения.",
+    "prediction.manualResolveSentTitle": "Resolve отправлен",
+    "prediction.manualResolveSentBody":
+      "Транзакция на resolve рынка отправлена. Статус обновится после подтверждения.",
+    "prediction.manualLockFailedTitle": "Не удалось залочить рынок",
+    "prediction.manualLockFailedBody":
+      "Приложение не смогло подготовить или подтвердить lock-транзакцию рынка.",
+    "prediction.manualResolveFailedTitle": "Не удалось зарезолвить рынок",
+    "prediction.manualResolveFailedBody":
+      "Приложение не смогло подготовить или подтвердить resolve-транзакцию рынка.",
+    "prediction.manualLockDoneTitle": "Рынок залочен",
+    "prediction.manualLockDoneBody":
+      "Рынок уже залочен onchain и готов к resolve.",
+    "prediction.manualResolveDoneTitle": "Рынок завершен",
+    "prediction.manualResolveDoneBody": "Итог рынка уже опубликован onchain.",
+    "prediction.operatorResolverOnly":
+      "Отправить resolve-транзакцию может только resolver-кошелек.",
+    "prediction.operatorPriceUnavailable":
+      "Backend не смог получить актуальный price snapshot для resolve.",
     "prediction.treasuryMissing":
       "Адрес prediction treasury пока не настроен, поэтому on-chain ставка недоступна.",
     "profile.walletGuard":
@@ -884,8 +1081,27 @@ export const messages = {
     "profile.summary.editBody":
       "Имя и bio используются в активности Pulse, чтобы прогнозы, комментарии и чек-ины выглядели как часть одной идентичности.",
     "profile.summary.displayName": "Имя профиля",
+    "profile.summary.displayNamePlaceholder":
+      "Как Pulse должен показывать тебя в приложении",
     "profile.summary.bio": "О себе",
+    "profile.summary.bioPlaceholder":
+      "Пара слов о твоем стиле, фокусе или onchain-идентичности.",
     "profile.summary.save": "Сохранить профиль",
+    "profile.summary.saving": "Сохраняем...",
+    "profile.summary.reset": "Сбросить",
+    "profile.summary.preview": "Превью профиля",
+    "profile.summary.pulseId": "Pulse ID",
+    "profile.summary.editorSynced": "Синхронизировано",
+    "profile.summary.editorDirty": "Есть несохраненные изменения",
+    "profile.summary.editorHintTitle": "Синхронизация публичного профиля",
+    "profile.summary.editorHintBody":
+      "Сохраненные имя и bio дублируются локально, чтобы профиль мог восстановиться даже после обновления страницы или перезапуска сервера.",
+    "profile.summary.saveSuccessTitle": "Профиль обновлен",
+    "profile.summary.saveSuccessBody":
+      "Новое имя и bio уже синхронизированы внутри Pulse.",
+    "profile.summary.saveErrorTitle": "Не удалось сохранить профиль",
+    "profile.summary.saveErrorBody":
+      "Pulse не смог сохранить последние изменения профиля прямо сейчас.",
     "profile.summary.level": "Уровень",
     "profile.summary.pointsCount": "{count} points в профиле",
     "profile.summary.wallet": "Кошелек",

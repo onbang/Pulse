@@ -59,10 +59,11 @@ This runs:
 - Set `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
 - Set `TELEGRAM_BOT_TOKEN`
 - Set `TELEGRAM_MINI_APP_URL`
-- Set `STON_PULSE_DB_FILE` for persistent SQLite storage
+- Set `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` for persistent SQLite storage
+- Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want deploys to fail fast on ephemeral `/tmp` storage
 - Register Telegram bot commands with `pnpm --filter @ston-pulse/telegram-bot register`
 - Point TON Connect manifest to `/api/tonconnect-manifest` or your own production manifest URL
-- Use `GET /api/health` as a simple platform health probe
+- Use `GET /api/health` for storage/auto-cycle health and `GET /api/forecast-markets/ops` for protected resolver diagnostics
 - Follow the full release flow in `docs/release-checklist.md`
 
 ## GitHub and CI
@@ -74,3 +75,4 @@ The repo includes a GitHub Actions workflow at `.github/workflows/ci.yml` that v
 - The current persistence layer uses SQLite through `node:sqlite`
 - Node 22 is required
 - During production builds, Node may print an experimental warning for `node:sqlite`; this is expected with the current runtime
+- Contract structure, prediction-market flow, and remaining delivery gaps are documented in `docs/contracts-overview.md`

@@ -76,11 +76,15 @@ export default function ProfilePage() {
             {
               href: ROUTES.swap,
               label: t("profile.hero.primaryAction"),
+              className:
+                "bg-[linear-gradient(135deg,#061a31,#0b75d5,#33c3f0)] shadow-[0_22px_50px_-26px_rgba(11,117,213,0.56)]",
             },
             {
               href: ROUTES.pools,
               label: t("profile.hero.secondaryAction"),
               variant: "outline",
+              className:
+                "border-white/85 bg-white/82 text-slate-900 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.16)]",
             },
           ]}
         />

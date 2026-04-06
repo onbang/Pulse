@@ -9,6 +9,7 @@ type IntroAction = {
   href: string;
   label: string;
   variant?: "default" | "outline";
+  className?: string;
 };
 
 type IntroStat = {
@@ -50,6 +51,7 @@ export function PageIntro({
                   asChild
                   size="lg"
                   variant={action.variant ?? "default"}
+                  className={action.className}
                 >
                   <Link href={action.href}>{action.label}</Link>
                 </Button>

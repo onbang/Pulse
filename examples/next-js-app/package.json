@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "pnpm run /^lint:/",
-    "lint:eslint": "next lint",
+    "lint:eslint": "eslint .",
     "lint:tsc": "next typegen && tsc --noEmit --pretty --incremental false"
   },
   "dependencies": {

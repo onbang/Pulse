@@ -1,11 +1,12 @@
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { Address, Cell } from "@ton/core";
 import { parsePredictionContractPayloadBase64 } from "@ston-pulse/prediction-sdk";
 
 import {
   COMMENT_POINTS,
+  DEFAULT_PROFILE_BIO,
   DAILY_CHECK_IN_POINTS,
   PREDICTION_POINTS,
   TRACK_POINTS,
@@ -54,6 +55,7 @@ import {
 } from "@/lib/prediction-timeframes";
 import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
 import {
+  requireDurableRuntimeStorage,
   resolveCommunityDatabaseFile,
   resolveLegacyCommunityJsonFile,
 } from "@/lib/server/runtime-storage";
@@ -78,6 +80,7 @@ async function ensureDatabase() {
     return database;
   }
 
+  requireDurableRuntimeStorage();
   await mkdir(dirname(databaseFile), { recursive: true });
 
   if (!database) {
@@ -1170,7 +1173,81 @@ function getRoundIdentifier(
   return "round_id" in round ? round.round_id : round.id;
 }
 
+function pickEarliestTimestamp(...values: Array<string | null | undefined>) {
+  return (
+    values
+      .filter((value): value is string => Boolean(value?.trim()))
+      .sort((left, right) => left.localeCompare(right))[0] ?? null
+  );
+}
+
+function rememberEarliestTimestamp(
+  map: Map<string, string>,
+  walletAddress: string,
+  timestamp?: string | null,
+) {
+  if (!timestamp?.trim()) {
+    return;
+  }
+
+  const current = map.get(walletAddress);
+
+  if (!current || timestamp.localeCompare(current) < 0) {
+    map.set(walletAddress, timestamp);
+  }
+}
+
+function buildProfileEarliestActivityMap(db: DatabaseSync) {
+  const earliestByWallet = new Map<string, string>();
+  const queries = [
+    `
+      SELECT wallet_address, MIN(COALESCE(confirmed_at, created_at)) AS earliest_at
+      FROM check_in_events
+      WHERE status = 'confirmed'
+      GROUP BY wallet_address
+    `,
+    `
+      SELECT wallet_address, MIN(created_at) AS earliest_at
+      FROM prediction_bets
+      GROUP BY wallet_address
+    `,
+    `
+      SELECT wallet_address, MIN(created_at) AS earliest_at
+      FROM comments
+      GROUP BY wallet_address
+    `,
+    `
+      SELECT wallet_address, MIN(created_at) AS earliest_at
+      FROM reward_ledger
+      GROUP BY wallet_address
+    `,
+    `
+      SELECT wallet_address, MIN(created_at) AS earliest_at
+      FROM watchlists
+      GROUP BY wallet_address
+    `,
+  ];
+
+  for (const query of queries) {
+    const rows = db.prepare(query).all() as Array<{
+      wallet_address: string;
+      earliest_at: string | null;
+    }>;
+
+    for (const row of rows) {
+      rememberEarliestTimestamp(
+        earliestByWallet,
+        row.wallet_address,
+        row.earliest_at,
+      );
+    }
+  }
+
+  return earliestByWallet;
+}
+
 function hydrateStore(db: DatabaseSync): CommunityStore {
+  const earliestActivityByWallet = buildProfileEarliestActivityMap(db);
   const profilesRows = db.prepare("SELECT * FROM profiles").all() as Array<{
     wallet_address: string;
     display_name: string;
@@ -1196,7 +1273,11 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
         walletAddress: row.wallet_address,
         displayName: row.display_name,
         bio: row.bio,
-        joinedAt: row.joined_at,
+        joinedAt:
+          pickEarliestTimestamp(
+            row.joined_at,
+            earliestActivityByWallet.get(row.wallet_address),
+          ) ?? row.joined_at,
         totalPoints: row.total_points,
         streak: row.streak,
         longestStreak: row.longest_streak,
@@ -2802,8 +2883,8 @@ export async function getCommunityState(walletAddress: string | null) {
 
 export async function upsertProfile(input: {
   walletAddress: string;
-  displayName: string;
-  bio: string;
+  displayName?: string | null;
+  bio?: string | null;
   telegramDisplayName?: string | null;
   notificationPreferences?: Partial<NotificationPreferences>;
 }) {
@@ -2820,14 +2901,22 @@ export async function upsertProfile(input: {
       normalizedWalletAddress,
       input.telegramDisplayName ?? undefined,
     ).displayName;
+  const nextDisplayName =
+    typeof input.displayName === "string"
+      ? input.displayName.trim().slice(0, 32) || fallbackName
+      : (current?.display_name ?? fallbackName);
+  const nextBio =
+    typeof input.bio === "string"
+      ? input.bio.trim().slice(0, 160)
+      : (current?.bio ?? DEFAULT_PROFILE_BIO);
 
   db.prepare(`
     UPDATE profiles
     SET display_name = ?, bio = ?, notification_preferences_json = ?
     WHERE wallet_address = ?
   `).run(
-    input.displayName.trim() || fallbackName,
-    input.bio.trim() || "Liquidity explorer on TON.",
+    nextDisplayName,
+    nextBio,
     JSON.stringify(
       normalizeNotificationPreferences({
         ...parseJson<Partial<NotificationPreferences>>(

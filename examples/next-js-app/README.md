@@ -58,8 +58,12 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `GET /api/debug/runtime-logs`
 - `POST /api/debug/runtime-logs`
 - `GET /api/forecast-markets/context`
+- `GET /api/forecast-markets/ops`
 - `POST /api/forecast-markets/create-intent`
 - `POST /api/forecast-markets/bet-intent`
+- `POST /api/forecast-markets/claim-intent`
+- `POST /api/forecast-markets/lock-intent`
+- `POST /api/forecast-markets/resolve-intent`
 - `PUT /api/forecast-markets/sync`
 - `POST /api/forecast-markets/auto-cycle`
 
@@ -77,6 +81,8 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `FORECAST_RESOLVER_ADDRESS`
 - `FORECAST_RESOLVER_MNEMONIC`
 - `FORECAST_CRON_SECRET`
+- `STON_PULSE_DATA_DIR`
+- `STON_PULSE_REQUIRE_DURABLE_STORAGE`
 - `STON_PULSE_DB_FILE`
 - `STON_PULSE_LOG_FILE`
 - `STON_PULSE_DEBUG_LOG_SECRET`
@@ -85,6 +91,7 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 
 - Server route failures are now written to a runtime log file
 - Client-side crashes and unhandled promise rejections are also reported automatically
+- The same structured entries are mirrored to stdout/stderr, so they also show up in Vercel Runtime Logs
 - Local default log path: `.data/runtime-errors.log`
 - Serverless default log path: `/tmp/ston-pulse/runtime-errors.log`
 - To override the file location, set `STON_PULSE_LOG_FILE`
@@ -110,6 +117,12 @@ The response includes:
 
 Each entry includes timestamp, scope, message, stack trace, route path, and extra metadata when available.
 
+Operational snapshot for resolver wallet and auto-cycle:
+
+```sh
+curl -s "http://localhost:3000/api/forecast-markets/ops?secret=your-secret"
+```
+
 ## Deployment notes
 
 - Default TON Connect manifest is now served from `/api/tonconnect-manifest`
@@ -117,11 +130,13 @@ Each entry includes timestamp, scope, message, stack trace, route path, and extr
 - In local development the default storage path is `.data/community.sqlite`
 - In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
 - Runtime logs follow the same writable storage rule and default to `.data/runtime-errors.log` locally or `/tmp/ston-pulse/runtime-errors.log` on serverless
-- For durable production persistence, provide a custom `STON_PULSE_DB_FILE` backed by writable storage instead of relying on ephemeral `/tmp`
-- `GET /api/health` can be used as a lightweight health endpoint
+- For durable production persistence, provide `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` backed by writable storage instead of relying on ephemeral `/tmp`
+- Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want the app to fail fast whenever the database still resolves to an ephemeral path
+- `GET /api/health` now reports storage durability and the latest forecast auto-cycle summary
 - Token forecasts use one `TonForecastMarket` contract per `token + timeframe + roundStart`
-- `GET /api/forecast-markets/auto-cycle` is scheduled via Vercel Cron every minute to lock closed rounds, resolve winners, and trigger automatic winner payouts
+- `POST /api/forecast-markets/auto-cycle` is scheduled via Vercel Cron every minute to lock closed rounds, resolve winners, and trigger automatic winner payouts
 - Automatic resolution and payouts require a funded resolver wallet via `FORECAST_RESOLVER_MNEMONIC` or `FORECAST_RESOLVER_ADDRESS`
+- The forecast card now exposes manual fallback controls for `lock`, `resolve`, and `claim` when the connected wallet is allowed to perform them
 - `FORECAST_CRON_SECRET` can be set to protect the auto-cycle route with a bearer token
 
 ## Hobby scheduler

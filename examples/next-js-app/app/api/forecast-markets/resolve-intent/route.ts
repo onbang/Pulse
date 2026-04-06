@@ -11,11 +11,7 @@ export async function POST(request: Request) {
     resolvedAt?: number;
   };
 
-  if (
-    !body.walletAddress ||
-    !body.marketAddress ||
-    typeof body.finalPriceE9 !== "number"
-  ) {
+  if (!body.walletAddress || !body.marketAddress) {
     return NextResponse.json(
       { error: "Missing forecast resolve payload" },
       { status: 400 },

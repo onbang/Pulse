@@ -1,7 +1,7 @@
 "use client";
 
 import { Address, beginCell, toNano } from "@ton/core";
-import { useTonConnectUI } from "@tonconnect/ui-react";
+import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { CalendarCheck2, Gem, Sparkles, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -61,6 +61,7 @@ export function DailyCheckInCard() {
     syncCheckInTransaction,
   } = useCommunityProfile();
   const [tonConnectUI] = useTonConnectUI();
+  const tonConnectFromAddress = useTonAddress(false);
   const { toast } = useToast();
   const [status, setStatus] = useState<CheckInUiState>("idle");
   const [statusMessage, setStatusMessage] = useState(
@@ -292,7 +293,7 @@ export function DailyCheckInCard() {
                   {statusMessage}
                 </p>
                 <Button
-                  className="mt-5 h-12 w-full rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF,#7354F2)] text-base font-semibold text-white shadow-[0_16px_40px_-22px_rgba(1,128,255,0.55)] disabled:bg-[linear-gradient(135deg,rgba(1,128,255,0.32),rgba(61,177,255,0.32),rgba(115,84,242,0.32))] disabled:text-white/90 disabled:opacity-100"
+                  className="mt-5 h-[52px] w-full rounded-[20px] bg-[linear-gradient(135deg,#071a31,#0b75d5,#34d3ff)] text-base font-semibold text-white shadow-[0_20px_46px_-22px_rgba(11,117,213,0.58)] hover:translate-y-[-1px] disabled:bg-[linear-gradient(135deg,rgba(7,26,49,0.34),rgba(11,117,213,0.34),rgba(52,211,255,0.34))] disabled:text-white/90 disabled:opacity-100"
                   disabled={isDisabled}
                   onClick={async () => {
                     if (isDisabled) {
@@ -317,6 +318,9 @@ export function DailyCheckInCard() {
 
                       const txResult = await tonConnectUI.sendTransaction({
                         validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
+                        ...(tonConnectFromAddress
+                          ? { from: tonConnectFromAddress }
+                          : {}),
                         messages: [
                           {
                             address: getCheckInTreasuryAddress(),
@@ -414,6 +418,7 @@ export function DailyCheckInCard() {
                     }
                   }}
                 >
+                  <Sparkles className="h-4 w-4" />
                   {ctaLabel}
                 </Button>
                 <p className="mt-3 text-xs leading-5 text-slate-500">
