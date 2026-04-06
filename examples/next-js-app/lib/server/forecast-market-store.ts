@@ -25,7 +25,10 @@ import {
 } from "@ston-pulse/prediction-sdk";
 import { TonForecastMarket } from "@ston-pulse/prediction-market-contract/ton-forecast-market";
 
-import type { PredictionDirection } from "@/lib/community";
+import type {
+  PredictionDirection,
+  PredictionSettlementDirection,
+} from "@/lib/community";
 import { getCommunityState } from "@/lib/server/community-store";
 import {
   logRuntimeError,
@@ -510,6 +513,47 @@ async function readForecastPositionOnchain(
   } catch {
     return null;
   }
+}
+
+function readForecastPositionFallback(
+  db: DatabaseSync,
+  market: ForecastMarketRow,
+  walletAddress: string,
+) {
+  const betRows = db
+    .prepare(`
+      SELECT direction, amount
+      FROM prediction_bets
+      WHERE round_id = ?
+        AND wallet_address = ?
+        AND source_kind = 'onchain_sync'
+    `)
+    .all(market.contract_address, walletAddress) as Array<{
+    direction: PredictionDirection;
+    amount: number;
+  }>;
+
+  const yesStake = betRows
+    .filter((row) => row.direction === "up")
+    .reduce((sum, row) => sum + row.amount, 0);
+  const noStake = betRows
+    .filter((row) => row.direction === "down")
+    .reduce((sum, row) => sum + row.amount, 0);
+  const autoClaim = getForecastAutoClaimRow(
+    db,
+    market.contract_address,
+    walletAddress,
+  );
+
+  if (yesStake <= 0 && noStake <= 0 && !autoClaim?.claimed_at) {
+    return null;
+  }
+
+  return {
+    yesStake,
+    noStake,
+    claimed: Boolean(autoClaim?.claimed_at),
+  };
 }
 
 async function waitForResolverSeqnoIncrement(
@@ -1076,13 +1120,17 @@ function mapForecastStatusToRoundStatus(status: TonForecastMarketStatus) {
 
 function mapForecastStatusToSettlementDirection(
   status: TonForecastMarketStatus,
-) {
+): PredictionSettlementDirection | null {
   if (status === "resolved_yes") {
     return "up" as const;
   }
 
   if (status === "resolved_no") {
     return "down" as const;
+  }
+
+  if (status === "resolved_draw") {
+    return "draw" as const;
   }
 
   return null;
@@ -1429,7 +1477,19 @@ async function syncForecastMarketTransactions(
         continue;
       }
 
-      if (incomingPayload.type === "claim_reward_for") {
+      if (
+        incomingPayload.type === "claim_reward" ||
+        incomingPayload.type === "claim_reward_for"
+      ) {
+        const claimedWallet =
+          incomingPayload.type === "claim_reward_for"
+            ? normalizeTonAddress(incomingPayload.walletAddress)
+            : normalizedSourceAddress;
+
+        if (!claimedWallet) {
+          continue;
+        }
+
         db.prepare(`
           INSERT INTO forecast_auto_claims (
             market_address, wallet_address, requested_at, claimed_at, last_error
@@ -1439,7 +1499,7 @@ async function syncForecastMarketTransactions(
             last_error = NULL
         `).run(
           contractAddress,
-          normalizeTonAddress(incomingPayload.walletAddress),
+          claimedWallet,
           createdAt,
           createdAt,
         );
@@ -1589,10 +1649,16 @@ async function buildForecastWalletState(
     return null;
   }
 
-  const position = await readForecastPositionOnchain(
-    market.contract_address,
-    normalizedWalletAddress,
-  );
+  const position =
+    (await readForecastPositionOnchain(
+      market.contract_address,
+      normalizedWalletAddress,
+    )) ??
+    readForecastPositionFallback(
+      await ensureForecastDatabase(),
+      market,
+      normalizedWalletAddress,
+    );
   const yesStakeTon = Number((position?.yesStake ?? 0).toFixed(6));
   const noStakeTon = Number((position?.noStake ?? 0).toFixed(6));
   const totalStakeTon = Number((yesStakeTon + noStakeTon).toFixed(6));

@@ -1,5 +1,6 @@
 export type ActivityTrack = "liquidity" | "farming" | "staking";
 export type PredictionDirection = "up" | "down";
+export type PredictionSettlementDirection = PredictionDirection | "draw";
 export type CommentReactionEmoji = "🔥" | "👍" | "🚀" | "💎";
 export type CheckInEventStatus = "pending" | "confirmed";
 export type RewardLedgerReason =
@@ -39,7 +40,7 @@ export type PredictionRound = {
   closesAt: string;
   resolvedAt?: string;
   durationMinutes: number;
-  settlementDirection?: PredictionDirection;
+  settlementDirection?: PredictionSettlementDirection;
 };
 
 export type PredictionPayoutPreview = {
@@ -53,7 +54,7 @@ export type PredictionSettlement = {
   roundId: string;
   pairId: string;
   pairLabel: string;
-  settlementDirection: PredictionDirection;
+  settlementDirection: PredictionSettlementDirection;
   settledAt: string;
   totalPool: number;
   payouts: PredictionPayoutPreview[];

@@ -42,7 +42,13 @@ export function NotificationCenterCard() {
         .map((item) => ({
           id: `settlement-${item.roundId}`,
           title: `${item.pairLabel} round settled`,
-          detail: `Winning side: ${item.settlementDirection === "up" ? "Up" : "Down"}. Your payout preview is available in profile history.`,
+          detail: `Winning side: ${
+            item.settlementDirection === "up"
+              ? "Up"
+              : item.settlementDirection === "down"
+                ? "Down"
+                : "Draw"
+          }. Your payout preview is available in profile history.`,
           createdAt: item.settledAt,
           kind: "settlement" as const,
         }))

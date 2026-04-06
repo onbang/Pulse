@@ -22,6 +22,7 @@ import {
   type PredictionDirection,
   type PredictionHistoryBet,
   type PredictionSettlement,
+  type PredictionSettlementDirection,
   type PredictionPayoutPreview,
   type PredictionRound,
   type RewardLedgerEntry,
@@ -801,7 +802,7 @@ function ensureRoundState(db: DatabaseSync, pairId: string, label: string) {
         resolved_at: string | null;
         timeframe_id: string | null;
         duration_minutes: number;
-        settlement_direction: PredictionDirection | null;
+        settlement_direction: PredictionSettlementDirection | null;
       }
     | undefined;
 
@@ -1401,7 +1402,7 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     closes_at: string;
     resolved_at: string | null;
     duration_minutes: number;
-    settlement_direction: PredictionDirection | null;
+    settlement_direction: PredictionSettlementDirection | null;
   }>;
   const settlementRows = db
     .prepare(
@@ -1411,7 +1412,7 @@ function hydrateStore(db: DatabaseSync): CommunityStore {
     round_id: string;
     pair_id: string;
     pair_label: string;
-    settlement_direction: PredictionDirection;
+    settlement_direction: PredictionSettlementDirection;
     settled_at: string;
     total_pool: number;
     payouts_json: string;
@@ -2343,7 +2344,7 @@ function getRoundSnapshot(db: DatabaseSync, pairId: string, label: string) {
         resolved_at: string | null;
         timeframe_id: string | null;
         duration_minutes: number;
-        settlement_direction: PredictionDirection | null;
+        settlement_direction: PredictionSettlementDirection | null;
       }
     | undefined;
 
