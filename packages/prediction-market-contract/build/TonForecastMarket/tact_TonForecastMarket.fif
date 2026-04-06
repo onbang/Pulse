@@ -12,8 +12,6 @@ PROGRAM{
   DECLPROC $TonForecastMarket$_store
   DECLPROC $TonForecastMarket$_load
   DECLPROC $Context$_get_value
-  DECLPROC $Position$_get_yesStake
-  DECLPROC $Position$_get_noStake
   DECLPROC $Position$_get_claimed
   DECLPROC $Position$_not_null
   DECLPROC $Position$_to_external
@@ -22,15 +20,38 @@ PROGRAM{
   DECLPROC $TonForecastMarket$_contract_init
   DECLPROC $TonForecastMarket$_contract_load
   DECLPROC $TonForecastMarket$_contract_store
-  DECLPROC $SendParameters$_constructor_to_value_mode
+  DECLPROC $TonForecastMarket$_fun_statusOpen
+  DECLPROC $TonForecastMarket$_fun_statusLocked
+  DECLPROC $TonForecastMarket$_fun_statusResolvedYes
+  DECLPROC $TonForecastMarket$_fun_statusResolvedNo
+  DECLPROC $TonForecastMarket$_fun_statusResolvedDraw
+  DECLPROC $TonForecastMarket$_fun_isOpen
+  DECLPROC $TonForecastMarket$_fun_isLocked
   DECLPROC $TonForecastMarket$_fun_isResolved
+  DECLPROC $TonForecastMarket$_fun_requireResolver
+  DECLPROC $TonForecastMarket$_fun_requireMarketOpenForBet
+  DECLPROC $TonForecastMarket$_fun_requireResolved
+  DECLPROC $TonForecastMarket$_fun_lockMarket
+  DECLPROC $TonForecastMarket$_fun_resolveStatusForPrice
+  DECLPROC $TonForecastMarket$_fun_normalizeResolvedStatus
+  DECLPROC $TonForecastMarket$_fun_resolveMarket
+  DECLPROC $TonForecastMarket$_fun_requireStakeAmount
   DECLPROC $TonForecastMarket$_fun_derivePositionKey
-  DECLPROC $TonForecastMarket$_fun_calculatePayout
-  DECLPROC $TonForecastMarket$_fun_claimFor
-  DECLPROC $TonForecastMarket$_fun_ensureMarketOpen
   DECLPROC $Position$_constructor_yesStake_noStake_claimed
-  DECLPROC $TonForecastMarket$_fun_placeStake
-  DECLPROC $TonForecastMarket$_fun_computeOutcome
+  DECLPROC $TonForecastMarket$_fun_loadPositionOrEmpty
+  DECLPROC $TonForecastMarket$_fun_savePosition
+  DECLPROC $TonForecastMarket$_fun_acceptBet
+  DECLPROC $TonForecastMarket$_fun_loadClaimablePosition
+  DECLPROC $TonForecastMarket$_fun_winningStake
+  DECLPROC $TonForecastMarket$_fun_winnerPool
+  DECLPROC $TonForecastMarket$_fun_loserPool
+  DECLPROC $TonForecastMarket$_fun_calculateGrossProfit
+  DECLPROC $TonForecastMarket$_fun_calculateProtocolFee
+  DECLPROC $TonForecastMarket$_fun_calculatePayout
+  DECLPROC $SendParameters$_constructor_to_value_mode
+  DECLPROC $TonForecastMarket$_fun_sendCoins
+  DECLPROC $TonForecastMarket$_fun_distributeClaim
+  DECLPROC $TonForecastMarket$_fun_claimFor
   DECLPROC $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo
   DECLPROC $TonForecastMarket$_fun_getMarketState
   DECLPROC $TonForecastMarket$_fun_getPosition
@@ -168,13 +189,6 @@ PROGRAM{
     s1 s3 XCHG
     3 BLKDROP
   }>
-  $Position$_get_yesStake PROCINLINE:<{
-    2DROP
-  }>
-  $Position$_get_noStake PROCINLINE:<{
-    DROP
-    NIP
-  }>
   $Position$_get_claimed PROCINLINE:<{
     2 1 BLKDROP2
   }>
@@ -269,29 +283,326 @@ PROGRAM{
     ENDC
     c4 POP
   }>
-  $SendParameters$_constructor_to_value_mode PROCINLINE:<{
-    PUSHNULL
-    2SWAP
-    PUSHNULL
-    PUSHNULL
-    s0 s0 s3 XCHG3
-    TRUE
+  $TonForecastMarket$_fun_statusOpen PROCREF:<{
+    0 PUSHINT
+  }>
+  $TonForecastMarket$_fun_statusLocked PROCREF:<{
+    1 PUSHINT
+  }>
+  $TonForecastMarket$_fun_statusResolvedYes PROCREF:<{
+    2 PUSHINT
+  }>
+  $TonForecastMarket$_fun_statusResolvedNo PROCREF:<{
+    3 PUSHINT
+  }>
+  $TonForecastMarket$_fun_statusResolvedDraw PROCREF:<{
+    4 PUSHINT
+  }>
+  $TonForecastMarket$_fun_isOpen PROCREF:<{
+    s5 PUSH
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusOpen INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    s1 s3 s0 XCHG3
+  }>
+  $TonForecastMarket$_fun_isLocked PROCREF:<{
+    s5 PUSH
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusLocked INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    s1 s3 s0 XCHG3
   }>
   $TonForecastMarket$_fun_isResolved PROCREF:<{
     s5 PUSH
-    2 EQINT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
     IF:<{
       TRUE
     }>ELSE<{
-      s5 PUSH
-      3 EQINT
+      s4 PUSH
+      s0 16 s() XCHG
+      $TonForecastMarket$_fun_statusResolvedNo INLINECALLDICT
+      s1 17 s() XCHG
+      EQUAL
     }>
     IF:<{
       TRUE
     }>ELSE<{
-      s5 PUSH
-      4 EQINT
+      s4 PUSH
+      s0 16 s() XCHG
+      $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+      s1 17 s() XCHG
+      EQUAL
     }>
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    s1 s3 s0 XCHG3
+  }>
+  $TonForecastMarket$_fun_requireResolver PROCREF:<{
+    41950 PUSHINT
+    __tact_context_get_sender INLINECALLDICT
+    16 s() PUSH
+    SDEQ
+    THROWANYIFNOT
+  }>
+  $TonForecastMarket$_fun_requireMarketOpenForBet PROCREF:<{
+    15 -ROLL
+    48446 PUSHINT
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_isOpen INLINECALLDICT
+    s1 17 s() XCHG
+    THROWANYIFNOT
+    7397 PUSHINT
+        NOW
+    s7 PUSH
+    LESS
+    THROWANYIFNOT
+    15 ROLL
+  }>
+  $TonForecastMarket$_fun_requireResolved PROCREF:<{
+    15 -ROLL
+    40921 PUSHINT
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_isResolved INLINECALLDICT
+    s1 17 s() XCHG
+    THROWANYIFNOT
+    15 ROLL
+  }>
+  $TonForecastMarket$_fun_lockMarket PROCREF:<{
+    37841 PUSHINT
+        NOW
+    s8 PUSH
+    GEQ
+    THROWANYIFNOT
+    15 -ROLL
+    48446 PUSHINT
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_isOpen INLINECALLDICT
+    s1 17 s() XCHG
+    THROWANYIFNOT
+    15 ROLL
+    $TonForecastMarket$_fun_statusLocked INLINECALLDICT
+    s6 POP
+  }>
+  $TonForecastMarket$_fun_resolveStatusForPrice PROCREF:<{
+    10000 PUSHINT
+    s12 PUSH
+    ADD
+    s11 s(-1) PUXC
+    MUL
+    10000 PUSHINT
+    DIV
+    10000 PUSHINT
+    s13 PUSH
+    SUB
+    s12 s(-1) PUXC
+    MUL
+    10000 PUSHINT
+    DIV
+    s2 s1 PUXC
+    GEQ
+    IFJMP:<{
+      2DROP
+      $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    }>
+    LEQ
+    IFJMP:<{
+      $TonForecastMarket$_fun_statusResolvedNo INLINECALLDICT
+    }>
+    $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+  }>
+  $TonForecastMarket$_fun_normalizeResolvedStatus PROCREF:<{
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    17 s() PUSH
+    SWAP
+    EQUAL
+    IF:<{
+      s2 PUSH
+      0 EQINT
+    }>ELSE<{
+      FALSE
+    }>
+    IFJMP:<{
+      16 s() POP
+      15 ROLL
+      $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+    }>
+    $TonForecastMarket$_fun_statusResolvedNo INLINECALLDICT
+    17 s() PUSH
+    SWAP
+    EQUAL
+    IF:<{
+      OVER
+      0 EQINT
+    }>ELSE<{
+      FALSE
+    }>
+    IFJMP:<{
+      16 s() POP
+      15 ROLL
+      $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+    }>
+    s15 16 s() XCHG
+    15 ROLL
+  }>
+  $TonForecastMarket$_fun_resolveMarket PROCREF:<{
+    s15 17 s() XCHG
+    5 13 REVERSE
+    s12 16 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 17 s() XCHG
+    s8 16 s() XCHG
+    s7 17 s() XCHG
+    s6 16 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 17 s() XCHG
+    s2 16 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_requireResolver INLINECALLDICT
+    37841 PUSHINT
+        NOW
+    s8 PUSH
+    GEQ
+    THROWANYIFNOT
+    15 -ROLL
+    24341 PUSHINT
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_isOpen INLINECALLDICT
+    IF:<{
+      TRUE
+    }>ELSE<{
+      $TonForecastMarket$_fun_isLocked INLINECALLDICT
+    }>
+    s1 17 s() XCHG
+    THROWANYIFNOT
+    15 ROLL
+    17 s() PUSH
+    $TonForecastMarket$_fun_resolveStatusForPrice INLINECALLDICT
+    $TonForecastMarket$_fun_normalizeResolvedStatus INLINECALLDICT
+    s4 POP
+    s4 POP
+    s4 POP
+    s14 PUSH
+    0 GTINT
+    IF:<{
+    }>ELSE<{
+      s14 POP
+          NOW
+      s0 s14 XCHG
+    }>
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s5 s2 XCHG2
+    s1 s3 XCHG
+  }>
+  $TonForecastMarket$_fun_requireStakeAmount PROCREF:<{
+    32630 PUSHINT
+    OVER
+    0 GTINT
+    THROWANYIFNOT
+    47621 PUSHINT
+    __tact_context_get INLINECALLDICT
+    $Context$_get_value INLINECALLDICT
+    ROT
+    GEQ
+    THROWANYIFNOT
   }>
   $TonForecastMarket$_fun_derivePositionKey PROCREF:<{
         NEWC
@@ -300,80 +611,181 @@ PROGRAM{
         ENDC
         HASHCU
   }>
-  $TonForecastMarket$_fun_calculatePayout PROCREF:<{
-    DROP
-    s7 PUSH
-    4 EQINT
-    IFJMP:<{
-      ADD
-    }>
-    s7 PUSH
-    2 EQINT
+  $Position$_constructor_yesStake_noStake_claimed PROCINLINE:<{
+  }>
+  $TonForecastMarket$_fun_loadPositionOrEmpty PROCREF:<{
+    OVER
+    s15 17 s() XCHG
+    5 13 REVERSE
+    s12 16 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 17 s() XCHG
+    s8 16 s() XCHG
+    s7 17 s() XCHG
+    s6 16 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 17 s() XCHG
+    s2 16 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
+    8 PUSHPOW2
+    s0 18 s() XCHG
+    $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
+    s2 17 s() XCHG
+    s1 18 s() XCHG
+    __tact_dict_get_uint_cell INLINECALLDICT
+    $Position$_load_opt INLINECALLDICT
+    DUP
+    ISNULL
     IF:<{
       DROP
+      0 PUSHINT
+      DUP
+      FALSE
+      $Position$_constructor_yesStake_noStake_claimed INLINECALLDICT
     }>ELSE<{
-      NIP
+      $Position$_not_null INLINECALLDICT
     }>
-    45775 PUSHINT
-    OVER
-    0 GTINT
-    THROWANYIFNOT
-    s6 PUSH
-    2 EQINT
-    IF:<{
-      s3 PUSH
-    }>ELSE<{
-      s2 PUSH
-    }>
-    s7 PUSH
-    2 EQINT
-    IF:<{
-      s3 PUSH
-    }>ELSE<{
-      s4 PUSH
-    }>
-    63018 PUSHINT
-    s2 PUSH
-    0 GTINT
-    THROWANYIFNOT
-    s2 s(-1) PUXC
-    MUL
-    SWAP
-    DIV
-    s0 s10 PUSH2
-    MUL
-    10000 PUSHINT
-    DIV
-    -ROT
-    ADD
-    SWAP
-    SUB
-  }>
-  $TonForecastMarket$_fun_claimFor PROCREF:<{
+    16 s() 18 s() XCHG
+    s15 17 s() XCHG
     s14 16 s() XCHG
-    5 12 REVERSE
-    s11 s15 XCHG
-    s10 16 s() XCHG
-    s9 s15 XCHG
-    s8 16 s() XCHG
-    s7 s15 XCHG
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s3 s5 XCHG
+    s3 s4 XCHG
+  }>
+  $TonForecastMarket$_fun_savePosition PROCREF:<{
+    s4 PUSH
+    s15 20 s() XCHG
+    s14 19 s() XCHG
+    s13 18 s() XCHG
+    s12 17 s() XCHG
+    s11 16 s() XCHG
+    s10 20 s() XCHG
+    s9 19 s() XCHG
+    s8 18 s() XCHG
+    s7 17 s() XCHG
     s6 16 s() XCHG
-    s5 s15 XCHG
-    s4 16 s() XCHG
-    s3 s15 XCHG
-    s0 16 s() XCHG
-    s15 s2 XCHG2
-    40921 PUSHINT
-    s0 16 s() XCHG
-    $TonForecastMarket$_fun_isResolved INLINECALLDICT
-    s1 17 s() XCHG
-    THROWANYIFNOT
-    15 ROLL
-    16 s() PUSH
-    $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
-    OVER
+    s5 20 s() XCHG
+    s4 19 s() XCHG
+    s3 18 s() XCHG
+    s2 17 s() XCHG
+    s1 16 s() XCHG
+    s0 20 s() XCHG
     8 PUSHPOW2
-    s2 PUSH
+    s0 20 s() XCHG
+    $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
+    NIP
+    s2 18 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
+    NEWC
+    $Position$_store_cell INLINECALLDICT
+    s3 18 s() XCHG
+    s2 17 s() XCHG
+    s1 s14 XCHG
+    __tact_dict_set_uint_cell INLINECALLDICT
+    s10 s15 XCHG
+    s9 s14 XCHG
+    s8 s13 XCHG
+    s7 s12 XCHG
+    s6 s11 XCHG
+    s5 s10 XCHG
+    s4 s9 XCHG
+    s3 s8 XCHG
+    s7 s6 s0 XCHG3
+    s3 s3 s0 XCHG3
+  }>
+  $TonForecastMarket$_fun_acceptBet PROCREF:<{
+    s15 18 s() XCHG
+    s14 17 s() XCHG
+    s13 16 s() XCHG
+    s12 18 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 18 s() XCHG
+    s8 17 s() XCHG
+    s7 16 s() XCHG
+    s6 18 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 18 s() XCHG
+    s2 17 s() XCHG
+    s1 16 s() XCHG
+    s0 18 s() XCHG
+    $TonForecastMarket$_fun_requireMarketOpenForBet INLINECALLDICT
+    18 s() PUSH
+    $TonForecastMarket$_fun_requireStakeAmount INLINECALLDICT
+    17 s() PUSH
+    $TonForecastMarket$_fun_loadPositionOrEmpty INLINECALLDICT
+    s0 19 s() XCHG
+    IF:<{
+      s0 s4 XCHG
+      20 s() PUSH
+      ADD
+      s0 20 s() XCHG
+      ADD
+    }>ELSE<{
+      s0 s3 XCHG
+      20 s() PUSH
+      ADD
+      s0 20 s() XCHG
+      s1 s3 XCHG
+      ADD
+      s0 s3 XCHG
+      s0 19 s() XCHG
+      s0 s2 XCHG
+    }>
+    16 s() 19 s() XCHG
+    s15 18 s() XCHG
+    s14 17 s() XCHG
+    s13 16 s() XCHG
+    s12 s15 XCHG
+    s11 s14 XCHG
+    s10 s13 XCHG
+    s9 s12 XCHG
+    s8 s11 XCHG
+    s7 s10 XCHG
+    s6 s9 XCHG
+    s5 s8 XCHG
+    s4 s7 XCHG
+    s4 s6 XCHG
+    s0 s4 s5 XCHG3
+    s1 s3 XCHG
+    $TonForecastMarket$_fun_savePosition INLINECALLDICT
+  }>
+  $TonForecastMarket$_fun_loadClaimablePosition PROCREF:<{
+    OVER
+    s15 17 s() XCHG
+    5 13 REVERSE
+    s12 16 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 17 s() XCHG
+    s8 16 s() XCHG
+    s7 17 s() XCHG
+    s6 16 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 17 s() XCHG
+    s2 16 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
+    8 PUSHPOW2
+    s0 18 s() XCHG
+    $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
+    s2 17 s() XCHG
+    s1 18 s() XCHG
     __tact_dict_get_uint_cell INLINECALLDICT
     $Position$_load_opt INLINECALLDICT
     19900 PUSHINT
@@ -387,227 +799,325 @@ PROGRAM{
     $Position$_get_claimed INLINECALLDICT
     NOT
     THROWANYIFNOT
-    DUP
     $Position$_not_null INLINECALLDICT
-    18 s() 20 s() XCHG
-    17 s() 19 s() XCHG
-    16 s() 20 s() XCHG
-    s15 19 s() XCHG
-    s14 20 s() XCHG
-    s13 19 s() XCHG
-    s12 20 s() XCHG
-    s11 19 s() XCHG
-    s10 20 s() XCHG
-    s9 19 s() XCHG
-    s8 20 s() XCHG
-    s7 19 s() XCHG
-    s6 20 s() XCHG
-    s5 19 s() XCHG
-    s4 20 s() XCHG
-    s3 19 s() XCHG
-    $TonForecastMarket$_fun_calculatePayout INLINECALLDICT
-    24830 PUSHINT
-    OVER
-    0 GTINT
-    THROWANYIFNOT
-    17 s() PUSH
-    $Position$_not_null INLINECALLDICT
+    16 s() 18 s() XCHG
+    s15 17 s() XCHG
+    s14 16 s() XCHG
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s3 s5 XCHG
+    s3 s4 XCHG
+  }>
+  $TonForecastMarket$_fun_winningStake PROCREF:<{
     DROP
-    TRUE
-    s0 s2 XCHG
-    8 PUSHPOW2
-    s2 s3 XCHG2
-    NEWC
-    $Position$_store_cell INLINECALLDICT
-    s1 s2 XCHG
-    s1 20 s() XCHG
-    __tact_dict_set_uint_cell INLINECALLDICT
+    s7 PUSH
+    s15 18 s() XCHG
+    s14 17 s() XCHG
+    s13 16 s() XCHG
+    s12 18 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 18 s() XCHG
+    s8 17 s() XCHG
+    s7 16 s() XCHG
+    s6 18 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 18 s() XCHG
+    s2 17 s() XCHG
+    s1 16 s() XCHG
+    s0 18 s() XCHG
+    $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    s1 19 s() XCHG
+    EQUAL
+    IF:<{
+      s15 POP
+    }>ELSE<{
+      16 s() POP
+      s14 s15 XCHG
+    }>
+    s13 16 s() XCHG
+    s12 s15 XCHG
+    3 12 BLKSWAP
+  }>
+  $TonForecastMarket$_fun_winnerPool PROCREF:<{
     s5 PUSH
-    4 EQINT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
+    IF:<{
+      OVER
+    }>ELSE<{
+      DUP
+    }>
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    s1 s3 s0 XCHG3
+  }>
+  $TonForecastMarket$_fun_loserPool PROCREF:<{
+    s5 PUSH
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_statusResolvedYes INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
+    IF:<{
+      DUP
+    }>ELSE<{
+      OVER
+    }>
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    s1 s3 s0 XCHG3
+  }>
+  $TonForecastMarket$_fun_calculateGrossProfit PROCREF:<{
+    $TonForecastMarket$_fun_winningStake INLINECALLDICT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_winnerPool INLINECALLDICT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_loserPool INLINECALLDICT
+    s1 18 s() XCHG
+    MUL
+    SWAP
+    s0 16 s() XCHG
+    DIV
+    s14 16 s() XCHG
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s3 s5 XCHG
+    s4 s3 s0 XCHG3
+    s1 s2 XCHG
+  }>
+  $TonForecastMarket$_fun_calculateProtocolFee PROCREF:<{
+    s9 PUSH
+    MUL
+    10000 PUSHINT
+    DIV
+  }>
+  $TonForecastMarket$_fun_calculatePayout PROCREF:<{
+    s8 PUSH
+    s15 19 s() XCHG
+    s14 18 s() XCHG
+    s13 17 s() XCHG
+    s12 16 s() XCHG
+    s11 19 s() XCHG
+    s10 18 s() XCHG
+    s9 17 s() XCHG
+    s8 16 s() XCHG
+    s7 19 s() XCHG
+    s6 18 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 19 s() XCHG
+    s2 18 s() XCHG
+    s1 17 s() XCHG
+    s0 16 s() XCHG
+    $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+    s1 17 s() XCHG
+    EQUAL
     IFJMP:<{
       16 s() POP
       s1 17 s() XCHG
       s0 16 s() XCHG
-      2 PUSHINT
-      $SendParameters$_constructor_to_value_mode INLINECALLDICT
-          NEWC
-          b{01} STSLICECONST  // store tag = $0 and ihr_disabled = true
-          1 STI               // store `bounce`
-          b{000} STSLICECONST // store bounced = false and src = addr_none
-          STSLICE             // store `to`
-          SWAP
-          STGRAMS             // store `value`
-          105 PUSHINT         // 1 + 4 + 4 + 64 + 32
-          STZEROES            // store currency_collection, ihr_fee, fwd_fee, created_lt and created_at
-          // → Stack state
-          // s0: Builder
-          // s1: `data`
-          // s2: `code`
-          // s3: `body`
-          // s4: `mode`
-          // Group 2: Placing the Builder after code and data, then checking those for nullability
-          s2 XCHG0
-          DUP2
-          ISNULL
-          SWAP
-          ISNULL
-          AND
-          // → Stack state
-          // s0: -1 (true) if `data` and `code` are both null, 0 (false) otherwise
-          // s1: `code`
-          // s2: `data`
-          // s3: Builder
-          // s4: `body`
-          // s5: `mode`
-          // Group 3: Left branch of the IFELSE, executed if s0 is -1 (true)
-          <{
-              DROP2 // drop `data` and `code`, since either of those is null
-              b{0} STSLICECONST
-          }> PUSHCONT
-          // Group 3: Right branch of the IFELSE, executed if s0 is 0 (false)
-          <{
-              // _ split_depth:(Maybe (## 5))
-              //   special:(Maybe TickTock)
-              //   code:(Maybe ^Cell)
-              //   data:(Maybe ^Cell)
-              //   library:(Maybe ^Cell)
-              // = StateInit;
-              ROT                // place message Builder on top
-              b{10} STSLICECONST // store Maybe = true, Either = false
-              // Start composing inlined StateInit
-              b{00} STSLICECONST // store split_depth and special first
-              STDICT             // store code
-              STDICT             // store data
-              b{0} STSLICECONST  // store library
-          }> PUSHCONT
-          // Group 3: IFELSE that does the branching shown above
-          IFELSE
-          // → Stack state
-          // s0: Builder
-          // s1: null or StateInit
-          // s2: `body`
-          // s3: `mode`
-          // Group 4: Finalizing the message
-          STDICT // store `body` as ref with an extra Maybe bit, since `body` might be null
-          ENDC
-          // → Stack state
-          // s0: Cell
-          // s1: `mode`
-          // Group 5: Sending the message, with `mode` on top
-          SWAP
-          SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-      3 13 BLKSWAP
+      ADD
+      s12 16 s() XCHG
+      s11 s15 XCHG
+      s10 s14 XCHG
+      s9 s13 XCHG
+      s8 s12 XCHG
+      s7 s11 XCHG
+      s6 s10 XCHG
+      s5 s9 XCHG
+      s4 s8 XCHG
+      s3 s7 XCHG
+      s6 s5 s0 XCHG3
     }>
-    s5 PUSH
-    2 EQINT
-    IF:<{
-      s0 16 s() XCHG
-      $Position$_not_null INLINECALLDICT
-      $Position$_get_yesStake INLINECALLDICT
-    }>ELSE<{
-      s0 16 s() XCHG
-      $Position$_not_null INLINECALLDICT
-      $Position$_get_noStake INLINECALLDICT
-    }>
-    s5 PUSH
-    2 EQINT
-    IF:<{
-      s2 PUSH
-    }>ELSE<{
-      OVER
-    }>
-    s6 PUSH
-    2 EQINT
-    IF:<{
-      s2 PUSH
-    }>ELSE<{
-      s3 PUSH
-    }>
-    s1 s2 XCHG
-    MUL
-    SWAP
-    DIV
-    s8 PUSH
-    MUL
-    10000 PUSHINT
-    DIV
-    DUP
+    18 s() PUSH
+    18 s() PUSH
+    18 s() PUSH
+    17 s() 18 s() XCHG
+    16 s() 17 s() XCHG
+    s15 16 s() XCHG
+    s14 s15 XCHG
+    s13 s14 XCHG
+    s12 s13 XCHG
+    s11 s12 XCHG
+    s10 s11 XCHG
+    s9 s10 XCHG
+    s8 s9 XCHG
+    s7 s8 XCHG
+    s6 s7 XCHG
+    s5 s6 XCHG
+    s4 s5 XCHG
+    s3 s4 XCHG
+    $TonForecastMarket$_fun_winningStake INLINECALLDICT
+    45775 PUSHINT
+    OVER
     0 GTINT
-    IF:<{
-      s13 s(-1) PUXC
-      2 PUSHINT
-      $SendParameters$_constructor_to_value_mode INLINECALLDICT
-          NEWC
-          b{01} STSLICECONST  // store tag = $0 and ihr_disabled = true
-          1 STI               // store `bounce`
-          b{000} STSLICECONST // store bounced = false and src = addr_none
-          STSLICE             // store `to`
-          SWAP
-          STGRAMS             // store `value`
-          105 PUSHINT         // 1 + 4 + 4 + 64 + 32
-          STZEROES            // store currency_collection, ihr_fee, fwd_fee, created_lt and created_at
-          // → Stack state
-          // s0: Builder
-          // s1: `data`
-          // s2: `code`
-          // s3: `body`
-          // s4: `mode`
-          // Group 2: Placing the Builder after code and data, then checking those for nullability
-          s2 XCHG0
-          DUP2
-          ISNULL
-          SWAP
-          ISNULL
-          AND
-          // → Stack state
-          // s0: -1 (true) if `data` and `code` are both null, 0 (false) otherwise
-          // s1: `code`
-          // s2: `data`
-          // s3: Builder
-          // s4: `body`
-          // s5: `mode`
-          // Group 3: Left branch of the IFELSE, executed if s0 is -1 (true)
-          <{
-              DROP2 // drop `data` and `code`, since either of those is null
-              b{0} STSLICECONST
-          }> PUSHCONT
-          // Group 3: Right branch of the IFELSE, executed if s0 is 0 (false)
-          <{
-              // _ split_depth:(Maybe (## 5))
-              //   special:(Maybe TickTock)
-              //   code:(Maybe ^Cell)
-              //   data:(Maybe ^Cell)
-              //   library:(Maybe ^Cell)
-              // = StateInit;
-              ROT                // place message Builder on top
-              b{10} STSLICECONST // store Maybe = true, Either = false
-              // Start composing inlined StateInit
-              b{00} STSLICECONST // store split_depth and special first
-              STDICT             // store code
-              STDICT             // store data
-              b{0} STSLICECONST  // store library
-          }> PUSHCONT
-          // Group 3: IFELSE that does the branching shown above
-          IFELSE
-          // → Stack state
-          // s0: Builder
-          // s1: null or StateInit
-          // s2: `body`
-          // s3: `mode`
-          // Group 4: Finalizing the message
-          STDICT // store `body` as ref with an extra Maybe bit, since `body` might be null
-          ENDC
-          // → Stack state
-          // s0: Cell
-          // s1: `mode`
-          // Group 5: Sending the message, with `mode` on top
-          SWAP
-          SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-    }>ELSE<{
-      DROP
-    }>
-    s1 17 s() XCHG
+    THROWANYIFNOT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
     s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_winnerPool INLINECALLDICT
+    63018 PUSHINT
+    SWAP
+    0 GTINT
+    THROWANYIFNOT
+    s2 19 s() XCHG
+    s1 18 s() XCHG
+    s0 17 s() XCHG
+    s15 18 s() XCHG
+    s14 17 s() XCHG
+    s13 16 s() XCHG
+    s12 s15 XCHG
+    s11 s14 XCHG
+    s10 s13 XCHG
+    s9 s12 XCHG
+    s8 s11 XCHG
+    s7 s10 XCHG
+    s6 s9 XCHG
+    s5 s8 XCHG
+    s4 s7 XCHG
+    s3 s6 XCHG
+    s5 19 s() XCHG
+    s3 s4 XCHG
+    s3 19 s() XCHG
+    $TonForecastMarket$_fun_calculateGrossProfit INLINECALLDICT
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    16 s() PUSH
+    $TonForecastMarket$_fun_calculateProtocolFee INLINECALLDICT
+    s1 18 s() XCHG
+    s0 17 s() XCHG
+    ADD
+    SWAP
+    s0 16 s() XCHG
+    SUB
+    s14 16 s() XCHG
+    s13 s15 XCHG
+    s12 s14 XCHG
+    s11 s13 XCHG
+    s10 s12 XCHG
+    s9 s11 XCHG
+    s8 s10 XCHG
+    s7 s9 XCHG
+    s6 s8 XCHG
+    s5 s7 XCHG
+    s4 s6 XCHG
+    s3 s5 XCHG
+    s4 s3 s0 XCHG3
+    s1 s2 XCHG
+  }>
+  $SendParameters$_constructor_to_value_mode PROCINLINE:<{
+    PUSHNULL
+    2SWAP
+    PUSHNULL
+    PUSHNULL
+    s0 s0 s3 XCHG3
+    TRUE
+  }>
+  $TonForecastMarket$_fun_sendCoins PROCREF:<{
     2 PUSHINT
     $SendParameters$_constructor_to_value_mode INLINECALLDICT
         NEWC
@@ -676,131 +1186,152 @@ PROGRAM{
         // Group 5: Sending the message, with `mode` on top
         SWAP
         SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
-    3 13 BLKSWAP
   }>
-  $TonForecastMarket$_fun_ensureMarketOpen PROCREF:<{
-    48446 PUSHINT
-    s6 PUSH
-    0 EQINT
-    THROWANYIFNOT
-    7397 PUSHINT
-        NOW
-    s8 PUSH
-    LESS
-    THROWANYIFNOT
+  $TonForecastMarket$_fun_distributeClaim PROCREF:<{
+    s10 PUSH
+    s15 21 s() XCHG
+    s14 20 s() XCHG
+    s13 19 s() XCHG
+    s12 18 s() XCHG
+    s11 17 s() XCHG
+    s10 16 s() XCHG
+    s9 21 s() XCHG
+    s8 20 s() XCHG
+    s7 19 s() XCHG
+    s6 18 s() XCHG
+    s5 17 s() XCHG
+    s4 16 s() XCHG
+    s3 21 s() XCHG
+    s2 20 s() XCHG
+    s1 19 s() XCHG
+    s0 18 s() XCHG
+    $TonForecastMarket$_fun_statusResolvedDraw INLINECALLDICT
+    s1 19 s() XCHG
+    EQUAL
+    IFJMP:<{
+      18 s() POP
+      18 s() POP
+      18 s() POP
+      s11 17 s() XCHG
+      s10 16 s() XCHG
+      s9 s15 XCHG
+      s8 s14 XCHG
+      s7 s13 XCHG
+      s6 s12 XCHG
+      6 6 BLKSWAP
+      $TonForecastMarket$_fun_sendCoins INLINECALLDICT
+    }>
+    s2 20 s() XCHG
+    s1 19 s() XCHG
+    s0 s14 XCHG
+    s0 18 s() XCHG
+    s13 17 s() XCHG
+    s12 16 s() XCHG
+    s11 s15 XCHG
+    s10 s14 XCHG
+    s9 s13 XCHG
+    s8 s12 XCHG
+    s7 s11 XCHG
+    s6 s10 XCHG
+    s5 s9 XCHG
+    s4 s8 XCHG
+    s3 s7 XCHG
+    s6 20 s() XCHG
+    s5 19 s() XCHG
+    s4 20 s() XCHG
+    s3 19 s() XCHG
+    $TonForecastMarket$_fun_calculateGrossProfit INLINECALLDICT
+    $TonForecastMarket$_fun_calculateProtocolFee INLINECALLDICT
+    DUP
+    0 GTINT
+    IF:<{
+      s14 s(-1) PUXC
+      $TonForecastMarket$_fun_sendCoins INLINECALLDICT
+    }>ELSE<{
+      DROP
+    }>
+    s15 17 s() XCHG
+    s14 16 s() XCHG
+    2 14 BLKSWAP
+    $TonForecastMarket$_fun_sendCoins INLINECALLDICT
   }>
-  $Position$_constructor_yesStake_noStake_claimed PROCINLINE:<{
-  }>
-  $TonForecastMarket$_fun_placeStake PROCREF:<{
-    32630 PUSHINT
+  $TonForecastMarket$_fun_claimFor PROCREF:<{
+    s15 16 s() XCHG
+    s14 16 s() XCHG
+    s13 16 s() XCHG
+    s12 16 s() XCHG
+    s11 16 s() XCHG
+    s10 16 s() XCHG
+    s9 16 s() XCHG
+    s0 16 s() XCHG
+    s0 s8 XCHG
+    s0 s7 XCHG
+    s0 s6 XCHG
+    5 -ROLL
+    $TonForecastMarket$_fun_requireResolved INLINECALLDICT
+    16 s() PUSH
+    $TonForecastMarket$_fun_loadClaimablePosition INLINECALLDICT
+    s2 s1 s0 PUSH3
+    18 s() 21 s() XCHG
+    17 s() 20 s() XCHG
+    16 s() 19 s() XCHG
+    s15 21 s() XCHG
+    s14 20 s() XCHG
+    s13 19 s() XCHG
+    s12 21 s() XCHG
+    s11 20 s() XCHG
+    s10 19 s() XCHG
+    s9 21 s() XCHG
+    s8 20 s() XCHG
+    s7 19 s() XCHG
+    s6 21 s() XCHG
+    s5 20 s() XCHG
+    s4 19 s() XCHG
+    s3 21 s() XCHG
+    $TonForecastMarket$_fun_calculatePayout INLINECALLDICT
+    24830 PUSHINT
     OVER
     0 GTINT
     THROWANYIFNOT
-    47621 PUSHINT
-    __tact_context_get INLINECALLDICT
-    $Context$_get_value INLINECALLDICT
-    s2 PUSH
-    GEQ
-    THROWANYIFNOT
-    __tact_context_get_sender INLINECALLDICT
+    18 s() PUSH
+    18 s() PUSH
+    17 s() 18 s() XCHG
     16 s() 18 s() XCHG
-    5 14 REVERSE
-    s13 17 s() XCHG
+    s15 18 s() XCHG
+    s14 18 s() XCHG
+    s13 18 s() XCHG
     s12 18 s() XCHG
-    s11 17 s() XCHG
+    s11 18 s() XCHG
     s10 18 s() XCHG
-    s9 17 s() XCHG
+    s9 18 s() XCHG
     s8 18 s() XCHG
-    s7 17 s() XCHG
+    s7 18 s() XCHG
     s6 18 s() XCHG
-    s5 17 s() XCHG
+    s5 18 s() XCHG
     s4 18 s() XCHG
-    s3 17 s() XCHG
+    s3 18 s() XCHG
     s2 18 s() XCHG
-    s1 17 s() XCHG
-    $TonForecastMarket$_fun_derivePositionKey INLINECALLDICT
-    OVER
-    8 PUSHPOW2
-    s2 PUSH
-    __tact_dict_get_uint_cell INLINECALLDICT
-    $Position$_load_opt INLINECALLDICT
-    DUP
-    ISNULL
-    IF:<{
-      DROP
-      0 PUSHINT
-      DUP
-      FALSE
-      $Position$_constructor_yesStake_noStake_claimed INLINECALLDICT
-    }>ELSE<{
-      $Position$_not_null INLINECALLDICT
-    }>
-    s0 21 s() XCHG
-    IF:<{
-      s0 s5 XCHG
-      19 s() PUSH
-      ADD
-      s0 19 s() XCHG
-      ADD
-    }>ELSE<{
-      s0 s4 XCHG
-      19 s() PUSH
-      ADD
-      s0 19 s() XCHG
-      s1 s4 XCHG
-      ADD
-      s0 s4 XCHG
-      s0 18 s() XCHG
-      s0 s3 XCHG
-    }>
-    SWAP
-    8 PUSHPOW2
-    s0 20 s() XCHG
-    s1 s5 XCHG
-    NEWC
-    $Position$_store_cell INLINECALLDICT
-    s1 s3 XCHG
-    s2 18 s() XCHG
-    __tact_dict_set_uint_cell INLINECALLDICT
-    s13 s15 XCHG
-    s12 s14 XCHG
-    s11 s13 XCHG
-    s10 s12 XCHG
-    s9 s11 XCHG
-    s8 s10 XCHG
-    s7 s9 XCHG
-    s6 s8 XCHG
-    s5 s7 XCHG
-    s4 s6 XCHG
-    s3 s5 XCHG
-    s4 s3 s0 XCHG3
-  }>
-  $TonForecastMarket$_fun_computeOutcome PROCREF:<{
-    10000 PUSHINT
-    s12 PUSH
-    ADD
-    s11 s(-1) PUXC
-    MUL
-    10000 PUSHINT
-    DIV
-    10000 PUSHINT
-    s13 PUSH
-    SUB
-    s12 s(-1) PUXC
-    MUL
-    10000 PUSHINT
-    DIV
-    s2 s1 PUXC
-    GEQ
-    IFJMP:<{
-      2DROP
-      2 PUSHINT
-    }>
-    LEQ
-    IFJMP:<{
-      3 PUSHINT
-    }>
-    4 PUSHINT
+    22 s() PUSH
+    -ROT
+    TRUE
+    $TonForecastMarket$_fun_savePosition INLINECALLDICT
+    s15 20 s() XCHG
+    s14 19 s() XCHG
+    s13 18 s() XCHG
+    s12 17 s() XCHG
+    s11 16 s() XCHG
+    s10 s15 XCHG
+    s9 s14 XCHG
+    s8 s13 XCHG
+    s7 s12 XCHG
+    s6 s11 XCHG
+    s5 s10 XCHG
+    s4 s9 XCHG
+    s3 s8 XCHG
+    s7 s1 s5 XCHG3
+    s6 s4 XCHG2
+    s3 s3 s0 XCHG3
+    $TonForecastMarket$_fun_distributeClaim INLINECALLDICT
   }>
   $MarketState$_constructor_owner_resolver_treasury_token_timeframeSeconds_thresholdBps_referencePriceE9_protocolFeeBps_createdAt_closeTime_status_resolvedAt_finalPriceE9_totalYes_totalNo PROCINLINE:<{
   }>
@@ -901,74 +1432,10 @@ PROGRAM{
       s0 s15 XCHG
       LDVARUINT16
       DROP
-      s14 s15 XCHG
-      s13 s14 XCHG
-      s12 s13 XCHG
-      s11 s12 XCHG
-      s10 s11 XCHG
-      s9 s10 XCHG
-      s8 s9 XCHG
-      s7 s8 XCHG
-      s6 s7 XCHG
-      s5 s6 XCHG
-      s4 s5 XCHG
-      s3 s4 XCHG
-      s0 16 s() XCHG
-      s1 s3 s0 XCHG3
-      $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
-      s15 16 s() XCHG
-      15 ROLL
-      TRUE
-      SWAP
-      $TonForecastMarket$_fun_placeStake INLINECALLDICT
-      $TonForecastMarket$_contract_store INLINECALLDICT
-    }>
-    OVER
-    1413893681 PUSHINT
-    EQUAL
-    IFJMP:<{
-      2DROP
-      s0 s15 XCHG
-      LDVARUINT16
-      DROP
-      s14 s15 XCHG
-      s13 s14 XCHG
-      s12 s13 XCHG
-      s11 s12 XCHG
-      s10 s11 XCHG
-      s9 s10 XCHG
-      s8 s9 XCHG
-      s7 s8 XCHG
-      s6 s7 XCHG
-      s5 s6 XCHG
-      s4 s5 XCHG
-      s3 s4 XCHG
-      s0 16 s() XCHG
-      s1 s3 s0 XCHG3
-      $TonForecastMarket$_fun_ensureMarketOpen INLINECALLDICT
-      s15 16 s() XCHG
-      15 ROLL
-      FALSE
-      SWAP
-      $TonForecastMarket$_fun_placeStake INLINECALLDICT
-      $TonForecastMarket$_contract_store INLINECALLDICT
-    }>
-    OVER
-    1413893169 PUSHINT
-    EQUAL
-    IFJMP:<{
-      2DROP
-      s15 POP
-      37841 PUSHINT
-          NOW
-      s6 PUSH
-      GEQ
-      THROWANYIFNOT
-      48446 PUSHINT
-      s0 s4 XCHG
-      0 EQINT
-      s1 s4 XCHG
-      THROWANYIFNOT
+      __tact_context_get_sender INLINECALLDICT
+      s15 17 s() XCHG
+      s14 16 s() XCHG
+      s13 s15 XCHG
       s12 s14 XCHG
       s11 s13 XCHG
       s10 s12 XCHG
@@ -979,9 +1446,51 @@ PROGRAM{
       s5 s7 XCHG
       s4 s6 XCHG
       s3 s5 XCHG
-      1 PUSHINT
-      s4 s3 s5 XCHG3
-      s1 s2 XCHG
+      s2 s4 XCHG
+      s3 s0 s0 XCHG3
+      TRUE
+      SWAP
+      $TonForecastMarket$_fun_acceptBet INLINECALLDICT
+      $TonForecastMarket$_contract_store INLINECALLDICT
+    }>
+    OVER
+    1413893681 PUSHINT
+    EQUAL
+    IFJMP:<{
+      2DROP
+      s0 s15 XCHG
+      LDVARUINT16
+      DROP
+      __tact_context_get_sender INLINECALLDICT
+      s15 17 s() XCHG
+      s14 16 s() XCHG
+      s13 s15 XCHG
+      s12 s14 XCHG
+      s11 s13 XCHG
+      s10 s12 XCHG
+      s9 s11 XCHG
+      s8 s10 XCHG
+      s7 s9 XCHG
+      s6 s8 XCHG
+      s5 s7 XCHG
+      s4 s6 XCHG
+      s3 s5 XCHG
+      s2 s4 XCHG
+      s3 s0 s0 XCHG3
+      FALSE
+      SWAP
+      $TonForecastMarket$_fun_acceptBet INLINECALLDICT
+      $TonForecastMarket$_contract_store INLINECALLDICT
+    }>
+    OVER
+    1413893169 PUSHINT
+    EQUAL
+    IFJMP:<{
+      2DROP
+      s15 POP
+      s13 s15 XCHG
+      2 13 BLKSWAP
+      $TonForecastMarket$_fun_lockMarket INLINECALLDICT
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>
     OVER
@@ -993,65 +1502,8 @@ PROGRAM{
       64 LDU
       32 LDU
       DROP
-      41950 PUSHINT
-      __tact_context_get_sender INLINECALLDICT
-      16 s() PUSH
-      SDEQ
-      THROWANYIFNOT
-      37841 PUSHINT
-          NOW
-      s8 PUSH
-      GEQ
-      THROWANYIFNOT
-      24341 PUSHINT
-      s6 PUSH
-      0 EQINT
-      IF:<{
-        TRUE
-      }>ELSE<{
-        s6 PUSH
-        1 EQINT
-      }>
-      THROWANYIFNOT
-      s1 16 s() XCHG
-      s0 17 s() XCHG
-      16 s() PUSH
-      $TonForecastMarket$_fun_computeOutcome INLINECALLDICT
-      s4 POP
-      s4 POP
-      s4 POP
-      OVER
-      2 EQINT
-      IF:<{
-        DUP
-        0 EQINT
-      }>ELSE<{
-        FALSE
-      }>
-      IF:<{
-        TRUE
-      }>ELSE<{
-        OVER
-        3 EQINT
-        IF:<{
-          s3 PUSH
-          0 EQINT
-        }>ELSE<{
-          FALSE
-        }>
-      }>
-      IF:<{
-        4 PUSHINT
-        s2 POP
-      }>
-      s15 PUSH
-      0 GTINT
-      IF:<{
-      }>ELSE<{
-        s15 POP
-            NOW
-        s0 s15 XCHG
-      }>
+      s15 17 s() XCHG
+      s14 16 s() XCHG
       s13 s15 XCHG
       s12 s14 XCHG
       s11 s13 XCHG
@@ -1062,9 +1514,10 @@ PROGRAM{
       s6 s8 XCHG
       s5 s7 XCHG
       s4 s6 XCHG
-      s5 s2 XCHG2
-      s1 s4 XCHG
-      s1 s3 XCHG
+      s3 s5 XCHG
+      s2 s4 XCHG
+      s2 s3 XCHG
+      $TonForecastMarket$_fun_resolveMarket INLINECALLDICT
       $TonForecastMarket$_contract_store INLINECALLDICT
     }>
     OVER

@@ -987,6 +987,51 @@ function getActiveForecastMarketRow(
   return null;
 }
 
+function getLatestForecastMarketRow(
+  db: DatabaseSync,
+  pairId: string,
+): ForecastMarketRow | null {
+  const rows = db
+    .prepare(`
+    SELECT *
+    FROM forecast_markets
+    WHERE pair_id = ?
+    ORDER BY created_at DESC
+  `)
+    .all(pairId) as ForecastMarketRow[];
+
+  for (const row of rows) {
+    if (
+      row.status === "pending" &&
+      !row.deployment_tx_hash &&
+      Date.now() - new Date(row.created_at).getTime() >
+        STALE_PENDING_MARKET_WINDOW_MS
+    ) {
+      continue;
+    }
+
+    return row;
+  }
+
+  return null;
+}
+
+async function syncForecastContextMarkets(
+  db: DatabaseSync,
+  pairId: string,
+) {
+  const activeMarket = getActiveForecastMarketRow(db, pairId);
+  const latestMarket = getLatestForecastMarketRow(db, pairId);
+  const contractAddresses = [...new Set([
+    activeMarket?.contract_address ?? null,
+    latestMarket?.contract_address ?? null,
+  ])].filter((value): value is string => Boolean(value));
+
+  for (const contractAddress of contractAddresses) {
+    await syncForecastMarketTransactions(db, contractAddress);
+  }
+}
+
 function computeForecastStatus(
   market: ForecastMarketRow,
   finalPriceE9?: number | null,
@@ -2465,12 +2510,14 @@ export async function getForecastMarketContext(input: {
   const pairId = buildPredictionTokenMarketId(tokenAddress, input.timeframeId);
   await runForecastAutoCycle({ pairId });
   const activeMarket = getActiveForecastMarketRow(db, pairId);
+  const latestMarket = getLatestForecastMarketRow(db, pairId);
 
-  if (activeMarket) {
-    await syncForecastMarketTransactions(db, activeMarket.contract_address);
+  if (activeMarket || latestMarket) {
+    await syncForecastContextMarkets(db, pairId);
   }
 
   const refreshedActiveMarket = getActiveForecastMarketRow(db, pairId);
+  const refreshedLatestMarket = getLatestForecastMarketRow(db, pairId);
   const snapshot = await resolveAssetSnapshot(tokenAddress);
 
   return {
@@ -2484,6 +2531,7 @@ export async function getForecastMarketContext(input: {
     thresholdPresetsBps: getForecastThresholdPresetsBps(),
     canCreate: !refreshedActiveMarket,
     activeMarket: toMarketSummary(refreshedActiveMarket),
+    latestMarket: toMarketSummary(refreshedLatestMarket),
   };
 }
 

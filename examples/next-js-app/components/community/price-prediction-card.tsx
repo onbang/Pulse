@@ -22,6 +22,7 @@ import { buildPredictionTransferMessage } from "@/lib/prediction-transfer";
 import { getMessageHashFromSignedBoc } from "@/lib/ton-message-hash";
 import { validateFloatValue } from "@/lib/utils";
 import { fetchInternalApi } from "@/lib/vercel-internal-fetch";
+import type { PredictionDirection } from "@/lib/community";
 import { useCommunityProfile } from "./community-provider";
 
 type PredictionSubmissionState =
@@ -112,6 +113,8 @@ type ForecastSyncResponse = {
   viewer?: ForecastViewerState | null;
 };
 
+type MarketWinningSide = PredictionDirection | "draw" | null;
+
 function wait(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -154,9 +157,48 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function mapForecastStatusToPredictionRoundStatus(status?: string | null) {
+  if (!status) {
+    return null;
+  }
+
+  if (status === "locked") {
+    return "closed" as const;
+  }
+
+  if (
+    status === "resolved_yes" ||
+    status === "resolved_no" ||
+    status === "resolved_draw"
+  ) {
+    return "settled" as const;
+  }
+
+  return "open" as const;
+}
+
+function resolveWinningSideFromForecastStatus(
+  status?: string | null,
+): MarketWinningSide {
+  if (status === "resolved_yes") {
+    return "up";
+  }
+
+  if (status === "resolved_no") {
+    return "down";
+  }
+
+  if (status === "resolved_draw") {
+    return "draw";
+  }
+
+  return null;
+}
+
 export function PricePredictionCard(props: {
   pairId: string;
   label: string;
+  marketSummary?: ForecastMarketSummary | null;
   disabled?: boolean;
   stakeAmount?: string;
   onStakeAmountChange?: (value: string) => void;
@@ -187,6 +229,23 @@ export function PricePredictionCard(props: {
   const setStakeAmount = props.onStakeAmountChange ?? setInternalStakeAmount;
   const prediction = getPrediction(props.pairId);
   const round = prediction?.round;
+  const fallbackRoundStatus = mapForecastStatusToPredictionRoundStatus(
+    props.marketSummary?.status,
+  );
+  const fallbackWinningSide = resolveWinningSideFromForecastStatus(
+    props.marketSummary?.status,
+  );
+  const currentRoundId = round?.id ?? props.marketSummary?.contractAddress ?? null;
+  const currentRoundStatus = round?.status ?? fallbackRoundStatus;
+  const currentRoundCloseTime =
+    round?.closesAt ?? props.marketSummary?.closeTime ?? null;
+  const currentRoundResolvedAt =
+    round?.resolvedAt ?? props.marketSummary?.resolvedAt ?? null;
+  const currentWinningSide =
+    round?.settlementDirection ?? fallbackWinningSide;
+  const hasRoundSnapshot = Boolean(
+    currentRoundId || currentRoundStatus || currentRoundCloseTime,
+  );
   const bets = prediction?.bets ?? [];
   const confirmedBets = useMemo(
     () => bets.filter((bet) => bet.sourceKind !== "pending"),
@@ -293,28 +352,39 @@ export function PricePredictionCard(props: {
     : 0;
   const latestSettlement = useMemo(() => {
     const settledRound =
-      round?.status === "settled" && round.settlementDirection
+      currentRoundStatus === "settled" && currentWinningSide
         ? {
-            roundId: round.id,
-            settlementDirection: round.settlementDirection,
-            settledAt: round.resolvedAt ?? round.closesAt,
+            roundId: currentRoundId ?? props.pairId,
+            settlementDirection: currentWinningSide,
+            settledAt:
+              currentRoundResolvedAt ??
+              currentRoundCloseTime ??
+              new Date().toISOString(),
             totalPool,
           }
         : null;
 
     return settledRound;
-  }, [round, totalPool]);
+  }, [
+    currentRoundCloseTime,
+    currentRoundId,
+    currentRoundResolvedAt,
+    currentRoundStatus,
+    currentWinningSide,
+    props.pairId,
+    totalPool,
+  ]);
   const showStakeInput = props.showStakeInput ?? true;
   const isDisabled = props.disabled || !walletAddress;
   const upOdds = upPool > 0 ? totalPool / upPool : 0;
   const downOdds = downPool > 0 ? totalPool / downPool : 0;
   const parsedMarket = parsePredictionTokenMarketId(props.pairId);
-  const isRoundOpen = round?.status === "open";
-  const isRoundClosed = round?.status === "closed";
-  const isRoundSettled = round?.status === "settled";
+  const isRoundOpen = currentRoundStatus === "open";
+  const isRoundClosed = currentRoundStatus === "closed";
+  const isRoundSettled = currentRoundStatus === "settled";
   const predictionEntryAddress = getPredictionEntryAddress();
   const isTokenPrediction = props.pairId.startsWith("prediction:");
-  const canAutoReopenRound = isTokenPrediction && (!round || isRoundSettled);
+  const canAutoReopenRound = isTokenPrediction && (!currentRoundId || isRoundSettled);
   const isClaimBusy =
     claimState === "requesting" ||
     claimState === "waiting_confirmation" ||
@@ -355,7 +425,7 @@ export function PricePredictionCard(props: {
     setClaimState("idle");
     setOperatorState("idle");
     setOperatorAction(null);
-  }, [props.pairId, round?.id, walletAddress]);
+  }, [currentRoundId, props.pairId, walletAddress]);
   const [clockNow, setClockNow] = useState(() => Date.now());
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -364,18 +434,18 @@ export function PricePredictionCard(props: {
 
     return () => window.clearInterval(timerId);
   }, []);
-  const timeLeftMs = round
-    ? Math.max(new Date(round.closesAt).getTime() - clockNow, 0)
+  const timeLeftMs = currentRoundCloseTime
+    ? Math.max(new Date(currentRoundCloseTime).getTime() - clockNow, 0)
     : 0;
-  const roundClosePassed = round
-    ? clockNow >= new Date(round.closesAt).getTime()
+  const roundClosePassed = currentRoundCloseTime
+    ? clockNow >= new Date(currentRoundCloseTime).getTime()
     : false;
-  const countdownLabel = round
+  const countdownLabel = currentRoundCloseTime
     ? formatCountdown(timeLeftMs)
     : t("prediction.pending");
   const nextRoundReadyNow =
-    round && !isRoundOpen
-      ? clockNow >= new Date(round.closesAt).getTime()
+    currentRoundCloseTime && !isRoundOpen
+      ? clockNow >= new Date(currentRoundCloseTime).getTime()
       : false;
   const nextRoundStatusLabel =
     nextRoundReadyNow && canAutoReopenRound
@@ -384,7 +454,7 @@ export function PricePredictionCard(props: {
         ? t("prediction.nextRoundOpensIn", { value: countdownLabel })
         : t("prediction.awaitingSettlement");
   useEffect(() => {
-    if (!walletAddress || !round?.id) {
+    if (!walletAddress || !currentRoundId) {
       return;
     }
 
@@ -412,7 +482,7 @@ export function PricePredictionCard(props: {
             body: JSON.stringify({
               walletAddress,
               pairId: props.pairId,
-              marketAddress: round.id,
+              marketAddress: currentRoundId,
             }),
           },
         );
@@ -444,7 +514,7 @@ export function PricePredictionCard(props: {
     isRoundSettled,
     props.pairId,
     refresh,
-    round?.id,
+    currentRoundId,
     walletAddress,
   ]);
   const previewUpPool = upPool + (isStakeValid ? numericStake : 0);
@@ -964,7 +1034,7 @@ export function PricePredictionCard(props: {
       return;
     }
 
-    if (!round?.id || isClaimBusy) {
+    if (!currentRoundId || isClaimBusy) {
       return;
     }
 
@@ -977,7 +1047,7 @@ export function PricePredictionCard(props: {
           method: "POST",
           body: JSON.stringify({
             walletAddress,
-            marketAddress: round.id,
+            marketAddress: currentRoundId,
           }),
         },
       );
@@ -1038,7 +1108,7 @@ export function PricePredictionCard(props: {
               body: JSON.stringify({
                 walletAddress,
                 pairId: props.pairId,
-                marketAddress: round.id,
+                marketAddress: currentRoundId,
               }),
             },
           );
@@ -1092,7 +1162,7 @@ export function PricePredictionCard(props: {
       return;
     }
 
-    if (!round?.id || isOperatorBusy) {
+    if (!currentRoundId || isOperatorBusy) {
       return;
     }
 
@@ -1108,7 +1178,7 @@ export function PricePredictionCard(props: {
           method: "POST",
           body: JSON.stringify({
             walletAddress,
-            marketAddress: round.id,
+            marketAddress: currentRoundId,
           }),
         },
       );
@@ -1173,7 +1243,7 @@ export function PricePredictionCard(props: {
               body: JSON.stringify({
                 walletAddress,
                 pairId: props.pairId,
-                marketAddress: round.id,
+                marketAddress: currentRoundId,
               }),
             },
           );
@@ -1264,9 +1334,9 @@ export function PricePredictionCard(props: {
             </CardDescription>
           </div>
           <Badge className="border-sky-100 bg-white text-slate-700">
-            {round?.status === "settled"
+            {currentRoundStatus === "settled"
               ? t("prediction.settled")
-              : round?.status === "closed"
+              : currentRoundStatus === "closed"
                 ? t("prediction.awaitingSettlement")
                 : `${totalVotes} votes`}
           </Badge>
@@ -1290,14 +1360,14 @@ export function PricePredictionCard(props: {
               {t("prediction.roundStatus")}
             </p>
             <p className="mt-2 text-lg font-semibold capitalize text-slate-950">
-              {round
+              {currentRoundStatus
                 ? t(
-                    `prediction.roundStatus${round.status.charAt(0).toUpperCase()}${round.status.slice(1)}`,
+                    `prediction.roundStatus${currentRoundStatus.charAt(0).toUpperCase()}${currentRoundStatus.slice(1)}`,
                   )
                 : t("prediction.pending")}
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              {round?.status === "settled"
+              {currentRoundStatus === "settled"
                 ? t("prediction.awaitingSettlement")
                 : t("prediction.marketLiquidityBody")}
             </p>
@@ -1307,7 +1377,7 @@ export function PricePredictionCard(props: {
               {t("prediction.timeLeft")}
             </p>
             <p className="mt-2 text-lg font-semibold text-slate-950">
-              {round
+              {hasRoundSnapshot
                 ? isRoundOpen
                   ? countdownLabel
                   : nextRoundReadyNow
@@ -1333,17 +1403,19 @@ export function PricePredictionCard(props: {
             </p>
           </div>
         </div>
-        {round ? (
+        {hasRoundSnapshot ? (
           <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white p-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 {t("prediction.winner")}
               </p>
               <p className="text-lg font-semibold text-slate-900">
-                {round.settlementDirection
-                  ? round.settlementDirection === "up"
+                {currentWinningSide
+                  ? currentWinningSide === "up"
                     ? t("prediction.up")
-                    : t("prediction.down")
+                    : currentWinningSide === "down"
+                      ? t("prediction.down")
+                      : t("prediction.draw")
                   : t("prediction.pending")}
               </p>
             </div>
@@ -1799,7 +1871,9 @@ export function PricePredictionCard(props: {
               <Badge variant="outline">
                 {latestSettlement.settlementDirection === "up"
                   ? t("prediction.upWon")
-                  : t("prediction.downWon")}
+                  : latestSettlement.settlementDirection === "down"
+                    ? t("prediction.downWon")
+                    : t("prediction.draw")}
               </Badge>
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">

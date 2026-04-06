@@ -79,6 +79,7 @@ type ForecastMarketContext = {
   thresholdPresetsBps: number[];
   canCreate: boolean;
   activeMarket: ForecastMarketSummary | null;
+  latestMarket: ForecastMarketSummary | null;
 };
 
 type MarketFilter = "all" | "live" | "ready" | "closed" | "resolved";
@@ -93,6 +94,7 @@ type MarketEntry = {
   symbol: string;
   status: Exclude<MarketFilter, "all">;
   displayStatus: DisplayMarketStatus;
+  displayMarket: ForecastMarketSummary | null;
   prediction: PairPrediction | null;
   totalPoolTon: number;
   totalConfirmedBets: number;
@@ -239,13 +241,18 @@ function createFallbackContext(
     thresholdPresetsBps: [],
     canCreate: true,
     activeMarket: null,
+    latestMarket: null,
   };
+}
+
+function resolveDisplayMarket(context: ForecastMarketContext) {
+  return context.activeMarket ?? context.latestMarket;
 }
 
 function resolveDisplayStatus(
   context: ForecastMarketContext,
 ): DisplayMarketStatus {
-  const status = context.activeMarket?.status;
+  const status = resolveDisplayMarket(context)?.status;
 
   if (!status) {
     return "ready";
@@ -312,6 +319,7 @@ function buildMarketEntry(input: {
   walletAddress: string;
   fallbackLabel: string;
 }) {
+  const displayMarket = resolveDisplayMarket(input.context);
   const confirmedBets = (input.prediction?.bets ?? []).filter(
     (bet) => bet.sourceKind !== "pending",
   );
@@ -329,8 +337,8 @@ function buildMarketEntry(input: {
     .filter((bet) => bet.walletAddress === input.walletAddress)
     .reduce((sum, bet) => sum + bet.amount, 0);
   const referencePriceUsd =
-    input.context.activeMarket?.referencePriceE9 != null
-      ? input.context.activeMarket.referencePriceE9 / 1_000_000_000
+    displayMarket?.referencePriceE9 != null
+      ? displayMarket.referencePriceE9 / 1_000_000_000
       : input.context.currentPriceUsd;
   const displayStatus = resolveDisplayStatus(input.context);
   const status = resolveFilterStatus(displayStatus);
@@ -339,11 +347,12 @@ function buildMarketEntry(input: {
     asset: input.asset,
     context: input.context,
     pairId: input.context.pairId,
-    label: input.context.activeMarket?.label ?? input.fallbackLabel,
+    label: displayMarket?.label ?? input.fallbackLabel,
     displayName: normalizeDisplayName(input.asset),
     symbol: normalizeSymbol(input.asset),
     status,
     displayStatus,
+    displayMarket,
     prediction: input.prediction,
     totalPoolTon,
     totalConfirmedBets: confirmedBets.length,
@@ -398,7 +407,7 @@ function resolveOutcomeLabel(
   entry: MarketEntry,
   t: (key: string, params?: Record<string, string | number>) => string,
 ) {
-  const status = entry.context.activeMarket?.status;
+  const status = entry.displayMarket?.status;
 
   if (status === "resolved_yes") {
     return t("prediction.upWon");
@@ -420,7 +429,7 @@ function renderTimeMeta(
   now: number,
   t: (key: string, params?: Record<string, string | number>) => string,
 ) {
-  if (!entry.context.activeMarket) {
+  if (!entry.displayMarket) {
     return {
       title: t("swap.marketHub.detail.next"),
       value: t("prediction.nextRoundReadyNow"),
@@ -432,7 +441,7 @@ function renderTimeMeta(
     return {
       title: t("prediction.timeLeft"),
       value: formatCountdown(
-        new Date(entry.context.activeMarket.closeTime).getTime() - now,
+        new Date(entry.displayMarket.closeTime).getTime() - now,
       ),
       body: t("prediction.roundClosesBody"),
     };
@@ -441,7 +450,7 @@ function renderTimeMeta(
   if (entry.displayStatus === "closed") {
     return {
       title: t("prediction.awaitingSettlement"),
-      value: formatShortDate(entry.context.activeMarket.closeTime),
+      value: formatShortDate(entry.displayMarket.closeTime),
       body: t("prediction.autoResolveBody"),
     };
   }
@@ -449,8 +458,7 @@ function renderTimeMeta(
   return {
     title: t("prediction.settledAt"),
     value: formatShortDate(
-      entry.context.activeMarket.resolvedAt ??
-        entry.context.activeMarket.closeTime,
+      entry.displayMarket.resolvedAt ?? entry.displayMarket.closeTime,
     ),
     body: t("prediction.autoPayoutBody"),
   };
@@ -818,10 +826,52 @@ export function SwapPredictionMarketsHub() {
   const liveCount = marketEntries.filter(
     (entry) => entry.status === "live",
   ).length;
+  const readyCount = marketEntries.filter(
+    (entry) => entry.status === "ready",
+  ).length;
   const myMarketsCount = marketEntries.filter((entry) =>
     myMarketIds.has(entry.pairId),
   ).length;
   const selectedLoadedIntoSwap = selectedEntry?.pairId === swapTicketPairId;
+  const liveStatBody =
+    liveCount > 0
+      ? t("swap.marketHub.stats.liveBody")
+      : readyCount > 0
+        ? t("swap.marketHub.stats.liveFallbackBody", {
+            count: readyCount,
+          })
+        : t("swap.marketHub.stats.liveEmptyBody");
+  const selectedEntryGuide = selectedEntry
+    ? selectedEntry.displayStatus === "pending"
+      ? {
+          title: t("swap.marketHub.pendingStartTitle"),
+          body: t("swap.marketHub.pendingStartBody"),
+          className:
+            "border-[#71c4ef]/20 bg-[linear-gradient(135deg,rgba(113,196,239,0.12),rgba(255,255,255,0.04))]",
+        }
+      : selectedEntry.displayStatus === "ready"
+      ? {
+          title: t("swap.marketHub.readyStartTitle"),
+          body: t("swap.marketHub.readyStartBody"),
+          className:
+            "border-[#10b68b]/18 bg-[linear-gradient(135deg,rgba(16,182,139,0.12),rgba(113,196,239,0.08))]",
+        }
+      : selectedEntry.displayStatus === "closed"
+        ? {
+            title: t("swap.marketHub.claimLockedTitle"),
+            body: t("swap.marketHub.claimLockedBody"),
+            className:
+              "border-amber-400/16 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(255,255,255,0.04))]",
+          }
+        : selectedEntry.displayStatus === "resolved"
+          ? {
+              title: t("swap.marketHub.claimResolvedTitle"),
+              body: t("swap.marketHub.claimResolvedBody"),
+              className:
+                "border-cyan-400/18 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(16,182,139,0.08))]",
+            }
+          : null
+    : null;
 
   useEffect(() => {
     if (!selectedEntry || swapTicketPairId) {
@@ -946,7 +996,7 @@ export function SwapPredictionMarketsHub() {
               icon={<Activity className="size-5" />}
               label={t("swap.marketHub.stats.live")}
               value={liveCount}
-              body={t("swap.marketHub.stats.liveBody")}
+              body={liveStatBody}
             />
             <MarketStatCard
               icon={<Sparkles className="size-5" />}
@@ -962,9 +1012,9 @@ export function SwapPredictionMarketsHub() {
             />
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-4 shadow-[0_20px_44px_-28px_rgba(0,0,0,0.76)] backdrop-blur-xl md:p-5">
+          <div className="rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_20px_44px_-28px_rgba(0,0,0,0.76)] backdrop-blur-xl md:p-5">
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.24fr)_minmax(0,0.76fr)]">
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[24px] border border-white/7 bg-black/12 p-3 md:p-3.5">
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white/46">
                   {t("swap.marketHub.filter.allMarkets")}
                 </p>
@@ -974,7 +1024,7 @@ export function SwapPredictionMarketsHub() {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder={t("swap.marketHub.searchPlaceholder")}
-                    className="h-12 rounded-2xl border-white/10 bg-black/20 pl-11 text-white placeholder:text-white/28"
+                    className="h-12 rounded-[20px] border-white/8 bg-white/[0.04] pl-11 text-white shadow-none placeholder:text-white/24 focus-visible:ring-2 focus-visible:ring-[#71c4ef]/35 focus-visible:ring-offset-0"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -988,8 +1038,8 @@ export function SwapPredictionMarketsHub() {
                       className={cn(
                         "rounded-full border px-3.5 py-2 text-sm font-semibold transition-all duration-200",
                         statusFilter === filter
-                          ? "border-[#10b68b]/32 bg-[#10b68b]/16 text-[#6ee5c2]"
-                          : "border-white/10 bg-black/18 text-white/62 hover:bg-white/[0.07] hover:text-white",
+                          ? "border-[#10b68b]/30 bg-[linear-gradient(135deg,rgba(16,182,139,0.2),rgba(113,196,239,0.14))] text-[#78f0cf]"
+                          : "border-white/8 bg-transparent text-white/62 hover:border-white/14 hover:bg-white/[0.05] hover:text-white",
                       )}
                     >
                       {t(`swap.marketHub.filter.${filter}`)}
@@ -1001,8 +1051,8 @@ export function SwapPredictionMarketsHub() {
                     className={cn(
                       "rounded-full border px-3.5 py-2 text-sm font-semibold transition-all duration-200",
                       myMarketsOnly
-                        ? "border-[#71c4ef]/32 bg-[#71c4ef]/14 text-[#9bdcff]"
-                        : "border-white/10 bg-black/18 text-white/62 hover:bg-white/[0.07] hover:text-white",
+                        ? "border-[#71c4ef]/28 bg-[linear-gradient(135deg,rgba(113,196,239,0.18),rgba(16,182,139,0.1))] text-[#a7ddff]"
+                        : "border-white/8 bg-transparent text-white/62 hover:border-white/14 hover:bg-white/[0.05] hover:text-white",
                     )}
                   >
                     {t("swap.marketHub.filter.mine")}
@@ -1010,7 +1060,7 @@ export function SwapPredictionMarketsHub() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[24px] border border-white/7 bg-black/12 p-3 md:p-3.5">
                 <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white/46">
                   {t("swap.marketHub.filter.horizon")}
                 </p>
@@ -1024,7 +1074,7 @@ export function SwapPredictionMarketsHub() {
                         "rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                         timeframeFilter === timeframe.id
                           ? "border-[#71c4ef]/36 bg-[linear-gradient(135deg,rgba(113,196,239,0.24),rgba(16,182,139,0.22))] text-white shadow-[0_22px_40px_-28px_rgba(16,182,139,0.36)]"
-                          : "border-white/10 bg-black/18 text-white/62 hover:bg-white/[0.07] hover:text-white",
+                          : "border-white/8 bg-transparent text-white/62 hover:border-white/14 hover:bg-white/[0.05] hover:text-white",
                       )}
                     >
                       {timeframe.id}
@@ -1033,6 +1083,13 @@ export function SwapPredictionMarketsHub() {
                 </div>
               </div>
             </div>
+
+            {readyCount > 0 ? (
+              <div className="mt-4 flex items-start gap-3 rounded-[24px] border border-[#10b68b]/18 bg-[linear-gradient(135deg,rgba(16,182,139,0.12),rgba(113,196,239,0.08))] px-4 py-3.5 text-sm leading-6 text-white/74">
+                <Sparkles className="mt-0.5 size-4 shrink-0 text-[#78f0cf]" />
+                <p>{t("swap.marketHub.readyHint", { count: readyCount })}</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">
@@ -1173,16 +1230,15 @@ export function SwapPredictionMarketsHub() {
                           {t("swap.marketHub.detail.contract")}
                         </p>
                         <p className="mt-2 text-base font-semibold text-white">
-                          {selectedEntry.context.activeMarket?.contractAddress
+                          {selectedEntry.displayMarket?.contractAddress
                             ? Formatter.address(
-                                selectedEntry.context.activeMarket
-                                  .contractAddress,
+                                selectedEntry.displayMarket.contractAddress,
                                 { truncateSize: 6 },
                               )
                             : t("swap.marketHub.detail.noContract")}
                         </p>
                         <p className="mt-2 text-sm leading-6 text-white/56">
-                          {selectedEntry.context.activeMarket?.contractAddress
+                          {selectedEntry.displayMarket?.contractAddress
                             ? t("swap.marketHub.detail.contractBody")
                             : t("swap.marketHub.detail.noContractBody")}
                         </p>
@@ -1190,10 +1246,27 @@ export function SwapPredictionMarketsHub() {
                     </div>
                   </div>
 
+                  {selectedEntryGuide ? (
+                    <div
+                      className={cn(
+                        "mt-5 rounded-[24px] border p-4",
+                        selectedEntryGuide.className,
+                      )}
+                    >
+                      <p className="text-sm font-semibold text-white">
+                        {selectedEntryGuide.title}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-white/68">
+                        {selectedEntryGuide.body}
+                      </p>
+                    </div>
+                  ) : null}
+
                   <PricePredictionCard
                     key={selectedEntry.pairId}
                     pairId={selectedEntry.pairId}
                     label={selectedEntry.label}
+                    marketSummary={selectedEntry.displayMarket}
                   />
                 </>
               ) : (

@@ -89,6 +89,10 @@ export const messages = {
       "Prediction markets surfaced for the selected horizon.",
     "swap.marketHub.stats.liveBody":
       "Markets that are still accepting bets right now.",
+    "swap.marketHub.stats.liveFallbackBody":
+      "{count} markets are ready to open with the first bet.",
+    "swap.marketHub.stats.liveEmptyBody":
+      "No active or ready rounds are available on this board right now.",
     "swap.marketHub.stats.volumeBody":
       "Confirmed TON committed across the visible board.",
     "swap.marketHub.stats.mineBody":
@@ -105,6 +109,8 @@ export const messages = {
     "swap.marketHub.boardTitle": "Market board",
     "swap.marketHub.boardBody":
       "Choose a market to inspect the round, chart, and prediction controls.",
+    "swap.marketHub.readyHint":
+      "Live rounds are at 0 because no round is active yet. {count} markets are ready: choose a card below, enter a stake, and use Up or Down in the forecast panel.",
     "swap.marketHub.emptyTitle": "No markets match this filter.",
     "swap.marketHub.emptyBody":
       "Try another search, switch the horizon, or return to the full board.",
@@ -137,6 +143,18 @@ export const messages = {
       "When there is no active round, the next confirmed bet can open one immediately.",
     "swap.marketHub.detail.contractBody":
       "Use this address when you need to inspect the live contract.",
+    "swap.marketHub.pendingStartTitle": "The first bet is still syncing",
+    "swap.marketHub.pendingStartBody":
+      "The wallet transaction has already opened deployment for this market, but the round is still waiting for chain confirmation. Give it a moment, then refresh or wait for the forecast card below to switch into the live round state.",
+    "swap.marketHub.readyStartTitle": "This market is ready to open",
+    "swap.marketHub.readyStartBody":
+      "There is no active round yet. Enter a stake below and send the first Up or Down bet to initialize the onchain round for this token and horizon.",
+    "swap.marketHub.claimLockedTitle": "Settlement is still in progress",
+    "swap.marketHub.claimLockedBody":
+      "The round is closed but not resolved yet. When settlement finishes, the payout block appears lower in the forecast card for the winning wallet.",
+    "swap.marketHub.claimResolvedTitle": "Payout is lower in the forecast card",
+    "swap.marketHub.claimResolvedBody":
+      "Scroll a bit lower. If this wallet has a winning position, the forecast card will show Claim payout. If it was auto-claimed already, you will see Claimed instead.",
     "swap.marketHub.trade.eyebrow": "Swap companion",
     "swap.marketHub.trade.title": "Trade around the selected market",
     "swap.marketHub.trade.body":
@@ -835,6 +853,10 @@ export const messages = {
       "Рынки прогнозов, показанные для выбранного горизонта.",
     "swap.marketHub.stats.liveBody":
       "Рынки, которые прямо сейчас еще принимают ставки.",
+    "swap.marketHub.stats.liveFallbackBody":
+      "{count} рынков готовы к старту первой ставкой.",
+    "swap.marketHub.stats.liveEmptyBody":
+      "Сейчас на витрине нет ни активных, ни готовых к старту раундов.",
     "swap.marketHub.stats.volumeBody":
       "Подтвержденный TON-объем на видимой витрине.",
     "swap.marketHub.stats.mineBody":
@@ -851,6 +873,8 @@ export const messages = {
     "swap.marketHub.boardTitle": "Доска рынков",
     "swap.marketHub.boardBody":
       "Выбери рынок, чтобы открыть раунд, график и блок прогноза.",
+    "swap.marketHub.readyHint":
+      "Живых раундов сейчас 0, потому что активный onchain-раунд еще не открыт. Но {count} рынков уже готовы: выбери карточку ниже, укажи сумму и нажми Вверх или Вниз в блоке прогноза.",
     "swap.marketHub.emptyTitle": "Под этот фильтр рынков не найдено.",
     "swap.marketHub.emptyBody":
       "Попробуй другой поиск, смени горизонт или вернись ко всей витрине.",
@@ -883,6 +907,18 @@ export const messages = {
       "Если активного раунда нет, следующий подтвержденный bet сможет открыть его сразу.",
     "swap.marketHub.detail.contractBody":
       "Используй этот адрес, если хочешь проверить live-контракт вручную.",
+    "swap.marketHub.pendingStartTitle": "Первая ставка ещё синхронизируется",
+    "swap.marketHub.pendingStartBody":
+      "Транзакция из кошелька уже запустила деплой этого рынка, но сам раунд ещё ждёт подтверждения в сети. Дай ему немного времени, затем обнови витрину или дождись, пока карточка прогноза ниже переключится в live-состояние.",
+    "swap.marketHub.readyStartTitle": "Этот рынок готов к открытию",
+    "swap.marketHub.readyStartBody":
+      "Активного раунда пока нет. Укажи сумму ниже и отправь первую ставку Вверх или Вниз, чтобы инициализировать onchain-раунд для этого токена и горизонта.",
+    "swap.marketHub.claimLockedTitle": "Расчёт раунда ещё идёт",
+    "swap.marketHub.claimLockedBody":
+      "Раунд уже закрыт, но ещё не завершён. Когда settlement закончится, ниже в карточке прогноза появится блок выплаты для выигравшего кошелька.",
+    "swap.marketHub.claimResolvedTitle": "Выплата находится ниже в карточке прогноза",
+    "swap.marketHub.claimResolvedBody":
+      "Прокрути чуть ниже. Если у этого кошелька есть выигравшая позиция, в карточке прогноза появится кнопка Claim payout. Если авто-выплата уже прошла, вместо неё будет статус Получено.",
     "swap.marketHub.trade.eyebrow": "Спутник swap",
     "swap.marketHub.trade.title": "Торгуй рядом с выбранным рынком",
     "swap.marketHub.trade.body":

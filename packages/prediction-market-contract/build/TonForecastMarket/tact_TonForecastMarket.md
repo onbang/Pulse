@@ -1,6 +1,6 @@
 # Tact compilation report
 Contract: TonForecastMarket
-BoC Size: 2336 bytes
+BoC Size: 3872 bytes
 
 ## Structures (Structs and Messages)
 Total structures: 19
