@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { type AssetInfo, useAssetsQuery } from "@/hooks/use-assets-query";
-import { Formatter } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { useCommunityProfile } from "@/components/community/community-provider";
 
@@ -223,10 +222,12 @@ function analyzeChartSignal(candles: Candle[]): ChartSignal {
   const recentAverage =
     recent.reduce((sum, value) => sum + value, 0) / Math.max(recent.length, 1);
   const previousAverage =
-    previous.reduce((sum, value) => sum + value, 0) / Math.max(previous.length, 1);
+    previous.reduce((sum, value) => sum + value, 0) /
+    Math.max(previous.length, 1);
   const lastClose = closes[closes.length - 1] ?? 0;
   const firstClose = closes[0] ?? lastClose;
-  const totalMove = ((lastClose - firstClose) / Math.max(firstClose, 0.000001)) * 100;
+  const totalMove =
+    ((lastClose - firstClose) / Math.max(firstClose, 0.000001)) * 100;
   const shortMove =
     ((lastClose - previousAverage) / Math.max(previousAverage, 0.000001)) * 100;
 
@@ -253,7 +254,11 @@ function analyzeChartSignal(candles: Candle[]): ChartSignal {
   };
 }
 
-export function SwapPriceChart() {
+export function SwapPriceChart(props: {
+  assetOverride?: AssetInfo | null;
+  hideSelector?: boolean;
+  className?: string;
+}) {
   const { t } = useI18n();
   const [timeframe, setTimeframe] = useState<
     (typeof TIMEFRAMES)[number]["key"] | null
@@ -277,7 +282,8 @@ export function SwapPriceChart() {
     return () => window.clearInterval(intervalId);
   }, [timeframe]);
 
-  const trackedAsset = selectedChartAsset ?? offerAsset ?? askAsset ?? null;
+  const trackedAsset =
+    props.assetOverride ?? selectedChartAsset ?? offerAsset ?? askAsset ?? null;
   const trackedLabel = trackedAsset
     ? normalizeLabel(trackedAsset.meta?.symbol)
     : "";
@@ -289,7 +295,8 @@ export function SwapPriceChart() {
     Math.max((prediction?.up.length ?? 0) + (prediction?.down.length ?? 0), 1);
 
   const basePrice =
-    trackedAsset?.dexPriceUsd && Number.isFinite(Number(trackedAsset.dexPriceUsd))
+    trackedAsset?.dexPriceUsd &&
+    Number.isFinite(Number(trackedAsset.dexPriceUsd))
       ? Number(trackedAsset.dexPriceUsd)
       : 0;
 
@@ -333,8 +340,12 @@ export function SwapPriceChart() {
     volatility,
   ]);
 
-  const high = trackedAsset ? Math.max(...candles.map((candle) => candle.high)) : 0;
-  const low = trackedAsset ? Math.min(...candles.map((candle) => candle.low)) : 0;
+  const high = trackedAsset
+    ? Math.max(...candles.map((candle) => candle.high))
+    : 0;
+  const low = trackedAsset
+    ? Math.min(...candles.map((candle) => candle.low))
+    : 0;
   const range = trackedAsset ? Math.max(high - low, livePrice * 0.02) : 1;
   const firstOpen = trackedAsset ? (candles[0]?.open ?? livePrice) : 0;
   const priceDirection = trackedAsset && livePrice >= firstOpen ? "up" : "down";
@@ -347,11 +358,16 @@ export function SwapPriceChart() {
   const gridLevels = [high, high - range * 0.33, high - range * 0.66, low];
 
   return (
-    <Card className="overflow-hidden rounded-[34px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(246,250,255,0.97))] text-slate-900 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.16)]">
-      <CardHeader className="border-b border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(244,248,255,0.6))] p-5 md:p-6">
+    <Card
+      className={cn(
+        "overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(24,30,29,0.98),rgba(18,22,21,0.98))] text-white shadow-[0_36px_96px_-60px_rgba(0,0,0,0.82)]",
+        props.className,
+      )}
+    >
+      <CardHeader className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <Avatar className="h-14 w-14 rounded-full border border-sky-100 bg-white shadow-[0_16px_34px_-18px_rgba(59,130,246,0.28)]">
+            <Avatar className="h-14 w-14 rounded-full border border-white/10 bg-black/25 shadow-[0_18px_34px_-18px_rgba(0,0,0,0.58)]">
               <AvatarImage
                 src={trackedAsset?.meta?.imageUrl}
                 alt={
@@ -363,13 +379,13 @@ export function SwapPriceChart() {
                 }
                 className="object-cover"
               />
-              <AvatarFallback className="bg-[linear-gradient(135deg,#7354F2,#3DB1FF)] text-lg font-semibold text-white">
+              <AvatarFallback className="bg-[linear-gradient(135deg,#10b68b,#71c4ef)] text-lg font-semibold text-slate-950">
                 {(trackedLabel || "T").slice(0, 1)}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-3xl font-semibold tracking-tight text-slate-950">
+                <CardTitle className="text-3xl font-semibold tracking-tight text-white">
                   {trackedAsset
                     ? normalizeLabel(
                         trackedAsset.meta?.displayName ?? trackedLabel,
@@ -378,16 +394,16 @@ export function SwapPriceChart() {
                 </CardTitle>
                 {trackedAsset ? (
                   <>
-                    <Badge className="border border-sky-100 bg-white text-slate-700">
+                    <Badge className="border border-white/10 bg-white/[0.05] text-white/72">
                       {chartLabel}
                     </Badge>
-                    <Badge className="border border-sky-100 bg-sky-50 text-sky-700">
+                    <Badge className="border border-[#10b68b]/22 bg-[#10b68b]/14 text-[#6ee5c2]">
                       {t("swap.chart.live")}
                     </Badge>
                   </>
                 ) : null}
               </div>
-              <CardDescription className="mt-1 max-w-xl text-slate-600">
+              <CardDescription className="mt-1 max-w-xl text-white/58">
                 {trackedAsset
                   ? t("swap.chart.liveDescription")
                   : t("swap.chart.selectTokenDescription")}
@@ -395,278 +411,291 @@ export function SwapPriceChart() {
             </div>
           </div>
 
-          <div className="flex w-full min-w-[280px] max-w-[420px] flex-col gap-3">
-            <AssetSelect
-              className="h-14 rounded-[20px] border-sky-100 bg-white px-4 text-base shadow-none"
-              assets={(assetsQuery.data ?? []).slice(0, 24)}
-              selectedAsset={selectedChartAsset}
-              onAssetSelect={setSelectedChartAsset}
-              loading={assetsQuery.isLoading}
-            />
-          </div>
+          {!props.hideSelector ? (
+            <div className="flex w-full min-w-[280px] max-w-[420px] flex-col gap-3">
+              <AssetSelect
+                className="h-14 rounded-[20px] border-white/10 bg-black/25 px-4 text-base text-white shadow-none"
+                assets={(assetsQuery.data ?? []).slice(0, 24)}
+                selectedAsset={selectedChartAsset}
+                onAssetSelect={setSelectedChartAsset}
+                loading={assetsQuery.isLoading}
+              />
+            </div>
+          ) : null}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-5 p-5 md:p-6">
         {!trackedAsset ? (
-          <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
-            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[28px] border border-dashed border-sky-200 bg-white/70 px-6 text-center">
+          <div className="rounded-[30px] border border-white/10 bg-black/18 p-4 md:p-5">
+            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[28px] border border-dashed border-white/12 bg-black/18 px-6 text-center">
               <div className="mx-auto max-w-sm">
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#3DB1FF]/80">
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#9bdcff]/80">
                   {t("swap.chart.selectTokenEyebrow")}
                 </p>
-                <h3 className="mt-3 text-2xl font-semibold text-slate-950">
+                <h3 className="mt-3 text-2xl font-semibold text-white">
                   {t("swap.chart.selectTokenPrompt")}
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 text-sm leading-6 text-white/56">
                   {t("swap.chart.selectTokenBody")}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-        <>
-        <div className="rounded-[30px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,251,255,0.82))] p-4 md:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4">
-            <div>
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                {t("swap.chart.priceInUsd")}
-              </p>
-              <p className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-                ${formatChartValue(livePrice)}
-              </p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
-                <Badge
-                  className={cn(
-                    "border-0 text-sm sm:text-base",
-                    priceDirection === "up"
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-rose-50 text-rose-600",
-                  )}
-                >
-                  {priceDirection === "up" ? (
-                    <TrendingUp className="mr-1 h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="mr-1 h-4 w-4" />
-                  )}
-                  {deltaPercent >= 0 ? "+" : ""}
-                  {deltaPercent.toFixed(2)}%
-                </Badge>
-                <span
-                  className={cn(
-                    "text-xl font-semibold sm:text-2xl",
-                    priceDirection === "up" ? "text-emerald-600" : "text-rose-600",
-                  )}
-                >
-                  {delta >= 0 ? "+" : ""}
-                  {formatChartValue(Math.abs(delta))}
-                </span>
-                <span className="text-xl font-semibold text-slate-500 sm:text-2xl">
-                  {timeframe ?? t("swap.chart.realtimeShort")}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_90px]">
-            <div className="relative overflow-hidden rounded-[28px] border border-sky-100 bg-white p-4 md:p-5">
-              <svg
-                viewBox="0 0 100 100"
-                className="h-[240px] w-full sm:h-[280px] md:h-[360px] lg:h-[420px]"
-                preserveAspectRatio="none"
-                aria-label={`${chartLabel} live candlestick chart`}
-              >
-                {gridLevels.map((level, index) => {
-                  const y = 100 - ((level - low) / range) * 100;
-
-                  return (
-                    <line
-                      key={index}
-                      x1="0"
-                      x2="100"
-                      y1={y}
-                      y2={y}
-                      stroke="rgba(148,163,184,0.35)"
-                      strokeDasharray="2.8 3.4"
-                    />
-                  );
-                })}
-
-                {candles.map((candle, index) => {
-                  const candleWidth = 100 / Math.max(candles.length, 1);
-                  const xCenter = candleWidth * index + candleWidth / 2;
-                  const bodyWidth = candleWidth * 0.56;
-                  const openY = 100 - ((candle.open - low) / range) * 100;
-                  const closeY = 100 - ((candle.close - low) / range) * 100;
-                  const highY = 100 - ((candle.high - low) / range) * 100;
-                  const lowY = 100 - ((candle.low - low) / range) * 100;
-                  const isBull = candle.close >= candle.open;
-                  const bodyTop = Math.min(openY, closeY);
-                  const bodyHeight = Math.max(Math.abs(openY - closeY), 1.8);
-                  const color = isBull ? "#5ad66f" : "#ff6d5a";
-
-                  return (
-                    <g key={`${index}-${candle.open}-${candle.close}`}>
-                      <line
-                        x1={xCenter}
-                        x2={xCenter}
-                        y1={highY}
-                        y2={lowY}
-                        stroke={color}
-                        strokeWidth="0.7"
-                        strokeLinecap="round"
-                      />
-                      <rect
-                        x={xCenter - bodyWidth / 2}
-                        y={bodyTop}
-                        width={bodyWidth}
-                        height={bodyHeight}
-                        rx="0.8"
-                        fill={color}
-                      />
-                    </g>
-                  );
-                })}
-
-                <line
-                  x1="0"
-                  x2="100"
-                  y1={100 - ((livePrice - low) / range) * 100}
-                  y2={100 - ((livePrice - low) / range) * 100}
-                  stroke={liveColor}
-                  strokeDasharray="3 2.6"
-                  strokeWidth="0.55"
-                />
-              </svg>
-
-              <div className="mt-4 rounded-[24px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,250,255,0.96))] p-2">
-                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 sm:gap-2">
-                  {TIMEFRAMES.map((frame) => (
-                    <button
-                      key={frame.key}
-                      type="button"
-                      onClick={() => setTimeframe(frame.key)}
+          <>
+            <div className="rounded-[30px] border border-white/10 bg-black/18 p-4 md:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4">
+                <div>
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/42">
+                    {t("swap.chart.priceInUsd")}
+                  </p>
+                  <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                    ${formatChartValue(livePrice)}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+                    <Badge
                       className={cn(
-                        "flex h-10 items-center justify-center rounded-full px-2 text-sm font-semibold transition-all sm:h-12 sm:px-3 sm:text-base",
-                        frame.key === timeframe
-                          ? "bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_12px_24px_-18px_rgba(1,128,255,0.45)]"
-                          : "border border-transparent bg-slate-50/80 text-slate-600 hover:bg-sky-50 hover:text-slate-900",
+                        "border-0 text-sm sm:text-base",
+                        priceDirection === "up"
+                          ? "bg-emerald-500/14 text-emerald-300"
+                          : "bg-rose-500/14 text-rose-300",
                       )}
                     >
-                      {frame.key}
-                    </button>
-                  ))}
+                      {priceDirection === "up" ? (
+                        <TrendingUp className="mr-1 h-4 w-4" />
+                      ) : (
+                        <TrendingDown className="mr-1 h-4 w-4" />
+                      )}
+                      {deltaPercent >= 0 ? "+" : ""}
+                      {deltaPercent.toFixed(2)}%
+                    </Badge>
+                    <span
+                      className={cn(
+                        "text-xl font-semibold sm:text-2xl",
+                        priceDirection === "up"
+                          ? "text-emerald-300"
+                          : "text-rose-300",
+                      )}
+                    >
+                      {delta >= 0 ? "+" : ""}
+                      {formatChartValue(Math.abs(delta))}
+                    </span>
+                    <span className="text-xl font-semibold text-white/52 sm:text-2xl">
+                      {timeframe ?? t("swap.chart.realtimeShort")}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-slate-500">
-                <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-slate-700">
-                  {t("swap.chart.candles")}
-                </span>
-                <span className="text-xs sm:text-sm">
-                  {timeframe ? t(currentFrame.labelKey) : t("swap.chart.realtime")}
-                </span>
-                <span
-                  className={cn(
-                    "rounded-full px-3 py-1",
-                    priceDirection === "up"
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-rose-50 text-rose-600",
-                  )}
-                >
-                  {t("swap.chart.liveValue", {
-                    value: formatChartValue(livePrice),
-                  })}
-                </span>
+              <div className="mt-4 grid gap-3 lg:mt-5 lg:grid-cols-[minmax(0,1fr)_90px]">
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#101413] p-4 md:p-5">
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="h-[240px] w-full sm:h-[280px] md:h-[360px] lg:h-[420px]"
+                    preserveAspectRatio="none"
+                    aria-label={`${chartLabel} live candlestick chart`}
+                  >
+                    {gridLevels.map((level, index) => {
+                      const y = 100 - ((level - low) / range) * 100;
+
+                      return (
+                        <line
+                          key={index}
+                          x1="0"
+                          x2="100"
+                          y1={y}
+                          y2={y}
+                          stroke="rgba(255,255,255,0.14)"
+                          strokeDasharray="2.8 3.4"
+                        />
+                      );
+                    })}
+
+                    {candles.map((candle, index) => {
+                      const candleWidth = 100 / Math.max(candles.length, 1);
+                      const xCenter = candleWidth * index + candleWidth / 2;
+                      const bodyWidth = candleWidth * 0.56;
+                      const openY = 100 - ((candle.open - low) / range) * 100;
+                      const closeY = 100 - ((candle.close - low) / range) * 100;
+                      const highY = 100 - ((candle.high - low) / range) * 100;
+                      const lowY = 100 - ((candle.low - low) / range) * 100;
+                      const isBull = candle.close >= candle.open;
+                      const bodyTop = Math.min(openY, closeY);
+                      const bodyHeight = Math.max(
+                        Math.abs(openY - closeY),
+                        1.8,
+                      );
+                      const color = isBull ? "#5ad66f" : "#ff6d5a";
+
+                      return (
+                        <g key={`${index}-${candle.open}-${candle.close}`}>
+                          <line
+                            x1={xCenter}
+                            x2={xCenter}
+                            y1={highY}
+                            y2={lowY}
+                            stroke={color}
+                            strokeWidth="0.7"
+                            strokeLinecap="round"
+                          />
+                          <rect
+                            x={xCenter - bodyWidth / 2}
+                            y={bodyTop}
+                            width={bodyWidth}
+                            height={bodyHeight}
+                            rx="0.8"
+                            fill={color}
+                          />
+                        </g>
+                      );
+                    })}
+
+                    <line
+                      x1="0"
+                      x2="100"
+                      y1={100 - ((livePrice - low) / range) * 100}
+                      y2={100 - ((livePrice - low) / range) * 100}
+                      stroke={liveColor}
+                      strokeDasharray="3 2.6"
+                      strokeWidth="0.55"
+                    />
+                  </svg>
+
+                  <div className="mt-4 rounded-[24px] border border-white/10 bg-black/24 p-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6 sm:gap-2">
+                      {TIMEFRAMES.map((frame) => (
+                        <button
+                          key={frame.key}
+                          type="button"
+                          onClick={() => setTimeframe(frame.key)}
+                          className={cn(
+                            "flex h-10 items-center justify-center rounded-full px-2 text-sm font-semibold transition-all sm:h-12 sm:px-3 sm:text-base",
+                            frame.key === timeframe
+                              ? "bg-[linear-gradient(135deg,#10b68b,#71c4ef)] text-slate-950 shadow-[0_12px_24px_-18px_rgba(16,182,139,0.45)]"
+                              : "border border-white/10 bg-white/[0.04] text-white/62 hover:bg-white/[0.08] hover:text-white",
+                          )}
+                        >
+                          {frame.key}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-white/48">
+                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-white/72">
+                      {t("swap.chart.candles")}
+                    </span>
+                    <span className="text-xs sm:text-sm">
+                      {timeframe
+                        ? t(currentFrame.labelKey)
+                        : t("swap.chart.realtime")}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-3 py-1",
+                        priceDirection === "up"
+                          ? "bg-emerald-500/14 text-emerald-300"
+                          : "bg-rose-500/14 text-rose-300",
+                      )}
+                    >
+                      {t("swap.chart.liveValue", {
+                        value: formatChartValue(livePrice),
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-row justify-between rounded-[24px] border border-white/10 bg-black/22 px-4 py-3 text-right lg:flex-col lg:rounded-[28px] lg:px-3 lg:py-4">
+                  {gridLevels.map((level, index) => (
+                    <span
+                      key={index}
+                      className="text-sm font-medium text-white/54"
+                    >
+                      {formatChartValue(level)}
+                    </span>
+                  ))}
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-center text-base font-semibold sm:text-lg",
+                      priceDirection === "up"
+                        ? "bg-emerald-500/14 text-emerald-300"
+                        : "bg-rose-500/14 text-rose-300",
+                    )}
+                  >
+                    {formatChartValue(livePrice)}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-row justify-between rounded-[24px] border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(244,248,255,0.82))] px-4 py-3 text-right lg:flex-col lg:rounded-[28px] lg:px-3 lg:py-4">
-              {gridLevels.map((level, index) => (
-                <span key={index} className="text-sm font-medium text-slate-500">
-                  {formatChartValue(level)}
-                </span>
-              ))}
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-1 text-center text-base font-semibold sm:text-lg",
-                  priceDirection === "up"
-                    ? "bg-emerald-50 text-emerald-600"
-                    : "bg-rose-50 text-rose-600",
-                )}
-              >
-                {formatChartValue(livePrice)}
-              </span>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex min-h-[124px] flex-col rounded-[24px] border border-white/10 bg-black/18 p-4 sm:min-h-[136px]">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/42">
+                  {t("swap.chart.structureHigh")}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-white sm:mt-3 sm:text-2xl">
+                  {formatChartValue(high)}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-white/56 sm:leading-6">
+                  {t("swap.chart.upperBand")}
+                </p>
+              </div>
+              <div className="flex min-h-[124px] flex-col rounded-[24px] border border-white/10 bg-black/18 p-4 sm:min-h-[136px]">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/42">
+                  {t("swap.chart.structureLow")}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-white sm:mt-3 sm:text-2xl">
+                  {formatChartValue(low)}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-white/56 sm:leading-6">
+                  {t("swap.chart.lowerBand")}
+                </p>
+              </div>
+              <div className="flex min-h-[124px] flex-col rounded-[24px] border border-white/10 bg-black/18 p-4 sm:min-h-[136px]">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/42">
+                  {t("swap.chart.routeImpact")}
+                </p>
+                <p className="mt-2 text-xl font-semibold text-white sm:mt-3 sm:text-2xl">
+                  {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
+                </p>
+                <p className="mt-2 text-sm leading-5 text-white/56 sm:leading-6">
+                  {trackedAsset
+                    ? t("swap.chart.impactLive")
+                    : t("swap.chart.impactPreview")}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.structureHigh")}
-            </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
-              {formatChartValue(high)}
-            </p>
-            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
-              {t("swap.chart.upperBand")}
-            </p>
-          </div>
-          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.structureLow")}
-            </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
-              {formatChartValue(low)}
-            </p>
-            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
-              {t("swap.chart.lowerBand")}
-            </p>
-          </div>
-          <div className="flex min-h-[124px] flex-col rounded-[24px] border border-sky-100 bg-white p-4 sm:min-h-[136px]">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.routeImpact")}
-            </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
-              {(Number(simulation?.priceImpact ?? 0) * 100).toFixed(2)}%
-            </p>
-            <p className="mt-2 text-sm leading-5 text-slate-500 sm:leading-6">
-              {trackedAsset
-                ? t("swap.chart.impactLive")
-                : t("swap.chart.impactPreview")}
-            </p>
-          </div>
-        </div>
-        <div className="rounded-[24px] border border-white/8 bg-[linear-gradient(135deg,rgba(1,128,255,0.14),rgba(115,84,242,0.16))] p-4 shadow-[0_24px_60px_-34px_rgba(1,128,255,0.28)]">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              {t("swap.chart.forecastPulse")}
-            </p>
-            <div
-              className={cn(
-                "inline-flex w-fit items-center rounded-full px-2 py-1 text-[11px] font-semibold",
-                chartSignal.tone === "bullish" &&
-                  "bg-emerald-500/10 text-emerald-500",
-                chartSignal.tone === "bearish" && "bg-rose-500/10 text-rose-500",
-                chartSignal.tone === "neutral" &&
-                  "bg-slate-100 text-slate-500",
-              )}
-            >
-              <Dot className="-mx-1 h-4 w-4 animate-pulse" />
-              {t("swap.chart.basedOnChart")}
+            <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(16,182,139,0.12),rgba(113,196,239,0.12))] p-4 shadow-[0_24px_60px_-34px_rgba(16,182,139,0.18)]">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-white/42">
+                  {t("swap.chart.forecastPulse")}
+                </p>
+                <div
+                  className={cn(
+                    "inline-flex w-fit items-center rounded-full px-2 py-1 text-[11px] font-semibold",
+                    chartSignal.tone === "bullish" &&
+                      "bg-emerald-500/10 text-emerald-500",
+                    chartSignal.tone === "bearish" &&
+                      "bg-rose-500/10 text-rose-500",
+                    chartSignal.tone === "neutral" &&
+                      "bg-white/10 text-white/56",
+                  )}
+                >
+                  <Dot className="-mx-1 h-4 w-4 animate-pulse" />
+                  {t("swap.chart.basedOnChart")}
+                </div>
+              </div>
+              <p className="mt-2 text-lg font-semibold leading-7 text-white">
+                {t(chartSignal.titleKey)}
+              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
+                {t(chartSignal.bodyKey, {
+                  timeframe: timeframe ?? t("swap.chart.realtimeShort"),
+                })}
+              </p>
             </div>
-          </div>
-          <p className="mt-2 text-lg font-semibold leading-7 text-slate-900">
-            {t(chartSignal.titleKey)}
-          </p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            {t(chartSignal.bodyKey, {
-              timeframe: timeframe ?? t("swap.chart.realtimeShort"),
-            })}
-          </p>
-        </div>
-        </>
+          </>
         )}
       </CardContent>
     </Card>
