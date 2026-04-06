@@ -81,6 +81,8 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `FORECAST_RESOLVER_ADDRESS`
 - `FORECAST_RESOLVER_MNEMONIC`
 - `FORECAST_CRON_SECRET`
+- `STON_PULSE_DATABASE_URL`
+- `STON_PULSE_DATABASE_NAMESPACE`
 - `STON_PULSE_DATA_DIR`
 - `STON_PULSE_REQUIRE_DURABLE_STORAGE`
 - `STON_PULSE_DB_FILE`
@@ -126,14 +128,18 @@ curl -s "http://localhost:3000/api/forecast-markets/ops?secret=your-secret"
 ## Deployment notes
 
 - Default TON Connect manifest is now served from `/api/tonconnect-manifest`
-- The app uses SQLite storage through `node:sqlite`
-- In local development the default storage path is `.data/community.sqlite`
-- In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
+- The app still uses SQLite through `node:sqlite`, but it can now mirror the shared runtime state into external Postgres
+- Set `STON_PULSE_DATABASE_URL` to a Postgres or Neon connection string to enable durable external persistence
+- If you already use Vercel Postgres or Neon env injection, `POSTGRES_URL_NON_POOLING`, `POSTGRES_URL`, and `DATABASE_URL` are also recognized automatically
+- `STON_PULSE_DATABASE_NAMESPACE` can be set to keep preview and production state separated when they share the same Postgres database
+- In local development without external Postgres, the default storage path is `.data/community.sqlite`
+- In serverless runtimes like Vercel without external Postgres, the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
 - Runtime logs follow the same writable storage rule and default to `.data/runtime-errors.log` locally or `/tmp/ston-pulse/runtime-errors.log` on serverless
-- For durable production persistence outside Vercel, provide `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` backed by a real persistent writable volume instead of relying on ephemeral `/tmp`
-- On Vercel Functions, `STON_PULSE_DB_FILE` and `STON_PULSE_DATA_DIR` only change the local file path and do not make SQLite durable across deploys, cold starts, or new instances
+- With `STON_PULSE_DATABASE_URL` enabled, each request hydrates a scratch SQLite file from Postgres, runs the existing business logic, and writes the updated snapshot back before finishing
+- `STON_PULSE_DB_FILE` and `STON_PULSE_DATA_DIR` are now for local development or self-hosted persistent volumes only
+- On Vercel Functions, `STON_PULSE_DB_FILE` and `STON_PULSE_DATA_DIR` still only change the local scratch path and do not make SQLite durable across deploys, cold starts, or new instances
 - Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want the app to fail fast whenever the database still resolves to an ephemeral path
-- `GET /api/health` now reports storage durability and the latest forecast auto-cycle summary
+- `GET /api/health` now reports `external-postgres` when durable Postgres snapshot persistence is active, plus the latest forecast auto-cycle summary
 - Token forecasts use one `TonForecastMarket` contract per `token + timeframe + roundStart`
 - `POST /api/forecast-markets/auto-cycle` is scheduled via Vercel Cron every minute to lock closed rounds, resolve winners, and trigger automatic winner payouts
 - Automatic resolution and payouts require a funded resolver wallet via `FORECAST_RESOLVER_MNEMONIC` or `FORECAST_RESOLVER_ADDRESS`

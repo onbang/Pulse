@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 
 type RuntimeStorageMode =
+  | "external-postgres"
   | "explicit-files"
   | "explicit-data-dir"
   | "workspace-local"
@@ -29,6 +30,23 @@ function parseBooleanFlag(value?: string | null) {
 
 function isServerlessReadonlyFs() {
   return process.env.VERCEL === "1" || process.cwd().startsWith("/var/task");
+}
+
+function isPostgresConnectionString(value: string) {
+  return /^postgres(ql)?:\/\//i.test(value);
+}
+
+export function getExternalDatabaseConnectionString() {
+  const candidates = [
+    process.env.STON_PULSE_DATABASE_URL?.trim(),
+    process.env.POSTGRES_URL_NON_POOLING?.trim(),
+    process.env.POSTGRES_URL?.trim(),
+    process.env.DATABASE_URL?.trim(),
+  ].filter(Boolean) as string[];
+
+  return (
+    candidates.find((candidate) => isPostgresConnectionString(candidate)) ?? ""
+  );
 }
 
 function resolveWritableDataRoot() {
@@ -105,21 +123,26 @@ export function resolveRuntimeLogFile() {
 }
 
 export function getRuntimeStorageDiagnostics(): RuntimeStorageDiagnostics {
+  const externalDatabaseConnectionString =
+    getExternalDatabaseConnectionString();
+  const externalDatabaseConfigured = Boolean(externalDatabaseConnectionString);
   const dataRoot = resolveWritableDataRoot();
   const databaseFile = resolveCommunityDatabasePath();
   const legacyJsonFile = resolveLegacyCommunityJsonPath();
   const runtimeLogFile = resolveRuntimeLogPath();
   const serverless = isServerlessReadonlyFs();
-  const databaseLikelyEphemeral =
-    serverless || isLikelyEphemeralPath(databaseFile);
+  const databaseLikelyEphemeral = externalDatabaseConfigured
+    ? false
+    : serverless || isLikelyEphemeralPath(databaseFile);
   const runtimeLogLikelyEphemeral =
     serverless || isLikelyEphemeralPath(runtimeLogFile);
   const requireDurableStorage = parseBooleanFlag(
     process.env.STON_PULSE_REQUIRE_DURABLE_STORAGE,
   );
-  const mode: RuntimeStorageMode =
-    process.env.STON_PULSE_DB_FILE?.trim() ||
-    process.env.STON_PULSE_LOG_FILE?.trim()
+  const mode: RuntimeStorageMode = externalDatabaseConfigured
+    ? "external-postgres"
+    : process.env.STON_PULSE_DB_FILE?.trim() ||
+        process.env.STON_PULSE_LOG_FILE?.trim()
       ? "explicit-files"
       : process.env.STON_PULSE_DATA_DIR?.trim()
         ? "explicit-data-dir"
@@ -128,7 +151,11 @@ export function getRuntimeStorageDiagnostics(): RuntimeStorageDiagnostics {
           : "workspace-local";
   const warnings: string[] = [];
 
-  if (serverless) {
+  if (externalDatabaseConfigured) {
+    warnings.push(
+      "SQLite state is mirrored into external Postgres storage. Local SQLite files remain scratch space only.",
+    );
+  } else if (serverless) {
     warnings.push(
       "Vercel Functions do not provide durable local filesystem storage. STON_PULSE_DB_FILE and STON_PULSE_DATA_DIR can only point SQLite at temporary function storage here.",
     );

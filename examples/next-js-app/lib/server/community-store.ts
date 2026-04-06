@@ -1,6 +1,5 @@
-import { mkdir, readFile, stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
-import { dirname } from "node:path";
 import { Address, Cell } from "@ton/core";
 import { parsePredictionContractPayloadBase64 } from "@ston-pulse/prediction-sdk";
 
@@ -56,16 +55,13 @@ import {
 } from "@/lib/prediction-timeframes";
 import { parsePredictionTransferComment } from "@/lib/prediction-transfer";
 import {
-  requireDurableRuntimeStorage,
-  resolveCommunityDatabaseFile,
-  resolveLegacyCommunityJsonFile,
-} from "@/lib/server/runtime-storage";
+  ensureRuntimeDatabaseScopeInitialized,
+  withRuntimeDatabaseSession,
+} from "@/lib/server/runtime-database-session";
+import { resolveLegacyCommunityJsonFile } from "@/lib/server/runtime-storage";
 
-const databaseFile = resolveCommunityDatabaseFile();
 const legacyJsonFile = resolveLegacyCommunityJsonFile();
 
-let database: DatabaseSync | null = null;
-let initialized = false;
 const DEFAULT_ROUND_DURATION_MINUTES = 240;
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
 const PREDICTION_HISTORY_SCAN_LIMIT = 100;
@@ -77,27 +73,17 @@ const LEGACY_PREDICTION_MARKET_ADDRESSES = [
 ];
 
 async function ensureDatabase() {
-  if (database && initialized) {
-    return database;
-  }
+  return ensureRuntimeDatabaseScopeInitialized(
+    "community-store",
+    async (db) => {
+      setupSchema(db);
+      await migrateLegacyJson(db);
+    },
+  );
+}
 
-  requireDurableRuntimeStorage();
-  await mkdir(dirname(databaseFile), { recursive: true });
-
-  if (!database) {
-    database = new DatabaseSync(databaseFile);
-    database.exec("PRAGMA journal_mode = WAL;");
-    database.exec("PRAGMA foreign_keys = ON;");
-    database.exec("PRAGMA busy_timeout = 5000;");
-  }
-
-  if (!initialized) {
-    setupSchema(database);
-    await migrateLegacyJson(database);
-    initialized = true;
-  }
-
-  return database;
+export async function ensureCommunityDatabaseReady() {
+  return withRuntimeDatabaseSession(async () => ensureDatabase());
 }
 
 function setupSchema(db: DatabaseSync) {
@@ -2870,16 +2856,18 @@ function extractMessageTonValue(message: Record<string, unknown> | null) {
 }
 
 export async function getCommunityState(walletAddress: string | null) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  const normalizedWalletAddress = normalizeTonAddress(walletAddress);
-  if (normalizedWalletAddress) {
-    ensureProfile(db, normalizedWalletAddress);
-  }
-  await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
-  await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
-  const store = hydrateStore(db);
-  return buildCommunityState(store, normalizedWalletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    const normalizedWalletAddress = normalizeTonAddress(walletAddress);
+    if (normalizedWalletAddress) {
+      ensureProfile(db, normalizedWalletAddress);
+    }
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+    await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
+    const store = hydrateStore(db);
+    return buildCommunityState(store, normalizedWalletAddress);
+  });
 }
 
 export async function upsertProfile(input: {
@@ -2889,221 +2877,227 @@ export async function upsertProfile(input: {
   telegramDisplayName?: string | null;
   notificationPreferences?: Partial<NotificationPreferences>;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  const normalizedWalletAddress =
-    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
-  ensureProfile(db, normalizedWalletAddress, input.telegramDisplayName);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    const normalizedWalletAddress =
+      normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
+    ensureProfile(db, normalizedWalletAddress, input.telegramDisplayName);
 
-  const current = getProfileRow(db, normalizedWalletAddress);
-  const fallbackName =
-    current?.display_name ??
-    createDefaultProfile(
+    const current = getProfileRow(db, normalizedWalletAddress);
+    const fallbackName =
+      current?.display_name ??
+      createDefaultProfile(
+        normalizedWalletAddress,
+        input.telegramDisplayName ?? undefined,
+      ).displayName;
+    const nextDisplayName =
+      typeof input.displayName === "string"
+        ? input.displayName.trim().slice(0, 32) || fallbackName
+        : (current?.display_name ?? fallbackName);
+    const nextBio =
+      typeof input.bio === "string"
+        ? input.bio.trim().slice(0, 160)
+        : (current?.bio ?? DEFAULT_PROFILE_BIO);
+
+    db.prepare(`
+      UPDATE profiles
+      SET display_name = ?, bio = ?, notification_preferences_json = ?
+      WHERE wallet_address = ?
+    `).run(
+      nextDisplayName,
+      nextBio,
+      JSON.stringify(
+        normalizeNotificationPreferences({
+          ...parseJson<Partial<NotificationPreferences>>(
+            current?.notification_preferences_json ?? "{}",
+            {},
+          ),
+          ...(input.notificationPreferences ?? {}),
+        }),
+      ),
       normalizedWalletAddress,
-      input.telegramDisplayName ?? undefined,
-    ).displayName;
-  const nextDisplayName =
-    typeof input.displayName === "string"
-      ? input.displayName.trim().slice(0, 32) || fallbackName
-      : (current?.display_name ?? fallbackName);
-  const nextBio =
-    typeof input.bio === "string"
-      ? input.bio.trim().slice(0, 160)
-      : (current?.bio ?? DEFAULT_PROFILE_BIO);
+    );
 
-  db.prepare(`
-    UPDATE profiles
-    SET display_name = ?, bio = ?, notification_preferences_json = ?
-    WHERE wallet_address = ?
-  `).run(
-    nextDisplayName,
-    nextBio,
-    JSON.stringify(
-      normalizeNotificationPreferences({
-        ...parseJson<Partial<NotificationPreferences>>(
-          current?.notification_preferences_json ?? "{}",
-          {},
-        ),
-        ...(input.notificationPreferences ?? {}),
-      }),
-    ),
-    normalizedWalletAddress,
-  );
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+    await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
 
-  await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
-  await syncOnchainPredictionTransactions(db, normalizedWalletAddress);
-
-  return buildCommunityState(hydrateStore(db), normalizedWalletAddress);
+    return buildCommunityState(hydrateStore(db), normalizedWalletAddress);
+  });
 }
 
 export async function registerPendingCheckInTransaction(input: {
   walletAddress: string;
   txHash: string;
 }) {
-  const normalizedWalletAddress =
-    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, normalizedWalletAddress);
-  const current = getProfileRow(db, normalizedWalletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const normalizedWalletAddress =
+      normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, normalizedWalletAddress);
+    const current = getProfileRow(db, normalizedWalletAddress);
 
-  if (!current) {
-    return {
-      result: { ok: false, points: 0, syncStatus: "failed" as const },
-      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
-    };
-  }
+    if (!current) {
+      return {
+        result: { ok: false, points: 0, syncStatus: "failed" as const },
+        state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
+      };
+    }
 
-  const today = getTodayKey();
+    const today = getTodayKey();
 
-  if (current.last_check_in_date === today) {
-    return {
-      result: { ok: false, points: 0, syncStatus: "confirmed" as const },
-      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
-    };
-  }
+    if (current.last_check_in_date === today) {
+      return {
+        result: { ok: false, points: 0, syncStatus: "confirmed" as const },
+        state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
+      };
+    }
 
-  const existingTodayEvent = db
-    .prepare(
-      `
-      SELECT id, status
-      FROM check_in_events
-      WHERE wallet_address = ? AND date_key = ?
-      ORDER BY created_at DESC
-      LIMIT 1
-    `,
-    )
-    .get(normalizedWalletAddress, today) as
-    | { id: string; status: CheckInEvent["status"] }
-    | undefined;
+    const existingTodayEvent = db
+      .prepare(
+        `
+        SELECT id, status
+        FROM check_in_events
+        WHERE wallet_address = ? AND date_key = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      )
+      .get(normalizedWalletAddress, today) as
+      | { id: string; status: CheckInEvent["status"] }
+      | undefined;
 
-  if (existingTodayEvent) {
+    if (existingTodayEvent) {
+      return {
+        result: {
+          ok: existingTodayEvent.status === "pending",
+          points: 0,
+          syncStatus:
+            existingTodayEvent.status === "confirmed" ? "confirmed" : "pending",
+        },
+        state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
+      };
+    }
+
+    const existingPending = db
+      .prepare(
+        "SELECT id FROM check_in_events WHERE source_message_hash = ? OR chain_tx_hash = ?",
+      )
+      .get(input.txHash, input.txHash) as { id: string } | undefined;
+
+    if (!existingPending) {
+      db.prepare(`
+        INSERT INTO check_in_events (
+          id, wallet_address, date_key, amount_ton, source_message_hash, created_at,
+          points_awarded, streak_after_check_in, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      `).run(
+        `checkin-pending-${normalizedWalletAddress}-${input.txHash}`,
+        normalizedWalletAddress,
+        today,
+        Number(CHECK_IN_CONFIRM_TON_AMOUNT),
+        input.txHash,
+        new Date().toISOString(),
+        0,
+        current.streak,
+      );
+    }
+
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
+      targetMessageHash: input.txHash,
+    });
+
+    let pendingState = hydrateStore(db);
+    let event = pendingState.checkInEvents.find(
+      (item) =>
+        item.walletAddress === normalizedWalletAddress &&
+        (item.sourceMessageHash === input.txHash ||
+          item.chainTxHash === input.txHash),
+    );
+
+    if (event?.status !== "confirmed") {
+      await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+      pendingState = hydrateStore(db);
+      event =
+        pendingState.checkInEvents.find(
+          (item) =>
+            item.walletAddress === normalizedWalletAddress &&
+            (item.sourceMessageHash === input.txHash ||
+              item.chainTxHash === input.txHash),
+        ) ??
+        pendingState.checkInEvents.find(
+          (item) =>
+            item.walletAddress === normalizedWalletAddress &&
+            item.dateKey === today &&
+            item.status === "confirmed",
+        );
+    }
+
     return {
       result: {
-        ok: existingTodayEvent.status === "pending",
-        points: 0,
-        syncStatus:
-          existingTodayEvent.status === "confirmed" ? "confirmed" : "pending",
+        ok: true,
+        points: event?.status === "confirmed" ? event.pointsAwarded : 0,
+        syncStatus: event?.status === "confirmed" ? "confirmed" : "pending",
       },
-      state: buildCommunityState(hydrateStore(db), normalizedWalletAddress),
+      state: buildCommunityState(pendingState, normalizedWalletAddress),
     };
-  }
-
-  const existingPending = db
-    .prepare(
-      "SELECT id FROM check_in_events WHERE source_message_hash = ? OR chain_tx_hash = ?",
-    )
-    .get(input.txHash, input.txHash) as { id: string } | undefined;
-
-  if (!existingPending) {
-    db.prepare(`
-      INSERT INTO check_in_events (
-        id, wallet_address, date_key, amount_ton, source_message_hash, created_at,
-        points_awarded, streak_after_check_in, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-    `).run(
-      `checkin-pending-${normalizedWalletAddress}-${input.txHash}`,
-      normalizedWalletAddress,
-      today,
-      Number(CHECK_IN_CONFIRM_TON_AMOUNT),
-      input.txHash,
-      new Date().toISOString(),
-      0,
-      current.streak,
-    );
-  }
-
-  await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
-    targetMessageHash: input.txHash,
   });
-
-  let pendingState = hydrateStore(db);
-  let event = pendingState.checkInEvents.find(
-    (item) =>
-      item.walletAddress === normalizedWalletAddress &&
-      (item.sourceMessageHash === input.txHash ||
-        item.chainTxHash === input.txHash),
-  );
-
-  if (event?.status !== "confirmed") {
-    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
-    pendingState = hydrateStore(db);
-    event =
-      pendingState.checkInEvents.find(
-        (item) =>
-          item.walletAddress === normalizedWalletAddress &&
-          (item.sourceMessageHash === input.txHash ||
-            item.chainTxHash === input.txHash),
-      ) ??
-      pendingState.checkInEvents.find(
-        (item) =>
-          item.walletAddress === normalizedWalletAddress &&
-          item.dateKey === today &&
-          item.status === "confirmed",
-      );
-  }
-
-  return {
-    result: {
-      ok: true,
-      points: event?.status === "confirmed" ? event.pointsAwarded : 0,
-      syncStatus: event?.status === "confirmed" ? "confirmed" : "pending",
-    },
-    state: buildCommunityState(pendingState, normalizedWalletAddress),
-  };
 }
 
 export async function syncCheckInTransaction(input: {
   walletAddress: string;
   txHash: string;
 }) {
-  const normalizedWalletAddress =
-    normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, normalizedWalletAddress);
-  const today = getTodayKey();
+  return withRuntimeDatabaseSession(async () => {
+    const normalizedWalletAddress =
+      normalizeTonAddress(input.walletAddress) ?? input.walletAddress;
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, normalizedWalletAddress);
+    const today = getTodayKey();
 
-  await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
-    targetMessageHash: input.txHash,
+    await syncOnchainCheckInTransactions(db, normalizedWalletAddress, {
+      targetMessageHash: input.txHash,
+    });
+
+    let store = hydrateStore(db);
+    let event = store.checkInEvents.find(
+      (item) =>
+        item.walletAddress === normalizedWalletAddress &&
+        (item.sourceMessageHash === input.txHash ||
+          item.chainTxHash === input.txHash),
+    );
+
+    if (event?.status !== "confirmed") {
+      await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
+      store = hydrateStore(db);
+      event =
+        store.checkInEvents.find(
+          (item) =>
+            item.walletAddress === normalizedWalletAddress &&
+            (item.sourceMessageHash === input.txHash ||
+              item.chainTxHash === input.txHash),
+        ) ??
+        store.checkInEvents.find(
+          (item) =>
+            item.walletAddress === normalizedWalletAddress &&
+            item.dateKey === today &&
+            item.status === "confirmed",
+        );
+    }
+
+    return {
+      result: event?.status === "confirmed",
+      syncStatus:
+        event?.status === "confirmed"
+          ? "confirmed"
+          : event
+            ? "pending"
+            : "missing",
+      state: buildCommunityState(store, normalizedWalletAddress),
+    };
   });
-
-  let store = hydrateStore(db);
-  let event = store.checkInEvents.find(
-    (item) =>
-      item.walletAddress === normalizedWalletAddress &&
-      (item.sourceMessageHash === input.txHash ||
-        item.chainTxHash === input.txHash),
-  );
-
-  if (event?.status !== "confirmed") {
-    await syncOnchainCheckInTransactions(db, normalizedWalletAddress);
-    store = hydrateStore(db);
-    event =
-      store.checkInEvents.find(
-        (item) =>
-          item.walletAddress === normalizedWalletAddress &&
-          (item.sourceMessageHash === input.txHash ||
-            item.chainTxHash === input.txHash),
-      ) ??
-      store.checkInEvents.find(
-        (item) =>
-          item.walletAddress === normalizedWalletAddress &&
-          item.dateKey === today &&
-          item.status === "confirmed",
-      );
-  }
-
-  return {
-    result: event?.status === "confirmed",
-    syncStatus:
-      event?.status === "confirmed"
-        ? "confirmed"
-        : event
-          ? "pending"
-          : "missing",
-    state: buildCommunityState(store, normalizedWalletAddress),
-  };
 }
 
 export async function addPoolComment(input: {
@@ -3111,61 +3105,63 @@ export async function addPoolComment(input: {
   poolId: string;
   text: string;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
-  const normalizedText = input.text.trim().slice(0, 200);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
+    const normalizedText = input.text.trim().slice(0, 200);
 
-  if (!current || !normalizedText) {
+    if (!current || !normalizedText) {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const commentId = `${input.walletAddress}-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+
+    db.exec("BEGIN");
+    try {
+      db.prepare(`
+        INSERT INTO comments (id, pool_id, wallet_address, author, text, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(
+        commentId,
+        input.poolId,
+        input.walletAddress,
+        current.display_name,
+        normalizedText,
+        createdAt,
+      );
+
+      db.prepare(`
+        UPDATE profiles
+        SET comments_count = comments_count + 1,
+            total_points = total_points + ?
+        WHERE wallet_address = ?
+      `).run(COMMENT_POINTS, input.walletAddress);
+
+      pushActivity(db, {
+        type: "comment_added",
+        walletAddress: input.walletAddress,
+        author: current.display_name,
+        createdAt,
+        title: "Left a pool comment",
+        detail: normalizedText,
+      });
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+
     return {
-      result: false,
+      result: true,
       state: buildCommunityState(hydrateStore(db), input.walletAddress),
     };
-  }
-
-  const commentId = `${input.walletAddress}-${Date.now()}`;
-  const createdAt = new Date().toISOString();
-
-  db.exec("BEGIN");
-  try {
-    db.prepare(`
-      INSERT INTO comments (id, pool_id, wallet_address, author, text, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      commentId,
-      input.poolId,
-      input.walletAddress,
-      current.display_name,
-      normalizedText,
-      createdAt,
-    );
-
-    db.prepare(`
-      UPDATE profiles
-      SET comments_count = comments_count + 1,
-          total_points = total_points + ?
-      WHERE wallet_address = ?
-    `).run(COMMENT_POINTS, input.walletAddress);
-
-    pushActivity(db, {
-      type: "comment_added",
-      walletAddress: input.walletAddress,
-      author: current.display_name,
-      createdAt,
-      title: "Left a pool comment",
-      detail: normalizedText,
-    });
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
-
-  return {
-    result: true,
-    state: buildCommunityState(hydrateStore(db), input.walletAddress),
-  };
+  });
 }
 
 export async function toggleReaction(input: {
@@ -3174,47 +3170,49 @@ export async function toggleReaction(input: {
   commentId: string;
   emoji: CommentReactionEmoji;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (!current) {
+    if (!current) {
+      return buildCommunityState(hydrateStore(db), input.walletAddress);
+    }
+
+    const existing = db
+      .prepare(`
+        SELECT 1 AS found
+        FROM comment_reactions
+        WHERE comment_id = ? AND emoji = ? AND wallet_address = ?
+      `)
+      .get(input.commentId, input.emoji, input.walletAddress) as
+      | { found: number }
+      | undefined;
+
+    if (existing) {
+      db.prepare(`
+        DELETE FROM comment_reactions
+        WHERE comment_id = ? AND emoji = ? AND wallet_address = ?
+      `).run(input.commentId, input.emoji, input.walletAddress);
+    } else {
+      db.prepare(`
+        INSERT INTO comment_reactions (comment_id, emoji, wallet_address)
+        VALUES (?, ?, ?)
+      `).run(input.commentId, input.emoji, input.walletAddress);
+    }
+
+    pushActivity(db, {
+      type: "reaction_added",
+      walletAddress: input.walletAddress,
+      author: current.display_name,
+      createdAt: new Date().toISOString(),
+      title: "Reacted to a pool comment",
+      detail: `${existing ? "Removed" : "Added"} ${input.emoji} reaction.`,
+    });
+
     return buildCommunityState(hydrateStore(db), input.walletAddress);
-  }
-
-  const existing = db
-    .prepare(`
-      SELECT 1 AS found
-      FROM comment_reactions
-      WHERE comment_id = ? AND emoji = ? AND wallet_address = ?
-    `)
-    .get(input.commentId, input.emoji, input.walletAddress) as
-    | { found: number }
-    | undefined;
-
-  if (existing) {
-    db.prepare(`
-      DELETE FROM comment_reactions
-      WHERE comment_id = ? AND emoji = ? AND wallet_address = ?
-    `).run(input.commentId, input.emoji, input.walletAddress);
-  } else {
-    db.prepare(`
-      INSERT INTO comment_reactions (comment_id, emoji, wallet_address)
-      VALUES (?, ?, ?)
-    `).run(input.commentId, input.emoji, input.walletAddress);
-  }
-
-  pushActivity(db, {
-    type: "reaction_added",
-    walletAddress: input.walletAddress,
-    author: current.display_name,
-    createdAt: new Date().toISOString(),
-    title: "Reacted to a pool comment",
-    detail: `${existing ? "Removed" : "Added"} ${input.emoji} reaction.`,
   });
-
-  return buildCommunityState(hydrateStore(db), input.walletAddress);
 }
 
 export async function addPrediction(input: {
@@ -3225,118 +3223,120 @@ export async function addPrediction(input: {
   amount: number;
   txHash?: string;
 }) {
-  const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
+  return withRuntimeDatabaseSession(async () => {
+    const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
 
-  if (input.txHash) {
-    return registerPendingPredictionTransaction({
-      ...input,
-      pairId: canonicalPairId,
-      txHash: input.txHash,
-    });
-  }
+    if (input.txHash) {
+      return registerPendingPredictionTransaction({
+        ...input,
+        pairId: canonicalPairId,
+        txHash: input.txHash,
+      });
+    }
 
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (!current || !Number.isFinite(input.amount) || input.amount <= 0) {
+    if (!current || !Number.isFinite(input.amount) || input.amount <= 0) {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const round = ensureRoundState(db, canonicalPairId, input.label);
+
+    if (round.status !== "open") {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const existing = db
+      .prepare(`
+        SELECT direction
+        FROM prediction_positions
+        WHERE pair_id = ? AND wallet_address = ?
+      `)
+      .get(canonicalPairId, input.walletAddress) as
+      | { direction: PredictionDirection }
+      | undefined;
+
+    if (existing?.direction === input.direction) {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const createdAt = new Date().toISOString();
+    const betId = `${input.walletAddress}-${Date.now()}`;
+
+    db.exec("BEGIN");
+    try {
+      db.prepare(`
+        INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
+        VALUES (?, ?, ?)
+      `).run(canonicalPairId, input.walletAddress, input.direction);
+
+      db.prepare(`
+        INSERT INTO prediction_bets (
+          id,
+          round_id,
+          pair_id,
+          pair_label,
+          wallet_address,
+          author,
+          amount,
+          direction,
+          created_at,
+          source_message_hash,
+          source_kind
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        betId,
+        round.id,
+        canonicalPairId,
+        input.label,
+        input.walletAddress,
+        current.display_name,
+        Math.round(input.amount * 100) / 100,
+        input.direction,
+        createdAt,
+        input.txHash ?? null,
+        input.txHash ? "wallet_signed" : "offchain",
+      );
+
+      db.prepare(`
+        UPDATE profiles
+        SET predictions_count = predictions_count + 1,
+            total_points = total_points + ?
+        WHERE wallet_address = ?
+      `).run(PREDICTION_POINTS, input.walletAddress);
+
+      pushActivity(db, {
+        type: "prediction_added",
+        walletAddress: input.walletAddress,
+        author: current.display_name,
+        createdAt,
+        title: "Placed a prediction bet",
+        detail: `${input.direction === "up" ? "Bullish" : "Bearish"} on ${input.label} for ${input.amount.toFixed(2)} points.`,
+      });
+
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+
     return {
-      result: false,
+      result: true,
       state: buildCommunityState(hydrateStore(db), input.walletAddress),
     };
-  }
-
-  const round = ensureRoundState(db, canonicalPairId, input.label);
-
-  if (round.status !== "open") {
-    return {
-      result: false,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
-
-  const existing = db
-    .prepare(`
-      SELECT direction
-      FROM prediction_positions
-      WHERE pair_id = ? AND wallet_address = ?
-    `)
-    .get(canonicalPairId, input.walletAddress) as
-    | { direction: PredictionDirection }
-    | undefined;
-
-  if (existing?.direction === input.direction) {
-    return {
-      result: false,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
-
-  const createdAt = new Date().toISOString();
-  const betId = `${input.walletAddress}-${Date.now()}`;
-
-  db.exec("BEGIN");
-  try {
-    db.prepare(`
-      INSERT OR REPLACE INTO prediction_positions (pair_id, wallet_address, direction)
-      VALUES (?, ?, ?)
-    `).run(canonicalPairId, input.walletAddress, input.direction);
-
-    db.prepare(`
-      INSERT INTO prediction_bets (
-        id,
-        round_id,
-        pair_id,
-        pair_label,
-        wallet_address,
-        author,
-        amount,
-        direction,
-        created_at,
-        source_message_hash,
-        source_kind
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      betId,
-      round.id,
-      canonicalPairId,
-      input.label,
-      input.walletAddress,
-      current.display_name,
-      Math.round(input.amount * 100) / 100,
-      input.direction,
-      createdAt,
-      input.txHash ?? null,
-      input.txHash ? "wallet_signed" : "offchain",
-    );
-
-    db.prepare(`
-      UPDATE profiles
-      SET predictions_count = predictions_count + 1,
-          total_points = total_points + ?
-      WHERE wallet_address = ?
-    `).run(PREDICTION_POINTS, input.walletAddress);
-
-    pushActivity(db, {
-      type: "prediction_added",
-      walletAddress: input.walletAddress,
-      author: current.display_name,
-      createdAt,
-      title: "Placed a prediction bet",
-      detail: `${input.direction === "up" ? "Bullish" : "Bearish"} on ${input.label} for ${input.amount.toFixed(2)} points.`,
-    });
-
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
-
-  return {
-    result: true,
-    state: buildCommunityState(hydrateStore(db), input.walletAddress),
-  };
+  });
 }
 
 export async function registerPendingPredictionTransaction(input: {
@@ -3347,107 +3347,95 @@ export async function registerPendingPredictionTransaction(input: {
   amount: number;
   txHash: string;
 }) {
-  const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const canonicalPairId = canonicalizePredictionMarketId(input.pairId);
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (
-    !current ||
-    !Number.isFinite(input.amount) ||
-    input.amount <= 0 ||
-    !input.txHash.trim()
-  ) {
-    return {
-      result: false,
-      syncStatus: "failed" as const,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
+    if (
+      !current ||
+      !Number.isFinite(input.amount) ||
+      input.amount <= 0 ||
+      !input.txHash.trim()
+    ) {
+      return {
+        result: false,
+        syncStatus: "failed" as const,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
 
-  const round = ensureRoundState(db, canonicalPairId, input.label);
+    const round = ensureRoundState(db, canonicalPairId, input.label);
 
-  if (round.status !== "open") {
-    return {
-      result: false,
-      syncStatus: "failed" as const,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
+    if (round.status !== "open") {
+      return {
+        result: false,
+        syncStatus: "failed" as const,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
 
-  const existingBet = db
-    .prepare(
-      `
-      SELECT id, source_kind
-      FROM prediction_bets
-      WHERE source_message_hash = ?
-         OR chain_tx_hash = ?
-    `,
-    )
-    .get(input.txHash, input.txHash) as
-    | {
-        id: string;
-        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
-      }
-    | undefined;
+    const existingBet = db
+      .prepare(
+        `
+        SELECT id, source_kind
+        FROM prediction_bets
+        WHERE source_message_hash = ?
+           OR chain_tx_hash = ?
+      `,
+      )
+      .get(input.txHash, input.txHash) as
+      | {
+          id: string;
+          source_kind:
+            | "offchain"
+            | "wallet_signed"
+            | "pending"
+            | "onchain_sync";
+        }
+      | undefined;
 
-  if (!existingBet) {
-    db.prepare(`
-      INSERT INTO prediction_bets (
-        id,
-        round_id,
-        pair_id,
-        pair_label,
-        wallet_address,
-        author,
-        amount,
-        direction,
-        created_at,
-        source_message_hash,
-        chain_tx_hash,
-        confirmed_at,
-        source_kind
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      `pending-${input.txHash}`,
-      round.id,
-      canonicalPairId,
-      input.label,
-      input.walletAddress,
-      current.display_name,
-      Math.round(input.amount * 100) / 100,
-      input.direction,
-      new Date().toISOString(),
-      input.txHash,
-      null,
-      null,
-      "pending",
-    );
-  }
+    if (!existingBet) {
+      db.prepare(`
+        INSERT INTO prediction_bets (
+          id,
+          round_id,
+          pair_id,
+          pair_label,
+          wallet_address,
+          author,
+          amount,
+          direction,
+          created_at,
+          source_message_hash,
+          chain_tx_hash,
+          confirmed_at,
+          source_kind
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        `pending-${input.txHash}`,
+        round.id,
+        canonicalPairId,
+        input.label,
+        input.walletAddress,
+        current.display_name,
+        Math.round(input.amount * 100) / 100,
+        input.direction,
+        new Date().toISOString(),
+        input.txHash,
+        null,
+        null,
+        "pending",
+      );
+    }
 
-  await syncOnchainPredictionTransactions(db, input.walletAddress, {
-    targetMessageHash: input.txHash,
-  });
+    await syncOnchainPredictionTransactions(db, input.walletAddress, {
+      targetMessageHash: input.txHash,
+    });
 
-  let syncedBet = db
-    .prepare(
-      `
-      SELECT source_kind
-      FROM prediction_bets
-      WHERE source_message_hash = ?
-         OR chain_tx_hash = ?
-    `,
-    )
-    .get(input.txHash, input.txHash) as
-    | {
-        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
-      }
-    | undefined;
-
-  if (syncedBet?.source_kind !== "onchain_sync") {
-    await syncOnchainPredictionTransactions(db, input.walletAddress);
-    syncedBet = db
+    let syncedBet = db
       .prepare(
         `
         SELECT source_kind
@@ -3465,48 +3453,54 @@ export async function registerPendingPredictionTransaction(input: {
             | "onchain_sync";
         }
       | undefined;
-  }
 
-  return {
-    result: Boolean(syncedBet),
-    syncStatus:
-      syncedBet?.source_kind === "onchain_sync"
-        ? ("confirmed" as const)
-        : ("pending" as const),
-    state: buildCommunityState(hydrateStore(db), input.walletAddress),
-  };
+    if (syncedBet?.source_kind !== "onchain_sync") {
+      await syncOnchainPredictionTransactions(db, input.walletAddress);
+      syncedBet = db
+        .prepare(
+          `
+          SELECT source_kind
+          FROM prediction_bets
+          WHERE source_message_hash = ?
+             OR chain_tx_hash = ?
+        `,
+        )
+        .get(input.txHash, input.txHash) as
+        | {
+            source_kind:
+              | "offchain"
+              | "wallet_signed"
+              | "pending"
+              | "onchain_sync";
+          }
+        | undefined;
+    }
+
+    return {
+      result: Boolean(syncedBet),
+      syncStatus:
+        syncedBet?.source_kind === "onchain_sync"
+          ? ("confirmed" as const)
+          : ("pending" as const),
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+    };
+  });
 }
 
 export async function syncPredictionTransaction(input: {
   walletAddress: string;
   txHash: string;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
 
-  await syncOnchainPredictionTransactions(db, input.walletAddress, {
-    targetMessageHash: input.txHash,
-  });
+    await syncOnchainPredictionTransactions(db, input.walletAddress, {
+      targetMessageHash: input.txHash,
+    });
 
-  let bet = db
-    .prepare(
-      `
-      SELECT source_kind
-      FROM prediction_bets
-      WHERE source_message_hash = ?
-         OR chain_tx_hash = ?
-    `,
-    )
-    .get(input.txHash, input.txHash) as
-    | {
-        source_kind: "offchain" | "wallet_signed" | "pending" | "onchain_sync";
-      }
-    | undefined;
-
-  if (bet?.source_kind !== "onchain_sync") {
-    await syncOnchainPredictionTransactions(db, input.walletAddress);
-    bet = db
+    let bet = db
       .prepare(
         `
         SELECT source_kind
@@ -3524,18 +3518,40 @@ export async function syncPredictionTransaction(input: {
             | "onchain_sync";
         }
       | undefined;
-  }
 
-  return {
-    result: Boolean(bet),
-    syncStatus:
-      bet?.source_kind === "onchain_sync"
-        ? ("confirmed" as const)
-        : bet?.source_kind === "pending"
-          ? ("pending" as const)
-          : ("missing" as const),
-    state: buildCommunityState(hydrateStore(db), input.walletAddress),
-  };
+    if (bet?.source_kind !== "onchain_sync") {
+      await syncOnchainPredictionTransactions(db, input.walletAddress);
+      bet = db
+        .prepare(
+          `
+          SELECT source_kind
+          FROM prediction_bets
+          WHERE source_message_hash = ?
+             OR chain_tx_hash = ?
+        `,
+        )
+        .get(input.txHash, input.txHash) as
+        | {
+            source_kind:
+              | "offchain"
+              | "wallet_signed"
+              | "pending"
+              | "onchain_sync";
+          }
+        | undefined;
+    }
+
+    return {
+      result: Boolean(bet),
+      syncStatus:
+        bet?.source_kind === "onchain_sync"
+          ? ("confirmed" as const)
+          : bet?.source_kind === "pending"
+            ? ("pending" as const)
+            : ("missing" as const),
+      state: buildCommunityState(hydrateStore(db), input.walletAddress),
+    };
+  });
 }
 
 export async function settlePredictionRound(input: {
@@ -3543,155 +3559,159 @@ export async function settlePredictionRound(input: {
   direction: PredictionDirection;
   walletAddress: string;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (!current) {
+    if (!current) {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const round = ensureRoundState(db, input.pairId, input.pairId);
+
+    if (!round || round.status === "open") {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const hydratedBeforeSettlement = hydrateStore(db);
+    const prediction = hydratedBeforeSettlement.predictions[input.pairId];
+
+    if (!prediction) {
+      return {
+        result: false,
+        state: buildCommunityState(hydrateStore(db), input.walletAddress),
+      };
+    }
+
+    const totalPool = prediction.bets.reduce((sum, bet) => sum + bet.amount, 0);
+    const winningPool = prediction.bets
+      .filter((bet) => bet.direction === input.direction)
+      .reduce((sum, bet) => sum + bet.amount, 0);
+
+    const payoutMap = new Map<
+      string,
+      Omit<PredictionPayoutPreview, "estimatedPayout">
+    >();
+
+    for (const bet of prediction.bets.filter(
+      (item) => item.direction === input.direction,
+    )) {
+      const currentPayout = payoutMap.get(bet.walletAddress) ?? {
+        walletAddress: bet.walletAddress,
+        author: bet.author,
+        totalStake: 0,
+      };
+
+      currentPayout.totalStake += bet.amount;
+      payoutMap.set(bet.walletAddress, currentPayout);
+    }
+
+    const payouts = winningPool
+      ? [...payoutMap.values()]
+          .map((item) => ({
+            ...item,
+            estimatedPayout: Number(
+              ((item.totalStake / winningPool) * totalPool).toFixed(2),
+            ),
+          }))
+          .sort((a, b) => b.estimatedPayout - a.estimatedPayout)
+      : [];
+
+    db.prepare(`
+      UPDATE prediction_rounds
+      SET status = 'settled',
+          settlement_direction = ?,
+          resolved_at = ?
+      WHERE pair_id = ?
+    `).run(input.direction, new Date().toISOString(), input.pairId);
+
+    db.prepare(`
+      INSERT OR REPLACE INTO prediction_settlements (
+        round_id, pair_id, pair_label, settlement_direction, settled_at, total_pool, payouts_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      getRoundIdentifier(round),
+      input.pairId,
+      prediction.label,
+      input.direction,
+      new Date().toISOString(),
+      totalPool,
+      JSON.stringify(payouts),
+    );
+
+    pushActivity(db, {
+      type: "prediction_settled",
+      walletAddress: input.walletAddress,
+      author: current.display_name,
+      createdAt: new Date().toISOString(),
+      title: "Settled a prediction round",
+      detail: `${input.direction === "up" ? "Up" : "Down"} side won the round.`,
+    });
+
     return {
-      result: false,
+      result: true,
       state: buildCommunityState(hydrateStore(db), input.walletAddress),
     };
-  }
-
-  const round = ensureRoundState(db, input.pairId, input.pairId);
-
-  if (!round || round.status === "open") {
-    return {
-      result: false,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
-
-  const hydratedBeforeSettlement = hydrateStore(db);
-  const prediction = hydratedBeforeSettlement.predictions[input.pairId];
-
-  if (!prediction) {
-    return {
-      result: false,
-      state: buildCommunityState(hydrateStore(db), input.walletAddress),
-    };
-  }
-
-  const totalPool = prediction.bets.reduce((sum, bet) => sum + bet.amount, 0);
-  const winningPool = prediction.bets
-    .filter((bet) => bet.direction === input.direction)
-    .reduce((sum, bet) => sum + bet.amount, 0);
-
-  const payoutMap = new Map<
-    string,
-    Omit<PredictionPayoutPreview, "estimatedPayout">
-  >();
-
-  for (const bet of prediction.bets.filter(
-    (item) => item.direction === input.direction,
-  )) {
-    const currentPayout = payoutMap.get(bet.walletAddress) ?? {
-      walletAddress: bet.walletAddress,
-      author: bet.author,
-      totalStake: 0,
-    };
-
-    currentPayout.totalStake += bet.amount;
-    payoutMap.set(bet.walletAddress, currentPayout);
-  }
-
-  const payouts = winningPool
-    ? [...payoutMap.values()]
-        .map((item) => ({
-          ...item,
-          estimatedPayout: Number(
-            ((item.totalStake / winningPool) * totalPool).toFixed(2),
-          ),
-        }))
-        .sort((a, b) => b.estimatedPayout - a.estimatedPayout)
-    : [];
-
-  db.prepare(`
-    UPDATE prediction_rounds
-    SET status = 'settled',
-        settlement_direction = ?,
-        resolved_at = ?
-    WHERE pair_id = ?
-  `).run(input.direction, new Date().toISOString(), input.pairId);
-
-  db.prepare(`
-    INSERT OR REPLACE INTO prediction_settlements (
-      round_id, pair_id, pair_label, settlement_direction, settled_at, total_pool, payouts_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    getRoundIdentifier(round),
-    input.pairId,
-    prediction.label,
-    input.direction,
-    new Date().toISOString(),
-    totalPool,
-    JSON.stringify(payouts),
-  );
-
-  pushActivity(db, {
-    type: "prediction_settled",
-    walletAddress: input.walletAddress,
-    author: current.display_name,
-    createdAt: new Date().toISOString(),
-    title: "Settled a prediction round",
-    detail: `${input.direction === "up" ? "Up" : "Down"} side won the round.`,
   });
-
-  return {
-    result: true,
-    state: buildCommunityState(hydrateStore(db), input.walletAddress),
-  };
 }
 
 export async function startTrackedActivity(input: {
   walletAddress: string;
   track: ActivityTrack;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (!current) {
-    return buildCommunityState(hydrateStore(db), input.walletAddress);
-  }
-
-  const activities = parseJson<Partial<Record<ActivityTrack, string>>>(
-    current.activities_json,
-    {},
-  );
-
-  if (!activities[input.track]) {
-    activities[input.track] = new Date().toISOString();
-
-    db.exec("BEGIN");
-    try {
-      db.prepare(`
-        UPDATE profiles
-        SET total_points = total_points + ?,
-            activities_json = ?
-        WHERE wallet_address = ?
-      `).run(TRACK_POINTS, JSON.stringify(activities), input.walletAddress);
-
-      pushActivity(db, {
-        type: "track_started",
-        walletAddress: input.walletAddress,
-        author: current.display_name,
-        createdAt: new Date().toISOString(),
-        title: "Started a tracked position",
-        detail: `Now tracking ${input.track} progress for achievements.`,
-      });
-
-      db.exec("COMMIT");
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
+    if (!current) {
+      return buildCommunityState(hydrateStore(db), input.walletAddress);
     }
-  }
 
-  return buildCommunityState(hydrateStore(db), input.walletAddress);
+    const activities = parseJson<Partial<Record<ActivityTrack, string>>>(
+      current.activities_json,
+      {},
+    );
+
+    if (!activities[input.track]) {
+      activities[input.track] = new Date().toISOString();
+
+      db.exec("BEGIN");
+      try {
+        db.prepare(`
+          UPDATE profiles
+          SET total_points = total_points + ?,
+              activities_json = ?
+          WHERE wallet_address = ?
+        `).run(TRACK_POINTS, JSON.stringify(activities), input.walletAddress);
+
+        pushActivity(db, {
+          type: "track_started",
+          walletAddress: input.walletAddress,
+          author: current.display_name,
+          createdAt: new Date().toISOString(),
+          title: "Started a tracked position",
+          detail: `Now tracking ${input.track} progress for achievements.`,
+        });
+
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+
+    return buildCommunityState(hydrateStore(db), input.walletAddress);
+  });
 }
 
 export async function toggleWatchlist(input: {
@@ -3699,48 +3719,50 @@ export async function toggleWatchlist(input: {
   poolId: string;
   poolLabel: string;
 }) {
-  const db = await ensureDatabase();
-  refreshPredictionRounds(db);
-  ensureProfile(db, input.walletAddress);
-  const current = getProfileRow(db, input.walletAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureDatabase();
+    refreshPredictionRounds(db);
+    ensureProfile(db, input.walletAddress);
+    const current = getProfileRow(db, input.walletAddress);
 
-  if (!current) {
+    if (!current) {
+      return buildCommunityState(hydrateStore(db), input.walletAddress);
+    }
+
+    const existing = db
+      .prepare(`
+        SELECT 1 AS found
+        FROM watchlists
+        WHERE wallet_address = ? AND pool_id = ?
+      `)
+      .get(input.walletAddress, input.poolId) as { found: number } | undefined;
+
+    if (existing) {
+      db.prepare(`
+        DELETE FROM watchlists
+        WHERE wallet_address = ? AND pool_id = ?
+      `).run(input.walletAddress, input.poolId);
+    } else {
+      db.prepare(`
+        INSERT INTO watchlists (wallet_address, pool_id, pool_label, created_at)
+        VALUES (?, ?, ?, ?)
+      `).run(
+        input.walletAddress,
+        input.poolId,
+        input.poolLabel,
+        new Date().toISOString(),
+      );
+
+      pushActivity(db, {
+        type: "watchlist_added",
+        walletAddress: input.walletAddress,
+        author: current.display_name,
+        createdAt: new Date().toISOString(),
+        title: "Added a pool to watchlist",
+        detail: input.poolLabel,
+      });
+    }
+
     return buildCommunityState(hydrateStore(db), input.walletAddress);
-  }
-
-  const existing = db
-    .prepare(`
-      SELECT 1 AS found
-      FROM watchlists
-      WHERE wallet_address = ? AND pool_id = ?
-    `)
-    .get(input.walletAddress, input.poolId) as { found: number } | undefined;
-
-  if (existing) {
-    db.prepare(`
-      DELETE FROM watchlists
-      WHERE wallet_address = ? AND pool_id = ?
-    `).run(input.walletAddress, input.poolId);
-  } else {
-    db.prepare(`
-      INSERT INTO watchlists (wallet_address, pool_id, pool_label, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(
-      input.walletAddress,
-      input.poolId,
-      input.poolLabel,
-      new Date().toISOString(),
-    );
-
-    pushActivity(db, {
-      type: "watchlist_added",
-      walletAddress: input.walletAddress,
-      author: current.display_name,
-      createdAt: new Date().toISOString(),
-      title: "Added a pool to watchlist",
-      detail: input.poolLabel,
-    });
-  }
-
-  return buildCommunityState(hydrateStore(db), input.walletAddress);
+  });
 }

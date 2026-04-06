@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import {
   Address,
@@ -29,7 +27,10 @@ import type {
   PredictionDirection,
   PredictionSettlementDirection,
 } from "@/lib/community";
-import { getCommunityState } from "@/lib/server/community-store";
+import {
+  ensureCommunityDatabaseReady,
+  getCommunityState,
+} from "@/lib/server/community-store";
 import {
   logRuntimeError,
   logRuntimeMessage,
@@ -51,13 +52,12 @@ import {
   type PredictionTimeframeId,
 } from "@/lib/prediction-timeframes";
 import {
-  getRuntimeStorageDiagnostics,
-  requireDurableRuntimeStorage,
-  resolveCommunityDatabaseFile,
-} from "@/lib/server/runtime-storage";
+  ensureRuntimeDatabaseScopeInitialized,
+  withRuntimeDatabaseSession,
+} from "@/lib/server/runtime-database-session";
+import { getRuntimeStorageDiagnostics } from "@/lib/server/runtime-storage";
 import { tonApiClient } from "@/lib/ton-api-client";
 
-const databaseFile = resolveCommunityDatabaseFile();
 const TONAPI_BASE_URL = process.env.TON_CONSOLE_API_URL ?? "https://tonapi.io";
 const AUTO_CLAIM_RETRY_WINDOW_MS = 2 * 60 * 1000;
 const AUTO_CYCLE_MARKET_LIMIT = 25;
@@ -66,8 +66,6 @@ const AUTO_CYCLE_CONFIRM_TIMEOUT_MS = 12_000;
 const AUTO_CYCLE_CONFIRM_POLL_MS = 1_500;
 const AUTO_CYCLE_RUN_HISTORY_LIMIT = 120;
 
-let database: DatabaseSync | null = null;
-let initialized = false;
 type ResolverWalletContext = {
   address: string;
   wallet: {
@@ -385,86 +383,71 @@ async function resolveForecastResolverAddress(ownerAddress?: string | null) {
 }
 
 async function ensureForecastDatabase() {
-  if (database && initialized) {
-    return database;
-  }
+  await ensureCommunityDatabaseReady();
+  return ensureRuntimeDatabaseScopeInitialized(
+    "forecast-market-store",
+    (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS forecast_markets (
+          contract_address TEXT PRIMARY KEY,
+          pair_id TEXT NOT NULL,
+          pair_label TEXT NOT NULL,
+          token_address TEXT NOT NULL,
+          token_symbol TEXT NOT NULL,
+          timeframe_id TEXT NOT NULL,
+          timeframe_seconds INTEGER NOT NULL,
+          threshold_bps INTEGER NOT NULL,
+          reference_price_e9 INTEGER NOT NULL,
+          protocol_fee_bps INTEGER NOT NULL,
+          owner_address TEXT NOT NULL,
+          resolver_address TEXT NOT NULL,
+          treasury_address TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          close_time TEXT NOT NULL,
+          deployment_message_hash TEXT,
+          deployment_tx_hash TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          final_price_e9 INTEGER,
+          resolved_at TEXT
+        );
 
-  requireDurableRuntimeStorage();
-  await getCommunityState(null);
-  await mkdir(dirname(databaseFile), { recursive: true });
+        CREATE INDEX IF NOT EXISTS idx_forecast_markets_pair_created
+        ON forecast_markets(pair_id, created_at DESC);
 
-  if (!database) {
-    database = new DatabaseSync(databaseFile);
-    database.exec("PRAGMA journal_mode = WAL;");
-    database.exec("PRAGMA foreign_keys = ON;");
-    database.exec("PRAGMA busy_timeout = 5000;");
-  }
+        CREATE TABLE IF NOT EXISTS forecast_auto_claims (
+          market_address TEXT NOT NULL,
+          wallet_address TEXT NOT NULL,
+          requested_at TEXT NOT NULL,
+          claimed_at TEXT,
+          last_error TEXT,
+          PRIMARY KEY (market_address, wallet_address)
+        );
 
-  if (!initialized) {
-    database.exec(`
-      CREATE TABLE IF NOT EXISTS forecast_markets (
-        contract_address TEXT PRIMARY KEY,
-        pair_id TEXT NOT NULL,
-        pair_label TEXT NOT NULL,
-        token_address TEXT NOT NULL,
-        token_symbol TEXT NOT NULL,
-        timeframe_id TEXT NOT NULL,
-        timeframe_seconds INTEGER NOT NULL,
-        threshold_bps INTEGER NOT NULL,
-        reference_price_e9 INTEGER NOT NULL,
-        protocol_fee_bps INTEGER NOT NULL,
-        owner_address TEXT NOT NULL,
-        resolver_address TEXT NOT NULL,
-        treasury_address TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        close_time TEXT NOT NULL,
-        deployment_message_hash TEXT,
-        deployment_tx_hash TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        final_price_e9 INTEGER,
-        resolved_at TEXT
-      );
+        CREATE INDEX IF NOT EXISTS idx_forecast_auto_claims_requested
+        ON forecast_auto_claims(requested_at DESC);
 
-      CREATE INDEX IF NOT EXISTS idx_forecast_markets_pair_created
-      ON forecast_markets(pair_id, created_at DESC);
+        CREATE TABLE IF NOT EXISTS forecast_auto_cycle_runs (
+          id TEXT PRIMARY KEY,
+          trigger_pair_id TEXT,
+          trigger_market_address TEXT,
+          started_at TEXT NOT NULL,
+          completed_at TEXT,
+          status TEXT NOT NULL,
+          scanned INTEGER NOT NULL DEFAULT 0,
+          locked_count INTEGER NOT NULL DEFAULT 0,
+          resolved_count INTEGER NOT NULL DEFAULT 0,
+          auto_claimed_count INTEGER NOT NULL DEFAULT 0,
+          automation_available INTEGER NOT NULL DEFAULT 0,
+          resolver_address TEXT,
+          error_message TEXT,
+          duration_ms INTEGER
+        );
 
-      CREATE TABLE IF NOT EXISTS forecast_auto_claims (
-        market_address TEXT NOT NULL,
-        wallet_address TEXT NOT NULL,
-        requested_at TEXT NOT NULL,
-        claimed_at TEXT,
-        last_error TEXT,
-        PRIMARY KEY (market_address, wallet_address)
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_forecast_auto_claims_requested
-      ON forecast_auto_claims(requested_at DESC);
-
-      CREATE TABLE IF NOT EXISTS forecast_auto_cycle_runs (
-        id TEXT PRIMARY KEY,
-        trigger_pair_id TEXT,
-        trigger_market_address TEXT,
-        started_at TEXT NOT NULL,
-        completed_at TEXT,
-        status TEXT NOT NULL,
-        scanned INTEGER NOT NULL DEFAULT 0,
-        locked_count INTEGER NOT NULL DEFAULT 0,
-        resolved_count INTEGER NOT NULL DEFAULT 0,
-        auto_claimed_count INTEGER NOT NULL DEFAULT 0,
-        automation_available INTEGER NOT NULL DEFAULT 0,
-        resolver_address TEXT,
-        error_message TEXT,
-        duration_ms INTEGER
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_forecast_auto_cycle_runs_started
-      ON forecast_auto_cycle_runs(started_at DESC);
-    `);
-
-    initialized = true;
-  }
-
-  return database;
+        CREATE INDEX IF NOT EXISTS idx_forecast_auto_cycle_runs_started
+        ON forecast_auto_cycle_runs(started_at DESC);
+      `);
+    },
+  );
 }
 
 async function readForecastMarketOnchainState(contractAddress: string) {
@@ -1060,16 +1043,15 @@ function getLatestForecastMarketRow(
   return null;
 }
 
-async function syncForecastContextMarkets(
-  db: DatabaseSync,
-  pairId: string,
-) {
+async function syncForecastContextMarkets(db: DatabaseSync, pairId: string) {
   const activeMarket = getActiveForecastMarketRow(db, pairId);
   const latestMarket = getLatestForecastMarketRow(db, pairId);
-  const contractAddresses = [...new Set([
-    activeMarket?.contract_address ?? null,
-    latestMarket?.contract_address ?? null,
-  ])].filter((value): value is string => Boolean(value));
+  const contractAddresses = [
+    ...new Set([
+      activeMarket?.contract_address ?? null,
+      latestMarket?.contract_address ?? null,
+    ]),
+  ].filter((value): value is string => Boolean(value));
 
   for (const contractAddress of contractAddresses) {
     await syncForecastMarketTransactions(db, contractAddress);
@@ -1497,12 +1479,7 @@ async function syncForecastMarketTransactions(
           ON CONFLICT(market_address, wallet_address) DO UPDATE SET
             claimed_at = excluded.claimed_at,
             last_error = NULL
-        `).run(
-          contractAddress,
-          claimedWallet,
-          createdAt,
-          createdAt,
-        );
+        `).run(contractAddress, claimedWallet, createdAt, createdAt);
       }
     }
 
@@ -2271,131 +2248,135 @@ export async function runForecastAutoCycle(input?: {
   pairId?: string;
   marketAddress?: string;
 }) {
-  const db = await ensureForecastDatabase();
-  const autoCycleEnabled = getForecastAutoCycleEnabled();
-  const markets = getForecastMarketRowsForAutoCycle(db, input);
-  const resolverWalletResult = await tryGetResolverWalletContext();
-  const resolverAddress =
-    resolverWalletResult.context?.address ||
-    getExplicitForecastResolverAddress() ||
-    null;
-  const summary = {
-    scanned: markets.length,
-    locked: 0,
-    resolved: 0,
-    autoClaimed: 0,
-    automationAvailable:
-      autoCycleEnabled && Boolean(resolverWalletResult.context),
-  };
-  const run = startForecastAutoCycleRun(db, {
-    pairId: input?.pairId,
-    marketAddress: input?.marketAddress,
-    scanned: summary.scanned,
-    automationAvailable: summary.automationAvailable,
-    resolverAddress,
-  });
-
-  if (resolverWalletResult.error) {
-    await logRuntimeMessage({
-      level: "warn",
-      scope: "forecast-market-store.auto-cycle",
-      message: "Resolver wallet is unavailable for forecast automation",
-      metadata: {
-        pairId: input?.pairId ?? null,
-        marketAddress: input?.marketAddress ?? null,
-        resolverAddress,
-        error: resolverWalletResult.error,
-      },
-    });
-  }
-
-  try {
-    for (const marketRow of markets) {
-      await syncForecastMarketTransactions(db, marketRow.contract_address);
-      let market = getForecastMarketRow(db, marketRow.contract_address);
-
-      if (!market) {
-        continue;
-      }
-
-      if (summary.automationAvailable && market.status === "open") {
-        const locked = await autoLockForecastMarket(db, market);
-        if (locked) {
-          summary.locked += 1;
-          await syncForecastMarketTransactions(db, market.contract_address);
-          market = getForecastMarketRow(db, market.contract_address) ?? market;
-        }
-      }
-
-      if (summary.automationAvailable && market.status === "locked") {
-        const resolved = await autoResolveForecastMarket(db, market);
-        if (resolved) {
-          summary.resolved += 1;
-          await syncForecastMarketTransactions(db, market.contract_address);
-          market = getForecastMarketRow(db, market.contract_address) ?? market;
-        }
-      }
-
-      if (
-        summary.automationAvailable &&
-        (market.status === "resolved_yes" ||
-          market.status === "resolved_no" ||
-          market.status === "resolved_draw")
-      ) {
-        summary.autoClaimed += await autoClaimForecastMarket(db, market);
-        await syncForecastMarketTransactions(db, market.contract_address);
-      }
-    }
-
-    completeForecastAutoCycleRun(db, run.id, run.startedAt, {
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const autoCycleEnabled = getForecastAutoCycleEnabled();
+    const markets = getForecastMarketRowsForAutoCycle(db, input);
+    const resolverWalletResult = await tryGetResolverWalletContext();
+    const resolverAddress =
+      resolverWalletResult.context?.address ||
+      getExplicitForecastResolverAddress() ||
+      null;
+    const summary = {
+      scanned: markets.length,
+      locked: 0,
+      resolved: 0,
+      autoClaimed: 0,
+      automationAvailable:
+        autoCycleEnabled && Boolean(resolverWalletResult.context),
+    };
+    const run = startForecastAutoCycleRun(db, {
+      pairId: input?.pairId,
+      marketAddress: input?.marketAddress,
       scanned: summary.scanned,
-      locked: summary.locked,
-      resolved: summary.resolved,
-      autoClaimed: summary.autoClaimed,
       automationAvailable: summary.automationAvailable,
       resolverAddress,
     });
 
-    await logRuntimeMessage({
-      scope: "forecast-market-store.auto-cycle",
-      message: "Forecast auto-cycle completed",
-      metadata: {
-        pairId: input?.pairId ?? null,
-        marketAddress: input?.marketAddress ?? null,
+    if (resolverWalletResult.error) {
+      await logRuntimeMessage({
+        level: "warn",
+        scope: "forecast-market-store.auto-cycle",
+        message: "Resolver wallet is unavailable for forecast automation",
+        metadata: {
+          pairId: input?.pairId ?? null,
+          marketAddress: input?.marketAddress ?? null,
+          resolverAddress,
+          error: resolverWalletResult.error,
+        },
+      });
+    }
+
+    try {
+      for (const marketRow of markets) {
+        await syncForecastMarketTransactions(db, marketRow.contract_address);
+        let market = getForecastMarketRow(db, marketRow.contract_address);
+
+        if (!market) {
+          continue;
+        }
+
+        if (summary.automationAvailable && market.status === "open") {
+          const locked = await autoLockForecastMarket(db, market);
+          if (locked) {
+            summary.locked += 1;
+            await syncForecastMarketTransactions(db, market.contract_address);
+            market =
+              getForecastMarketRow(db, market.contract_address) ?? market;
+          }
+        }
+
+        if (summary.automationAvailable && market.status === "locked") {
+          const resolved = await autoResolveForecastMarket(db, market);
+          if (resolved) {
+            summary.resolved += 1;
+            await syncForecastMarketTransactions(db, market.contract_address);
+            market =
+              getForecastMarketRow(db, market.contract_address) ?? market;
+          }
+        }
+
+        if (
+          summary.automationAvailable &&
+          (market.status === "resolved_yes" ||
+            market.status === "resolved_no" ||
+            market.status === "resolved_draw")
+        ) {
+          summary.autoClaimed += await autoClaimForecastMarket(db, market);
+          await syncForecastMarketTransactions(db, market.contract_address);
+        }
+      }
+
+      completeForecastAutoCycleRun(db, run.id, run.startedAt, {
         scanned: summary.scanned,
         locked: summary.locked,
         resolved: summary.resolved,
         autoClaimed: summary.autoClaimed,
         automationAvailable: summary.automationAvailable,
         resolverAddress,
-      },
-    });
+      });
 
-    return summary;
-  } catch (error) {
-    const errorMessage = normalizeErrorMessage(
-      error,
-      "forecast_auto_cycle_failed",
-    );
+      await logRuntimeMessage({
+        scope: "forecast-market-store.auto-cycle",
+        message: "Forecast auto-cycle completed",
+        metadata: {
+          pairId: input?.pairId ?? null,
+          marketAddress: input?.marketAddress ?? null,
+          scanned: summary.scanned,
+          locked: summary.locked,
+          resolved: summary.resolved,
+          autoClaimed: summary.autoClaimed,
+          automationAvailable: summary.automationAvailable,
+          resolverAddress,
+        },
+      });
 
-    failForecastAutoCycleRun(db, run.id, run.startedAt, errorMessage);
-    await logRuntimeError({
-      scope: "forecast-market-store.auto-cycle",
-      error,
-      fallbackMessage: "Failed to run forecast auto-cycle",
-      metadata: {
-        pairId: input?.pairId ?? null,
-        marketAddress: input?.marketAddress ?? null,
-        scanned: summary.scanned,
-        locked: summary.locked,
-        resolved: summary.resolved,
-        autoClaimed: summary.autoClaimed,
-        automationAvailable: summary.automationAvailable,
-        resolverAddress,
-      },
-    });
-    throw error;
-  }
+      return summary;
+    } catch (error) {
+      const errorMessage = normalizeErrorMessage(
+        error,
+        "forecast_auto_cycle_failed",
+      );
+
+      failForecastAutoCycleRun(db, run.id, run.startedAt, errorMessage);
+      await logRuntimeError({
+        scope: "forecast-market-store.auto-cycle",
+        error,
+        fallbackMessage: "Failed to run forecast auto-cycle",
+        metadata: {
+          pairId: input?.pairId ?? null,
+          marketAddress: input?.marketAddress ?? null,
+          scanned: summary.scanned,
+          locked: summary.locked,
+          resolved: summary.resolved,
+          autoClaimed: summary.autoClaimed,
+          automationAvailable: summary.automationAvailable,
+          resolverAddress,
+        },
+      });
+      throw error;
+    }
+  });
 }
 
 function toForecastAutoCycleRunSummary(row: ForecastAutoCycleRunRow) {
@@ -2418,187 +2399,198 @@ function toForecastAutoCycleRunSummary(row: ForecastAutoCycleRunRow) {
 }
 
 export async function getForecastOperationsSummary() {
-  const db = await ensureForecastDatabase();
-  const storage = getRuntimeStorageDiagnostics();
-  const autoCycleEnabled = getForecastAutoCycleEnabled();
-  const resolverWalletResult = await tryGetResolverWalletContext();
-  const resolverConfigured = Boolean(
-    getForecastResolverMnemonic().trim() ||
-      getExplicitForecastResolverAddress(),
-  );
-  const lastRun = getRecentForecastAutoCycleRuns(db, 1)[0] ?? null;
-  const pendingLockCount = countPendingForecastActionRows(db, "open");
-  const pendingResolveCount = countPendingForecastActionRows(db, "locked");
-  const autoClaimErrorCount = countForecastAutoClaimErrors(db);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const storage = getRuntimeStorageDiagnostics();
+    const autoCycleEnabled = getForecastAutoCycleEnabled();
+    const resolverWalletResult = await tryGetResolverWalletContext();
+    const resolverConfigured = Boolean(
+      getForecastResolverMnemonic().trim() ||
+        getExplicitForecastResolverAddress(),
+    );
+    const lastRun = getRecentForecastAutoCycleRuns(db, 1)[0] ?? null;
+    const pendingLockCount = countPendingForecastActionRows(db, "open");
+    const pendingResolveCount = countPendingForecastActionRows(db, "locked");
+    const autoClaimErrorCount = countForecastAutoClaimErrors(db);
 
-  return {
-    autoCycleEnabled,
-    automationAvailable:
-      autoCycleEnabled && Boolean(resolverWalletResult.context),
-    resolverConfigured,
-    resolverWalletError: resolverWalletResult.error,
-    lastRun: lastRun ? toForecastAutoCycleRunSummary(lastRun) : null,
-    pendingManualActions: {
-      lockCount: pendingLockCount,
-      resolveCount: pendingResolveCount,
-      autoClaimErrorCount,
-    },
-    storage: {
-      mode: storage.mode,
-      databaseLikelyEphemeral: storage.databaseLikelyEphemeral,
-      requireDurableStorage: storage.requireDurableStorage,
-      warnings: storage.warnings,
-    },
-  };
+    return {
+      autoCycleEnabled,
+      automationAvailable:
+        autoCycleEnabled && Boolean(resolverWalletResult.context),
+      resolverConfigured,
+      resolverWalletError: resolverWalletResult.error,
+      lastRun: lastRun ? toForecastAutoCycleRunSummary(lastRun) : null,
+      pendingManualActions: {
+        lockCount: pendingLockCount,
+        resolveCount: pendingResolveCount,
+        autoClaimErrorCount,
+      },
+      storage: {
+        mode: storage.mode,
+        databaseLikelyEphemeral: storage.databaseLikelyEphemeral,
+        requireDurableStorage: storage.requireDurableStorage,
+        warnings: storage.warnings,
+      },
+    };
+  });
 }
 
 export async function getForecastOperationsSnapshot() {
-  const db = await ensureForecastDatabase();
-  const storage = getRuntimeStorageDiagnostics();
-  const autoCycleEnabled = getForecastAutoCycleEnabled();
-  const resolverWalletResult = await tryGetResolverWalletContext();
-  const resolverConfigured = Boolean(
-    getForecastResolverMnemonic().trim() ||
-      getExplicitForecastResolverAddress(),
-  );
-  const resolverAddress =
-    resolverWalletResult.context?.address ||
-    getExplicitForecastResolverAddress() ||
-    null;
-  const recommendedMinBalanceNano = getRecommendedResolverBalanceNano();
-  const recentRuns = getRecentForecastAutoCycleRuns(db, 20);
-  const pendingLockMarkets = getPendingForecastActionRows(db, "open", 8);
-  const pendingResolveMarkets = getPendingForecastActionRows(db, "locked", 8);
-  const recentAutoClaimErrors = getRecentForecastAutoClaimErrors(db, 8);
-  let resolverSeqno: number | null = null;
-  let resolverBalanceNano: string | null = null;
-  let resolverBalanceTon: number | null = null;
-  let resolverError = resolverWalletResult.error;
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const storage = getRuntimeStorageDiagnostics();
+    const autoCycleEnabled = getForecastAutoCycleEnabled();
+    const resolverWalletResult = await tryGetResolverWalletContext();
+    const resolverConfigured = Boolean(
+      getForecastResolverMnemonic().trim() ||
+        getExplicitForecastResolverAddress(),
+    );
+    const resolverAddress =
+      resolverWalletResult.context?.address ||
+      getExplicitForecastResolverAddress() ||
+      null;
+    const recommendedMinBalanceNano = getRecommendedResolverBalanceNano();
+    const recentRuns = getRecentForecastAutoCycleRuns(db, 20);
+    const pendingLockMarkets = getPendingForecastActionRows(db, "open", 8);
+    const pendingResolveMarkets = getPendingForecastActionRows(db, "locked", 8);
+    const recentAutoClaimErrors = getRecentForecastAutoClaimErrors(db, 8);
+    let resolverSeqno: number | null = null;
+    let resolverBalanceNano: string | null = null;
+    let resolverBalanceTon: number | null = null;
+    let resolverError = resolverWalletResult.error;
 
-  if (resolverWalletResult.context) {
-    try {
-      resolverSeqno = await resolverWalletResult.context.wallet.getSeqno();
-    } catch (error) {
-      resolverError ??= normalizeErrorMessage(
-        error,
-        "resolver_seqno_unavailable",
-      );
+    if (resolverWalletResult.context) {
+      try {
+        resolverSeqno = await resolverWalletResult.context.wallet.getSeqno();
+      } catch (error) {
+        resolverError ??= normalizeErrorMessage(
+          error,
+          "resolver_seqno_unavailable",
+        );
+      }
     }
-  }
 
-  if (resolverAddress) {
-    try {
-      const balance = await tonApiClient.getBalance(
-        Address.parse(resolverAddress),
-      );
-      resolverBalanceNano = balance.toString();
-      resolverBalanceTon = fromNanoToTonNumber(balance);
-    } catch (error) {
-      resolverError ??= normalizeErrorMessage(
-        error,
-        "resolver_balance_unavailable",
-      );
+    if (resolverAddress) {
+      try {
+        const balance = await tonApiClient.getBalance(
+          Address.parse(resolverAddress),
+        );
+        resolverBalanceNano = balance.toString();
+        resolverBalanceTon = fromNanoToTonNumber(balance);
+      } catch (error) {
+        resolverError ??= normalizeErrorMessage(
+          error,
+          "resolver_balance_unavailable",
+        );
+      }
     }
-  }
 
-  return {
-    storage,
-    resolver: {
-      configured: resolverConfigured,
-      automationWalletAvailable: Boolean(resolverWalletResult.context),
-      address: resolverAddress,
-      seqno: resolverSeqno,
-      balanceNano: resolverBalanceNano,
-      balanceTon: resolverBalanceTon,
-      recommendedMinBalanceNano: recommendedMinBalanceNano.toString(),
-      recommendedMinBalanceTon: fromNanoToTonNumber(recommendedMinBalanceNano),
-      lowBalance:
-        resolverBalanceNano == null
-          ? null
-          : BigInt(resolverBalanceNano) < recommendedMinBalanceNano,
-      error: resolverError,
-    },
-    autoCycle: {
-      enabled: autoCycleEnabled,
-      automationAvailable:
-        autoCycleEnabled && Boolean(resolverWalletResult.context),
-      lastRun: recentRuns[0]
-        ? toForecastAutoCycleRunSummary(recentRuns[0])
-        : null,
-      recentRuns: recentRuns.map(toForecastAutoCycleRunSummary),
-      pendingLockMarkets: pendingLockMarkets.map((market) => ({
-        contractAddress: market.contract_address,
-        pairId: market.pair_id,
-        label: market.pair_label,
-        status: market.status,
-        closeTime: market.close_time,
-        overdueSeconds: Math.max(
-          0,
-          Math.floor(
-            (Date.now() - new Date(market.close_time).getTime()) / 1000,
-          ),
+    return {
+      storage,
+      resolver: {
+        configured: resolverConfigured,
+        automationWalletAvailable: Boolean(resolverWalletResult.context),
+        address: resolverAddress,
+        seqno: resolverSeqno,
+        balanceNano: resolverBalanceNano,
+        balanceTon: resolverBalanceTon,
+        recommendedMinBalanceNano: recommendedMinBalanceNano.toString(),
+        recommendedMinBalanceTon: fromNanoToTonNumber(
+          recommendedMinBalanceNano,
         ),
-      })),
-      pendingResolveMarkets: pendingResolveMarkets.map((market) => ({
-        contractAddress: market.contract_address,
-        pairId: market.pair_id,
-        label: market.pair_label,
-        status: market.status,
-        closeTime: market.close_time,
-        overdueSeconds: Math.max(
-          0,
-          Math.floor(
-            (Date.now() - new Date(market.close_time).getTime()) / 1000,
+        lowBalance:
+          resolverBalanceNano == null
+            ? null
+            : BigInt(resolverBalanceNano) < recommendedMinBalanceNano,
+        error: resolverError,
+      },
+      autoCycle: {
+        enabled: autoCycleEnabled,
+        automationAvailable:
+          autoCycleEnabled && Boolean(resolverWalletResult.context),
+        lastRun: recentRuns[0]
+          ? toForecastAutoCycleRunSummary(recentRuns[0])
+          : null,
+        recentRuns: recentRuns.map(toForecastAutoCycleRunSummary),
+        pendingLockMarkets: pendingLockMarkets.map((market) => ({
+          contractAddress: market.contract_address,
+          pairId: market.pair_id,
+          label: market.pair_label,
+          status: market.status,
+          closeTime: market.close_time,
+          overdueSeconds: Math.max(
+            0,
+            Math.floor(
+              (Date.now() - new Date(market.close_time).getTime()) / 1000,
+            ),
           ),
-        ),
-      })),
-      recentAutoClaimErrors: recentAutoClaimErrors.map((entry) => ({
-        marketAddress: entry.market_address,
-        walletAddress: entry.wallet_address,
-        requestedAt: entry.requested_at,
-        claimedAt: entry.claimed_at,
-        error: entry.last_error,
-      })),
-    },
-  };
+        })),
+        pendingResolveMarkets: pendingResolveMarkets.map((market) => ({
+          contractAddress: market.contract_address,
+          pairId: market.pair_id,
+          label: market.pair_label,
+          status: market.status,
+          closeTime: market.close_time,
+          overdueSeconds: Math.max(
+            0,
+            Math.floor(
+              (Date.now() - new Date(market.close_time).getTime()) / 1000,
+            ),
+          ),
+        })),
+        recentAutoClaimErrors: recentAutoClaimErrors.map((entry) => ({
+          marketAddress: entry.market_address,
+          walletAddress: entry.wallet_address,
+          requestedAt: entry.requested_at,
+          claimedAt: entry.claimed_at,
+          error: entry.last_error,
+        })),
+      },
+    };
+  });
 }
 
 export async function getForecastMarketContext(input: {
   tokenAddress: string;
   timeframeId: string;
 }) {
-  if (!isPredictionTimeframeId(input.timeframeId)) {
-    throw new Error("Unsupported forecast timeframe.");
-  }
+  return withRuntimeDatabaseSession(async () => {
+    if (!isPredictionTimeframeId(input.timeframeId)) {
+      throw new Error("Unsupported forecast timeframe.");
+    }
 
-  const db = await ensureForecastDatabase();
-  const tokenAddress = normalizeTonAddress(input.tokenAddress);
-  const pairId = buildPredictionTokenMarketId(tokenAddress, input.timeframeId);
-  await runForecastAutoCycle({ pairId });
-  const activeMarket = getActiveForecastMarketRow(db, pairId);
-  const latestMarket = getLatestForecastMarketRow(db, pairId);
+    const db = await ensureForecastDatabase();
+    const tokenAddress = normalizeTonAddress(input.tokenAddress);
+    const pairId = buildPredictionTokenMarketId(
+      tokenAddress,
+      input.timeframeId,
+    );
+    await runForecastAutoCycle({ pairId });
+    const activeMarket = getActiveForecastMarketRow(db, pairId);
+    const latestMarket = getLatestForecastMarketRow(db, pairId);
 
-  if (activeMarket || latestMarket) {
-    await syncForecastContextMarkets(db, pairId);
-  }
+    if (activeMarket || latestMarket) {
+      await syncForecastContextMarkets(db, pairId);
+    }
 
-  const refreshedActiveMarket = getActiveForecastMarketRow(db, pairId);
-  const refreshedLatestMarket = getLatestForecastMarketRow(db, pairId);
-  const snapshot = await resolveAssetSnapshot(tokenAddress);
+    const refreshedActiveMarket = getActiveForecastMarketRow(db, pairId);
+    const refreshedLatestMarket = getLatestForecastMarketRow(db, pairId);
+    const snapshot = await resolveAssetSnapshot(tokenAddress);
 
-  return {
-    pairId,
-    tokenAddress,
-    tokenSymbol: snapshot.tokenSymbol,
-    timeframeId: input.timeframeId,
-    timeframeSeconds: getPredictionTimeframeSeconds(input.timeframeId),
-    currentPriceUsd: snapshot.currentPriceUsd,
-    currentPriceE9: snapshot.currentPriceE9,
-    thresholdPresetsBps: getForecastThresholdPresetsBps(),
-    canCreate: !refreshedActiveMarket,
-    activeMarket: toMarketSummary(refreshedActiveMarket),
-    latestMarket: toMarketSummary(refreshedLatestMarket),
-  };
+    return {
+      pairId,
+      tokenAddress,
+      tokenSymbol: snapshot.tokenSymbol,
+      timeframeId: input.timeframeId,
+      timeframeSeconds: getPredictionTimeframeSeconds(input.timeframeId),
+      currentPriceUsd: snapshot.currentPriceUsd,
+      currentPriceE9: snapshot.currentPriceE9,
+      thresholdPresetsBps: getForecastThresholdPresetsBps(),
+      canCreate: !refreshedActiveMarket,
+      activeMarket: toMarketSummary(refreshedActiveMarket),
+      latestMarket: toMarketSummary(refreshedLatestMarket),
+    };
+  });
 }
 
 export async function createForecastMarketIntent(input: {
@@ -2609,25 +2601,212 @@ export async function createForecastMarketIntent(input: {
   amountTon: number;
   thresholdBps?: number;
 }) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  const tokenAddress = normalizeTonAddress(input.tokenAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    const tokenAddress = normalizeTonAddress(input.tokenAddress);
 
-  if (!walletAddress || !tokenAddress) {
-    throw new Error("Wallet and token address are required.");
-  }
+    if (!walletAddress || !tokenAddress) {
+      throw new Error("Wallet and token address are required.");
+    }
 
-  const context = await getForecastMarketContext({
-    tokenAddress,
-    timeframeId: input.timeframeId,
+    const context = await getForecastMarketContext({
+      tokenAddress,
+      timeframeId: input.timeframeId,
+    });
+    const activeMarketRow = getActiveForecastMarketRow(db, context.pairId);
+
+    if (context.activeMarket) {
+      if (isPendingUndeployedMarket(activeMarketRow)) {
+        const deployedMarket = await ensureForecastMarketDeployed(
+          db,
+          activeMarketRow!,
+        );
+
+        if (
+          deployedMarket.deployment_tx_hash ||
+          deployedMarket.status !== "pending"
+        ) {
+          return {
+            ok: true,
+            market: toMarketSummary(deployedMarket),
+            tonConnect: {
+              validUntil: Math.floor(Date.now() / 1000) + 600,
+              messages: [
+                buildTonForecastBetTransferMessage({
+                  contractAddress: deployedMarket.contract_address,
+                  direction: predictionDirectionToForecast(input.direction),
+                  amountTon: input.amountTon,
+                }),
+              ],
+            },
+            syncCursor: new Date().toISOString(),
+            state: await getCommunityState(walletAddress),
+          };
+        }
+
+        const pendingIntent = await buildPendingForecastDeployBetIntent({
+          market: deployedMarket,
+          direction: input.direction,
+          amountTon: input.amountTon,
+        });
+
+        return {
+          ok: true,
+          ...pendingIntent,
+          state: await getCommunityState(walletAddress),
+        };
+      }
+
+      return {
+        ok: false,
+        reason: "active_market_exists" as const,
+        context,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    const thresholdBps =
+      input.thresholdBps && Number.isFinite(input.thresholdBps)
+        ? input.thresholdBps
+        : (context.thresholdPresetsBps[0] ?? 100);
+    const createdAtUnix = Math.floor(Date.now() / 1000);
+    const timeframeSeconds = getPredictionTimeframeSeconds(input.timeframeId);
+    const closeTimeUnix = createdAtUnix + timeframeSeconds;
+    const syncCursor = new Date().toISOString();
+    const pairLabel = createForecastPairLabel(
+      context.tokenSymbol,
+      input.timeframeId,
+    );
+    const resolverAddress = await resolveForecastResolverAddress(walletAddress);
+    const contract = await TonForecastMarket.fromInit(
+      Address.parse(walletAddress),
+      Address.parse(resolverAddress),
+      Address.parse(getForecastTreasuryAddress()),
+      Address.parse(tokenAddress),
+      BigInt(timeframeSeconds),
+      BigInt(thresholdBps),
+      BigInt(context.currentPriceE9),
+      BigInt(getForecastProtocolFeeBps()),
+      BigInt(createdAtUnix),
+      BigInt(closeTimeUnix),
+    );
+    const contractAddress = contract.address.toString();
+
+    db.prepare(`
+      INSERT OR REPLACE INTO forecast_markets (
+        contract_address, pair_id, pair_label, token_address, token_symbol, timeframe_id,
+        timeframe_seconds, threshold_bps, reference_price_e9, protocol_fee_bps,
+        owner_address, resolver_address, treasury_address, created_at, close_time,
+        deployment_message_hash, deployment_tx_hash, status, final_price_e9, resolved_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 'pending', NULL, NULL)
+    `).run(
+      contractAddress,
+      context.pairId,
+      pairLabel,
+      tokenAddress,
+      context.tokenSymbol,
+      input.timeframeId,
+      timeframeSeconds,
+      thresholdBps,
+      context.currentPriceE9,
+      getForecastProtocolFeeBps(),
+      walletAddress,
+      resolverAddress,
+      getForecastTreasuryAddress(),
+      new Date(createdAtUnix * 1000).toISOString(),
+      new Date(closeTimeUnix * 1000).toISOString(),
+    );
+
+    const insertedMarket = getForecastMarketRow(db, contractAddress);
+    const deployedMarket = insertedMarket
+      ? await ensureForecastMarketDeployed(db, insertedMarket)
+      : null;
+
+    if (
+      deployedMarket &&
+      (deployedMarket.deployment_tx_hash || deployedMarket.status !== "pending")
+    ) {
+      return {
+        ok: true,
+        market: toMarketSummary(deployedMarket),
+        tonConnect: {
+          validUntil: Math.floor(Date.now() / 1000) + 600,
+          messages: [
+            buildTonForecastBetTransferMessage({
+              contractAddress: deployedMarket.contract_address,
+              direction: predictionDirectionToForecast(input.direction),
+              amountTon: input.amountTon,
+            }),
+          ],
+        },
+        syncCursor,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    return {
+      ok: true,
+      market: {
+        contractAddress,
+        pairId: context.pairId,
+        label: pairLabel,
+        tokenAddress,
+        tokenSymbol: context.tokenSymbol,
+        timeframeId: input.timeframeId,
+        timeframeSeconds,
+        thresholdBps,
+        referencePriceE9: context.currentPriceE9,
+        createdAt: new Date(createdAtUnix * 1000).toISOString(),
+        closeTime: new Date(closeTimeUnix * 1000).toISOString(),
+        status: "pending" as const,
+      },
+      tonConnect: {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [
+          {
+            address: toTonConnectDeployAddress(contract.address),
+            amount: (
+              toNano(getForecastDeployReserveTon()) +
+              toNano(String(input.amountTon))
+            ).toString(),
+            stateInit: serializeStateInit(contract.init!),
+            payload: buildTonForecastBetPayloadBase64({
+              direction: predictionDirectionToForecast(input.direction),
+              amountTon: input.amountTon,
+            }),
+          },
+        ],
+      },
+      syncCursor,
+      state: await getCommunityState(walletAddress),
+    };
   });
-  const activeMarketRow = getActiveForecastMarketRow(db, context.pairId);
+}
 
-  if (context.activeMarket) {
-    if (isPendingUndeployedMarket(activeMarketRow)) {
+export async function createForecastBetIntent(input: {
+  walletAddress: string;
+  pairId: string;
+  direction: PredictionDirection;
+  amountTon: number;
+}) {
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    await runForecastAutoCycle({ pairId: input.pairId });
+    const activeMarket = getActiveForecastMarketRow(db, input.pairId);
+
+    if (!walletAddress || !activeMarket) {
+      return {
+        ok: false,
+        state: await getCommunityState(walletAddress || null),
+      };
+    }
+
+    if (isPendingUndeployedMarket(activeMarket)) {
       const deployedMarket = await ensureForecastMarketDeployed(
         db,
-        activeMarketRow!,
+        activeMarket,
       );
 
       if (
@@ -2665,210 +2844,30 @@ export async function createForecastMarketIntent(input: {
       };
     }
 
-    return {
-      ok: false,
-      reason: "active_market_exists" as const,
-      context,
-      state: await getCommunityState(walletAddress),
-    };
-  }
+    if (activeMarket.status !== "open") {
+      return {
+        ok: false,
+        state: await getCommunityState(walletAddress),
+      };
+    }
 
-  const thresholdBps =
-    input.thresholdBps && Number.isFinite(input.thresholdBps)
-      ? input.thresholdBps
-      : (context.thresholdPresetsBps[0] ?? 100);
-  const createdAtUnix = Math.floor(Date.now() / 1000);
-  const timeframeSeconds = getPredictionTimeframeSeconds(input.timeframeId);
-  const closeTimeUnix = createdAtUnix + timeframeSeconds;
-  const syncCursor = new Date().toISOString();
-  const pairLabel = createForecastPairLabel(
-    context.tokenSymbol,
-    input.timeframeId,
-  );
-  const resolverAddress = await resolveForecastResolverAddress(walletAddress);
-  const contract = await TonForecastMarket.fromInit(
-    Address.parse(walletAddress),
-    Address.parse(resolverAddress),
-    Address.parse(getForecastTreasuryAddress()),
-    Address.parse(tokenAddress),
-    BigInt(timeframeSeconds),
-    BigInt(thresholdBps),
-    BigInt(context.currentPriceE9),
-    BigInt(getForecastProtocolFeeBps()),
-    BigInt(createdAtUnix),
-    BigInt(closeTimeUnix),
-  );
-  const contractAddress = contract.address.toString();
-
-  db.prepare(`
-    INSERT OR REPLACE INTO forecast_markets (
-      contract_address, pair_id, pair_label, token_address, token_symbol, timeframe_id,
-      timeframe_seconds, threshold_bps, reference_price_e9, protocol_fee_bps,
-      owner_address, resolver_address, treasury_address, created_at, close_time,
-      deployment_message_hash, deployment_tx_hash, status, final_price_e9, resolved_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 'pending', NULL, NULL)
-  `).run(
-    contractAddress,
-    context.pairId,
-    pairLabel,
-    tokenAddress,
-    context.tokenSymbol,
-    input.timeframeId,
-    timeframeSeconds,
-    thresholdBps,
-    context.currentPriceE9,
-    getForecastProtocolFeeBps(),
-    walletAddress,
-    resolverAddress,
-    getForecastTreasuryAddress(),
-    new Date(createdAtUnix * 1000).toISOString(),
-    new Date(closeTimeUnix * 1000).toISOString(),
-  );
-
-  const insertedMarket = getForecastMarketRow(db, contractAddress);
-  const deployedMarket = insertedMarket
-    ? await ensureForecastMarketDeployed(db, insertedMarket)
-    : null;
-
-  if (
-    deployedMarket &&
-    (deployedMarket.deployment_tx_hash || deployedMarket.status !== "pending")
-  ) {
     return {
       ok: true,
-      market: toMarketSummary(deployedMarket),
+      market: toMarketSummary(activeMarket),
       tonConnect: {
         validUntil: Math.floor(Date.now() / 1000) + 600,
         messages: [
           buildTonForecastBetTransferMessage({
-            contractAddress: deployedMarket.contract_address,
+            contractAddress: activeMarket.contract_address,
             direction: predictionDirectionToForecast(input.direction),
             amountTon: input.amountTon,
           }),
         ],
       },
-      syncCursor,
+      syncCursor: new Date().toISOString(),
       state: await getCommunityState(walletAddress),
     };
-  }
-
-  return {
-    ok: true,
-    market: {
-      contractAddress,
-      pairId: context.pairId,
-      label: pairLabel,
-      tokenAddress,
-      tokenSymbol: context.tokenSymbol,
-      timeframeId: input.timeframeId,
-      timeframeSeconds,
-      thresholdBps,
-      referencePriceE9: context.currentPriceE9,
-      createdAt: new Date(createdAtUnix * 1000).toISOString(),
-      closeTime: new Date(closeTimeUnix * 1000).toISOString(),
-      status: "pending" as const,
-    },
-    tonConnect: {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [
-        {
-          address: toTonConnectDeployAddress(contract.address),
-          amount: (
-            toNano(getForecastDeployReserveTon()) +
-            toNano(String(input.amountTon))
-          ).toString(),
-          stateInit: serializeStateInit(contract.init!),
-          payload: buildTonForecastBetPayloadBase64({
-            direction: predictionDirectionToForecast(input.direction),
-            amountTon: input.amountTon,
-          }),
-        },
-      ],
-    },
-    syncCursor,
-    state: await getCommunityState(walletAddress),
-  };
-}
-
-export async function createForecastBetIntent(input: {
-  walletAddress: string;
-  pairId: string;
-  direction: PredictionDirection;
-  amountTon: number;
-}) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  await runForecastAutoCycle({ pairId: input.pairId });
-  const activeMarket = getActiveForecastMarketRow(db, input.pairId);
-
-  if (!walletAddress || !activeMarket) {
-    return {
-      ok: false,
-      state: await getCommunityState(walletAddress || null),
-    };
-  }
-
-  if (isPendingUndeployedMarket(activeMarket)) {
-    const deployedMarket = await ensureForecastMarketDeployed(db, activeMarket);
-
-    if (
-      deployedMarket.deployment_tx_hash ||
-      deployedMarket.status !== "pending"
-    ) {
-      return {
-        ok: true,
-        market: toMarketSummary(deployedMarket),
-        tonConnect: {
-          validUntil: Math.floor(Date.now() / 1000) + 600,
-          messages: [
-            buildTonForecastBetTransferMessage({
-              contractAddress: deployedMarket.contract_address,
-              direction: predictionDirectionToForecast(input.direction),
-              amountTon: input.amountTon,
-            }),
-          ],
-        },
-        syncCursor: new Date().toISOString(),
-        state: await getCommunityState(walletAddress),
-      };
-    }
-
-    const pendingIntent = await buildPendingForecastDeployBetIntent({
-      market: deployedMarket,
-      direction: input.direction,
-      amountTon: input.amountTon,
-    });
-
-    return {
-      ok: true,
-      ...pendingIntent,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (activeMarket.status !== "open") {
-    return {
-      ok: false,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  return {
-    ok: true,
-    market: toMarketSummary(activeMarket),
-    tonConnect: {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [
-        buildTonForecastBetTransferMessage({
-          contractAddress: activeMarket.contract_address,
-          direction: predictionDirectionToForecast(input.direction),
-          amountTon: input.amountTon,
-        }),
-      ],
-    },
-    syncCursor: new Date().toISOString(),
-    state: await getCommunityState(walletAddress),
-  };
+  });
 }
 
 export async function syncForecastMarket(input: {
@@ -2877,152 +2876,156 @@ export async function syncForecastMarket(input: {
   marketAddress?: string;
   syncCursor?: string;
 }) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  await runForecastAutoCycle({
-    pairId: input.pairId,
-    marketAddress: input.marketAddress,
-  });
-  const market =
-    (input.marketAddress
-      ? getForecastMarketRow(db, normalizeTonAddress(input.marketAddress))
-      : null) ??
-    (input.pairId ? getActiveForecastMarketRow(db, input.pairId) : null);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    await runForecastAutoCycle({
+      pairId: input.pairId,
+      marketAddress: input.marketAddress,
+    });
+    const market =
+      (input.marketAddress
+        ? getForecastMarketRow(db, normalizeTonAddress(input.marketAddress))
+        : null) ??
+      (input.pairId ? getActiveForecastMarketRow(db, input.pairId) : null);
 
-  if (!walletAddress || !market) {
-    return {
-      result: false,
-      syncStatus: "missing" as const,
-      state: await getCommunityState(walletAddress || null),
-    };
-  }
+    if (!walletAddress || !market) {
+      return {
+        result: false,
+        syncStatus: "missing" as const,
+        state: await getCommunityState(walletAddress || null),
+      };
+    }
 
-  const synced = await syncForecastMarketTransactions(
-    db,
-    market.contract_address,
-  );
-  const updatedMarket = getForecastMarketRow(db, market.contract_address);
-  const viewer = updatedMarket
-    ? await buildForecastWalletState(updatedMarket, walletAddress)
-    : null;
-
-  const confirmedBet = db
-    .prepare(`
-      SELECT id
-      FROM prediction_bets
-      WHERE wallet_address = ?
-        AND round_id = ?
-        AND source_kind = 'onchain_sync'
-        AND (? IS NULL OR created_at >= ?)
-      LIMIT 1
-    `)
-    .get(
-      walletAddress,
+    const synced = await syncForecastMarketTransactions(
+      db,
       market.contract_address,
-      input.syncCursor ?? null,
-      input.syncCursor ?? null,
-    ) as { id: string } | undefined;
+    );
+    const updatedMarket = getForecastMarketRow(db, market.contract_address);
+    const viewer = updatedMarket
+      ? await buildForecastWalletState(updatedMarket, walletAddress)
+      : null;
 
-  return {
-    result: Boolean(confirmedBet),
-    syncStatus: confirmedBet
-      ? ("confirmed" as const)
-      : synced
-        ? ("pending" as const)
-        : ("missing" as const),
-    market: toMarketSummary(updatedMarket),
-    viewer,
-    state: await getCommunityState(walletAddress),
-  };
+    const confirmedBet = db
+      .prepare(`
+        SELECT id
+        FROM prediction_bets
+        WHERE wallet_address = ?
+          AND round_id = ?
+          AND source_kind = 'onchain_sync'
+          AND (? IS NULL OR created_at >= ?)
+        LIMIT 1
+      `)
+      .get(
+        walletAddress,
+        market.contract_address,
+        input.syncCursor ?? null,
+        input.syncCursor ?? null,
+      ) as { id: string } | undefined;
+
+    return {
+      result: Boolean(confirmedBet),
+      syncStatus: confirmedBet
+        ? ("confirmed" as const)
+        : synced
+          ? ("pending" as const)
+          : ("missing" as const),
+      market: toMarketSummary(updatedMarket),
+      viewer,
+      state: await getCommunityState(walletAddress),
+    };
+  });
 }
 
 export async function createForecastClaimIntent(input: {
   walletAddress: string;
   marketAddress: string;
 }) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  const marketAddress = normalizeTonAddress(input.marketAddress);
-  const market = getForecastMarketRow(db, marketAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    const marketAddress = normalizeTonAddress(input.marketAddress);
+    const market = getForecastMarketRow(db, marketAddress);
 
-  if (!walletAddress || !market) {
+    if (!walletAddress || !market) {
+      return {
+        ok: false,
+        state: await getCommunityState(walletAddress || null),
+      };
+    }
+
+    await syncForecastMarketTransactions(db, marketAddress);
+    const refreshedMarket = getForecastMarketRow(db, marketAddress);
+    const viewer = refreshedMarket
+      ? await buildForecastWalletState(refreshedMarket, walletAddress)
+      : null;
+
+    if (!refreshedMarket) {
+      return {
+        ok: false,
+        reason: "market_missing" as const,
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (!isResolvedForecastStatus(refreshedMarket.status)) {
+      return {
+        ok: false,
+        reason: "market_not_resolved" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (!viewer?.hasPosition) {
+      return {
+        ok: false,
+        reason: "position_not_found" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (viewer.claimed) {
+      return {
+        ok: false,
+        reason: "already_claimed" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (!viewer.claimable) {
+      return {
+        ok: false,
+        reason: "no_winning_position" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
     return {
-      ok: false,
-      state: await getCommunityState(walletAddress || null),
-    };
-  }
-
-  await syncForecastMarketTransactions(db, marketAddress);
-  const refreshedMarket = getForecastMarketRow(db, marketAddress);
-  const viewer = refreshedMarket
-    ? await buildForecastWalletState(refreshedMarket, walletAddress)
-    : null;
-
-  if (!refreshedMarket) {
-    return {
-      ok: false,
-      reason: "market_missing" as const,
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (!isResolvedForecastStatus(refreshedMarket.status)) {
-    return {
-      ok: false,
-      reason: "market_not_resolved" as const,
+      ok: true,
       market: toMarketSummary(refreshedMarket),
       viewer,
+      tonConnect: {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [
+          {
+            address: marketAddress,
+            amount: toNano(getForecastClaimTriggerTon()).toString(),
+            payload: buildTonForecastClaimPayloadBase64(),
+          },
+        ],
+      },
       state: await getCommunityState(walletAddress),
     };
-  }
-
-  if (!viewer?.hasPosition) {
-    return {
-      ok: false,
-      reason: "position_not_found" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (viewer.claimed) {
-    return {
-      ok: false,
-      reason: "already_claimed" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (!viewer.claimable) {
-    return {
-      ok: false,
-      reason: "no_winning_position" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  return {
-    ok: true,
-    market: toMarketSummary(refreshedMarket),
-    viewer,
-    tonConnect: {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [
-        {
-          address: marketAddress,
-          amount: toNano(getForecastClaimTriggerTon()).toString(),
-          payload: buildTonForecastClaimPayloadBase64(),
-        },
-      ],
-    },
-    state: await getCommunityState(walletAddress),
-  };
+  });
 }
 
 export async function createForecastResolveIntent(input: {
@@ -3031,176 +3034,188 @@ export async function createForecastResolveIntent(input: {
   finalPriceE9?: number;
   resolvedAt?: number;
 }) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  const marketAddress = normalizeTonAddress(input.marketAddress);
-  const market = getForecastMarketRow(db, marketAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    const marketAddress = normalizeTonAddress(input.marketAddress);
+    const market = getForecastMarketRow(db, marketAddress);
 
-  if (!walletAddress || !market) {
-    return {
-      ok: false,
-      state: await getCommunityState(walletAddress || null),
-    };
-  }
-
-  await syncForecastMarketTransactions(db, marketAddress);
-  const refreshedMarket = getForecastMarketRow(db, marketAddress) ?? market;
-  const viewer = await buildForecastWalletState(refreshedMarket, walletAddress);
-
-  if (normalizeTonAddress(refreshedMarket.resolver_address) !== walletAddress) {
-    return {
-      ok: false,
-      reason: "resolver_only" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (Date.now() < new Date(refreshedMarket.close_time).getTime()) {
-    return {
-      ok: false,
-      reason: "market_still_open" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (isResolvedForecastStatus(refreshedMarket.status)) {
-    return {
-      ok: false,
-      reason: "market_already_resolved" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  if (
-    refreshedMarket.status !== "open" &&
-    refreshedMarket.status !== "locked"
-  ) {
-    return {
-      ok: false,
-      reason: "market_not_resolvable" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  let finalPriceE9 = input.finalPriceE9;
-  let finalPriceUsd: number | null = null;
-
-  if (
-    typeof finalPriceE9 !== "number" ||
-    !Number.isFinite(finalPriceE9) ||
-    finalPriceE9 <= 0
-  ) {
-    try {
-      const snapshot = await resolveAssetSnapshot(
-        refreshedMarket.token_address,
-      );
-      finalPriceE9 = snapshot.currentPriceE9;
-      finalPriceUsd = snapshot.currentPriceUsd;
-    } catch {
+    if (!walletAddress || !market) {
       return {
         ok: false,
-        reason: "price_unavailable" as const,
+        state: await getCommunityState(walletAddress || null),
+      };
+    }
+
+    await syncForecastMarketTransactions(db, marketAddress);
+    const refreshedMarket = getForecastMarketRow(db, marketAddress) ?? market;
+    const viewer = await buildForecastWalletState(
+      refreshedMarket,
+      walletAddress,
+    );
+
+    if (
+      normalizeTonAddress(refreshedMarket.resolver_address) !== walletAddress
+    ) {
+      return {
+        ok: false,
+        reason: "resolver_only" as const,
         market: toMarketSummary(refreshedMarket),
         viewer,
         state: await getCommunityState(walletAddress),
       };
     }
-  }
 
-  const resolvedAt =
-    input.resolvedAt && Number.isFinite(input.resolvedAt)
-      ? Math.max(1, Math.round(input.resolvedAt))
-      : Math.floor(Date.now() / 1000);
-  const normalizedFinalPriceE9 = Math.max(1, Math.round(finalPriceE9));
+    if (Date.now() < new Date(refreshedMarket.close_time).getTime()) {
+      return {
+        ok: false,
+        reason: "market_still_open" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
 
-  return {
-    ok: true,
-    market: toMarketSummary(refreshedMarket),
-    viewer,
-    resolution: {
-      finalPriceE9: normalizedFinalPriceE9,
-      finalPriceUsd,
-      resolvedAt,
-    },
-    tonConnect: {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [
-        {
-          address: marketAddress,
-          amount: toNano(getForecastClaimTriggerTon()).toString(),
-          payload: buildTonForecastResolvePayloadBase64({
-            finalPriceE9: normalizedFinalPriceE9,
-            resolvedAt,
-          }),
-        },
-      ],
-    },
-    state: await getCommunityState(walletAddress),
-  };
+    if (isResolvedForecastStatus(refreshedMarket.status)) {
+      return {
+        ok: false,
+        reason: "market_already_resolved" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (
+      refreshedMarket.status !== "open" &&
+      refreshedMarket.status !== "locked"
+    ) {
+      return {
+        ok: false,
+        reason: "market_not_resolvable" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    let finalPriceE9 = input.finalPriceE9;
+    let finalPriceUsd: number | null = null;
+
+    if (
+      typeof finalPriceE9 !== "number" ||
+      !Number.isFinite(finalPriceE9) ||
+      finalPriceE9 <= 0
+    ) {
+      try {
+        const snapshot = await resolveAssetSnapshot(
+          refreshedMarket.token_address,
+        );
+        finalPriceE9 = snapshot.currentPriceE9;
+        finalPriceUsd = snapshot.currentPriceUsd;
+      } catch {
+        return {
+          ok: false,
+          reason: "price_unavailable" as const,
+          market: toMarketSummary(refreshedMarket),
+          viewer,
+          state: await getCommunityState(walletAddress),
+        };
+      }
+    }
+
+    const resolvedAt =
+      input.resolvedAt && Number.isFinite(input.resolvedAt)
+        ? Math.max(1, Math.round(input.resolvedAt))
+        : Math.floor(Date.now() / 1000);
+    const normalizedFinalPriceE9 = Math.max(1, Math.round(finalPriceE9));
+
+    return {
+      ok: true,
+      market: toMarketSummary(refreshedMarket),
+      viewer,
+      resolution: {
+        finalPriceE9: normalizedFinalPriceE9,
+        finalPriceUsd,
+        resolvedAt,
+      },
+      tonConnect: {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [
+          {
+            address: marketAddress,
+            amount: toNano(getForecastClaimTriggerTon()).toString(),
+            payload: buildTonForecastResolvePayloadBase64({
+              finalPriceE9: normalizedFinalPriceE9,
+              resolvedAt,
+            }),
+          },
+        ],
+      },
+      state: await getCommunityState(walletAddress),
+    };
+  });
 }
 
 export async function createForecastLockIntent(input: {
   walletAddress: string;
   marketAddress: string;
 }) {
-  const db = await ensureForecastDatabase();
-  const walletAddress = normalizeTonAddress(input.walletAddress);
-  const marketAddress = normalizeTonAddress(input.marketAddress);
-  const market = getForecastMarketRow(db, marketAddress);
+  return withRuntimeDatabaseSession(async () => {
+    const db = await ensureForecastDatabase();
+    const walletAddress = normalizeTonAddress(input.walletAddress);
+    const marketAddress = normalizeTonAddress(input.marketAddress);
+    const market = getForecastMarketRow(db, marketAddress);
 
-  if (!walletAddress || !market) {
+    if (!walletAddress || !market) {
+      return {
+        ok: false,
+        state: await getCommunityState(walletAddress || null),
+      };
+    }
+
+    await syncForecastMarketTransactions(db, marketAddress);
+    const refreshedMarket = getForecastMarketRow(db, marketAddress) ?? market;
+    const viewer = await buildForecastWalletState(
+      refreshedMarket,
+      walletAddress,
+    );
+
+    if (refreshedMarket.status !== "open") {
+      return {
+        ok: false,
+        reason: "market_not_open" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
+    if (Date.now() < new Date(refreshedMarket.close_time).getTime()) {
+      return {
+        ok: false,
+        reason: "market_still_open" as const,
+        market: toMarketSummary(refreshedMarket),
+        viewer,
+        state: await getCommunityState(walletAddress),
+      };
+    }
+
     return {
-      ok: false,
-      state: await getCommunityState(walletAddress || null),
-    };
-  }
-
-  await syncForecastMarketTransactions(db, marketAddress);
-  const refreshedMarket = getForecastMarketRow(db, marketAddress) ?? market;
-  const viewer = await buildForecastWalletState(refreshedMarket, walletAddress);
-
-  if (refreshedMarket.status !== "open") {
-    return {
-      ok: false,
-      reason: "market_not_open" as const,
+      ok: true,
       market: toMarketSummary(refreshedMarket),
       viewer,
+      tonConnect: {
+        validUntil: Math.floor(Date.now() / 1000) + 600,
+        messages: [
+          {
+            address: marketAddress,
+            amount: toNano(getForecastClaimTriggerTon()).toString(),
+            payload: buildTonForecastLockPayloadBase64(),
+          },
+        ],
+      },
       state: await getCommunityState(walletAddress),
     };
-  }
-
-  if (Date.now() < new Date(refreshedMarket.close_time).getTime()) {
-    return {
-      ok: false,
-      reason: "market_still_open" as const,
-      market: toMarketSummary(refreshedMarket),
-      viewer,
-      state: await getCommunityState(walletAddress),
-    };
-  }
-
-  return {
-    ok: true,
-    market: toMarketSummary(refreshedMarket),
-    viewer,
-    tonConnect: {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [
-        {
-          address: marketAddress,
-          amount: toNano(getForecastClaimTriggerTon()).toString(),
-          payload: buildTonForecastLockPayloadBase64(),
-        },
-      ],
-    },
-    state: await getCommunityState(walletAddress),
-  };
+  });
 }
