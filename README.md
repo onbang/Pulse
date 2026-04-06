@@ -59,7 +59,8 @@ This runs:
 - Set `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
 - Set `TELEGRAM_BOT_TOKEN`
 - Set `TELEGRAM_MINI_APP_URL`
-- Set `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` for persistent SQLite storage
+- Set `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` only when you control a genuinely persistent writable volume
+- Do not rely on `STON_PULSE_DB_FILE` / `STON_PULSE_DATA_DIR` for SQLite durability on Vercel Functions because local filesystem storage there is temporary
 - Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want deploys to fail fast on ephemeral `/tmp` storage
 - Register Telegram bot commands with `pnpm --filter @ston-pulse/telegram-bot register`
 - Point TON Connect manifest to `/api/tonconnect-manifest` or your own production manifest URL

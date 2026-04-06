@@ -130,7 +130,8 @@ curl -s "http://localhost:3000/api/forecast-markets/ops?secret=your-secret"
 - In local development the default storage path is `.data/community.sqlite`
 - In serverless runtimes like Vercel the default storage path falls back to `/tmp/ston-pulse/community.sqlite` to avoid read-only filesystem errors
 - Runtime logs follow the same writable storage rule and default to `.data/runtime-errors.log` locally or `/tmp/ston-pulse/runtime-errors.log` on serverless
-- For durable production persistence, provide `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` backed by writable storage instead of relying on ephemeral `/tmp`
+- For durable production persistence outside Vercel, provide `STON_PULSE_DB_FILE` or `STON_PULSE_DATA_DIR` backed by a real persistent writable volume instead of relying on ephemeral `/tmp`
+- On Vercel Functions, `STON_PULSE_DB_FILE` and `STON_PULSE_DATA_DIR` only change the local file path and do not make SQLite durable across deploys, cold starts, or new instances
 - Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want the app to fail fast whenever the database still resolves to an ephemeral path
 - `GET /api/health` now reports storage durability and the latest forecast auto-cycle summary
 - Token forecasts use one `TonForecastMarket` contract per `token + timeframe + roundStart`

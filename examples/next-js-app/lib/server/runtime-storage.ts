@@ -84,6 +84,10 @@ function isLikelyEphemeralPath(path: string) {
   });
 }
 
+function isLikelyServerlessWritablePath(path: string) {
+  return isLikelyEphemeralPath(path);
+}
+
 export function resolveWritableDataRootPath() {
   return resolveWritableDataRoot();
 }
@@ -106,8 +110,10 @@ export function getRuntimeStorageDiagnostics(): RuntimeStorageDiagnostics {
   const legacyJsonFile = resolveLegacyCommunityJsonPath();
   const runtimeLogFile = resolveRuntimeLogPath();
   const serverless = isServerlessReadonlyFs();
-  const databaseLikelyEphemeral = isLikelyEphemeralPath(databaseFile);
-  const runtimeLogLikelyEphemeral = isLikelyEphemeralPath(runtimeLogFile);
+  const databaseLikelyEphemeral =
+    serverless || isLikelyEphemeralPath(databaseFile);
+  const runtimeLogLikelyEphemeral =
+    serverless || isLikelyEphemeralPath(runtimeLogFile);
   const requireDurableStorage = parseBooleanFlag(
     process.env.STON_PULSE_REQUIRE_DURABLE_STORAGE,
   );
@@ -122,9 +128,25 @@ export function getRuntimeStorageDiagnostics(): RuntimeStorageDiagnostics {
           : "workspace-local";
   const warnings: string[] = [];
 
-  if (serverless && databaseLikelyEphemeral) {
+  if (serverless) {
     warnings.push(
-      "SQLite currently resolves to a temporary serverless path. Configure STON_PULSE_DB_FILE or STON_PULSE_DATA_DIR for durable storage.",
+      "Vercel Functions do not provide durable local filesystem storage. STON_PULSE_DB_FILE and STON_PULSE_DATA_DIR can only point SQLite at temporary function storage here.",
+    );
+
+    if (!isLikelyServerlessWritablePath(databaseFile)) {
+      warnings.push(
+        "The configured SQLite database path is outside the temporary writable directory and may be read-only on Vercel.",
+      );
+    }
+
+    if (!isLikelyServerlessWritablePath(runtimeLogFile)) {
+      warnings.push(
+        "The configured runtime log path is outside the temporary writable directory and may be read-only on Vercel.",
+      );
+    }
+  } else if (databaseLikelyEphemeral) {
+    warnings.push(
+      "SQLite currently resolves to a temporary path and may not survive restarts on this machine.",
     );
   }
 
@@ -162,7 +184,9 @@ export function requireDurableRuntimeStorage() {
     diagnostics.databaseLikelyEphemeral
   ) {
     throw new Error(
-      "Durable storage is required, but STON_PULSE_DB_FILE / STON_PULSE_DATA_DIR still points to ephemeral storage.",
+      diagnostics.serverless
+        ? "Durable storage is required, but this Vercel runtime only offers temporary local filesystem storage. Use external durable storage instead of STON_PULSE_DB_FILE / STON_PULSE_DATA_DIR."
+        : "Durable storage is required, but STON_PULSE_DB_FILE / STON_PULSE_DATA_DIR still points to ephemeral storage.",
     );
   }
 
