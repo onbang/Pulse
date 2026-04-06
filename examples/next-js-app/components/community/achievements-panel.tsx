@@ -14,6 +14,19 @@ import { useCommunityProfile } from "./community-provider";
 export function AchievementsPanel() {
   const { t } = useI18n();
   const { achievements } = useCommunityProfile();
+  const unlockedCount = achievements.filter(
+    (achievement) => achievement.unlocked,
+  ).length;
+  const sortedAchievements = [...achievements].sort((left, right) => {
+    if (left.unlocked !== right.unlocked) {
+      return Number(right.unlocked) - Number(left.unlocked);
+    }
+
+    const leftProgress = left.progress / Math.max(left.target, 1);
+    const rightProgress = right.progress / Math.max(right.target, 1);
+
+    return rightProgress - leftProgress;
+  });
 
   const tierBarClassName = (tier: string) => {
     switch (tier) {
@@ -47,17 +60,14 @@ export function AchievementsPanel() {
           </div>
           <Badge className="border-0 bg-[linear-gradient(135deg,#082f49,#0284c7)] px-4 py-2 text-white">
             {t("profile.achievements.unlockedCount", {
-              unlocked: String(
-                achievements.filter((achievement) => achievement.unlocked)
-                  .length,
-              ),
+              unlocked: String(unlockedCount),
               total: String(achievements.length),
             })}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
-        {achievements.map((achievement) => (
+        {sortedAchievements.map((achievement) => (
           <div
             key={achievement.id}
             className={`h-full rounded-[26px] border p-5 transition-transform duration-200 hover:-translate-y-1 ${
@@ -83,7 +93,13 @@ export function AchievementsPanel() {
                   </p>
                 </div>
               </div>
-              <Badge variant={achievement.level > 0 ? "default" : "outline"}>
+              <Badge
+                className={
+                  achievement.unlocked
+                    ? "border-0 bg-[linear-gradient(135deg,#082f49,#0284c7)] text-white"
+                    : "border-slate-200 bg-white/84 text-slate-500"
+                }
+              >
                 {achievement.milestone}
               </Badge>
             </div>
@@ -109,9 +125,11 @@ export function AchievementsPanel() {
                 }}
               />
             </div>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              {achievement.highlight}
-            </p>
+            {achievement.highlight ? (
+              <div className="mt-4 rounded-[18px] border border-white/70 bg-white/76 px-3 py-3 text-sm leading-6 text-slate-600">
+                {achievement.highlight}
+              </div>
+            ) : null}
           </div>
         ))}
       </CardContent>

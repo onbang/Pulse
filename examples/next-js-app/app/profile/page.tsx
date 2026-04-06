@@ -1,7 +1,6 @@
 "use client";
 
 import { AchievementsPanel } from "@/components/community/achievements-panel";
-import { ActivePredictionsPanel } from "@/components/community/active-predictions-panel";
 import { DailyCheckInCard } from "@/components/community/daily-check-in-card";
 import { ProfileBetHistory } from "@/components/community/profile-bet-history";
 import { ProfileSummary } from "@/components/community/profile-summary";
@@ -9,10 +8,11 @@ import { ProfileTonPanel } from "@/components/community/profile-ton-panel";
 import { WatchlistPanel } from "@/components/community/watchlist-panel";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { PageIntro } from "@/components/page-intro";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/constants";
 import { useCommunityProfile } from "@/components/community/community-provider";
-import { getUserLevelProgress } from "@/lib/community";
+import { getUserLevel, getUserLevelProgress } from "@/lib/community";
 import { WalletGuard } from "@/components/wallet-guard";
 
 export default function ProfilePage() {
@@ -25,6 +25,45 @@ export default function ProfilePage() {
   const levelProgress = profile
     ? getUserLevelProgress(profile.totalPoints)
     : null;
+  const userLevel = profile ? getUserLevel(profile.totalPoints) : null;
+  const nextLevelLabel = levelProgress?.next
+    ? t(`profile.level.${levelProgress.next.id}`)
+    : t("profile.progression.maxReached");
+  const overviewStats = profile
+    ? [
+        {
+          label: t("checkin.totalPoints"),
+          value: String(profile.totalPoints),
+          body: levelProgress?.next
+            ? t("checkin.progressNext", {
+                count: String(levelProgress.remainingScore),
+                level: nextLevelLabel,
+              })
+            : t("profile.progression.maxUnlocked"),
+        },
+        {
+          label: t("checkin.currentStreak"),
+          value: String(profile.streak),
+          body: t("checkin.daysInRow", {
+            count: String(profile.streak),
+          }),
+        },
+        {
+          label: t("profile.summary.unlockedBadges"),
+          value: String(unlockedAchievements),
+          body: t("profile.achievements.unlockedCount", {
+            unlocked: String(unlockedAchievements),
+            total: String(achievements.length),
+          }),
+        },
+      ]
+    : [];
+  const progressBody = levelProgress?.next
+    ? t("checkin.progressNext", {
+        count: String(levelProgress.remainingScore),
+        level: nextLevelLabel,
+      })
+    : t("profile.progression.maxUnlocked");
 
   return (
     <WalletGuard
@@ -41,37 +80,6 @@ export default function ProfilePage() {
           eyebrow={t("profile.hero.eyebrow")}
           title={t("profile.hero.title")}
           subtitle={t("profile.hero.subtitle")}
-          stats={
-            profile
-              ? [
-                  {
-                    label: t("checkin.totalPoints"),
-                    value: String(profile.totalPoints),
-                    body: levelProgress?.next
-                      ? t("checkin.progressNext", {
-                          count: String(levelProgress.remainingScore),
-                          level: t(`profile.level.${levelProgress.next.id}`),
-                        })
-                      : t("profile.progression.maxUnlocked"),
-                  },
-                  {
-                    label: t("checkin.currentStreak"),
-                    value: String(profile.streak),
-                    body: t("checkin.daysInRow", {
-                      count: String(profile.streak),
-                    }),
-                  },
-                  {
-                    label: t("profile.summary.unlockedBadges"),
-                    value: String(unlockedAchievements),
-                    body: t("profile.achievements.unlockedCount", {
-                      unlocked: String(unlockedAchievements),
-                      total: String(achievements.length),
-                    }),
-                  },
-                ]
-              : []
-          }
           actions={[
             {
               href: ROUTES.swap,
@@ -88,19 +96,82 @@ export default function ProfilePage() {
             },
           ]}
         />
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)] xl:items-start">
-          <DailyCheckInCard />
+        {profile && levelProgress && userLevel ? (
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] xl:items-stretch">
+            <div className="grid gap-4 md:grid-cols-3">
+              {overviewStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="stat-pill flex h-full min-h-[156px] flex-col justify-between px-5 py-5"
+                >
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    {stat.label}
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                    {stat.value}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {stat.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mesh-card p-5 md:p-6">
+              <div className="relative z-10 flex h-full flex-col gap-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="max-w-xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
+                      {t("profile.progression.eyebrow")}
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                      {t(`profile.level.${userLevel.id}`)}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {progressBody}
+                    </p>
+                  </div>
+                  <Badge className={`border-0 ${userLevel.accentClassName}`}>
+                    {t(`profile.level.${userLevel.id}`)}
+                  </Badge>
+                </div>
+
+                <div className="subtle-panel bg-white/84">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium text-slate-500">
+                      {t("profile.progression.progress")}
+                    </span>
+                    <span className="font-semibold text-slate-900">
+                      {levelProgress.progressPercent.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="mt-4 overflow-hidden rounded-full bg-sky-100">
+                    <div
+                      className="h-3 rounded-full bg-[linear-gradient(90deg,#0180FF,#3DB1FF,#34d399)] transition-all duration-500"
+                      style={{ width: `${levelProgress.progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+                    <span>{profile.totalPoints} pts</span>
+                    <span>
+                      {t("profile.progression.next")}: {nextLevelLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] xl:items-start">
           <ProfileSummary />
+          <DailyCheckInCard />
         </div>
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:items-start">
-          <ActivePredictionsPanel />
+        <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] xl:items-start">
+          <WatchlistPanel />
           <ProfileBetHistory />
         </div>
         <AchievementsPanel />
-        <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] xl:items-start">
-          <WatchlistPanel />
-          <ProfileTonPanel />
-        </div>
+        <ProfileTonPanel />
       </section>
     </WalletGuard>
   );

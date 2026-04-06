@@ -54,6 +54,7 @@ function normalizeWalletKey(value?: string | null) {
 export function DailyCheckInCard() {
   const { t } = useI18n();
   const {
+    isPreviewMode,
     profile,
     rewardLedger,
     checkInEvents,
@@ -104,30 +105,36 @@ export function DailyCheckInCard() {
     status === "sending" ||
     status === "waiting_confirmation" ||
     status === "syncing";
-  const isDisabled = confirmedToday || pendingToday || isBusy;
-  const statusLabel = confirmedToday
-    ? t("checkin.claimed")
-    : pendingToday || status === "waiting_confirmation"
-      ? t("checkin.waitingConfirmation")
-      : t("checkin.ready");
-  const statusBadgeClassName = confirmedToday
-    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-    : pendingToday || status === "waiting_confirmation"
-      ? "border-amber-200 bg-amber-50 text-amber-700"
-      : "border-sky-200 bg-sky-50 text-sky-700";
+  const isDisabled = isPreviewMode || confirmedToday || pendingToday || isBusy;
+  const statusLabel = isPreviewMode
+    ? t("profile.previewMode")
+    : confirmedToday
+      ? t("checkin.claimed")
+      : pendingToday || status === "waiting_confirmation"
+        ? t("checkin.waitingConfirmation")
+        : t("checkin.ready");
+  const statusBadgeClassName = isPreviewMode
+    ? "border-sky-200 bg-sky-50 text-sky-700"
+    : confirmedToday
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : pendingToday || status === "waiting_confirmation"
+        ? "border-amber-200 bg-amber-50 text-amber-700"
+        : "border-sky-200 bg-sky-50 text-sky-700";
 
-  const ctaLabel = confirmedToday
-    ? t("checkin.claimed")
-    : pendingToday || status === "waiting_confirmation"
-      ? t("checkin.waitingConfirmation")
-      : status === "syncing"
-        ? t("checkin.syncing")
-        : status === "sending"
-          ? t("checkin.processing")
-          : t("checkin.claim");
+  const ctaLabel = isPreviewMode
+    ? t("profile.previewMode")
+    : confirmedToday
+      ? t("checkin.claimed")
+      : pendingToday || status === "waiting_confirmation"
+        ? t("checkin.waitingConfirmation")
+        : status === "syncing"
+          ? t("checkin.syncing")
+          : status === "sending"
+            ? t("checkin.processing")
+            : t("checkin.claim");
 
   useEffect(() => {
-    if (!profile || !pendingToday || isBusy) {
+    if (!profile || !pendingToday || isBusy || isPreviewMode) {
       return;
     }
 
@@ -185,9 +192,12 @@ export function DailyCheckInCard() {
     };
   }, [
     checkInEvents,
+    isPreviewMode,
     isBusy,
     normalizedProfileWallet,
     pendingToday,
+    profile,
+    syncCheckInTransaction,
     t,
     todayKey,
   ]);
@@ -205,6 +215,40 @@ export function DailyCheckInCard() {
       : streakTarget === 30
         ? t("checkin.goal30")
         : t("checkin.goal90");
+  const lastRewardCopy = lastReward
+    ? t("checkin.lastReward", {
+        count: String(lastReward.points),
+      })
+    : t("checkin.rewardBody");
+  const actionStatusMessage = isPreviewMode
+    ? t("checkin.previewReadOnly")
+    : statusMessage;
+  const StatusIcon = isPreviewMode
+    ? Sparkles
+    : confirmedToday
+      ? Sparkles
+      : pendingToday
+        ? TimerReset
+        : Gem;
+  const streakStatItems = [
+    {
+      label: t("checkin.currentStreak"),
+      value: String(profile.streak),
+      body: t("checkin.daysInRow", {
+        count: String(profile.streak),
+      }),
+    },
+    {
+      label: t("checkin.longestStreak"),
+      value: String(profile.longestStreak),
+      body: t("checkin.bestSeries"),
+    },
+    {
+      label: t("checkin.totalCheckIns"),
+      value: String(profile.totalCheckIns),
+      body: t("checkin.totalCheckInsBody"),
+    },
+  ];
 
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
@@ -229,11 +273,11 @@ export function DailyCheckInCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-5 p-6">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(330px,0.9fr)] xl:items-start">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.06fr)_minmax(280px,0.94fr)] xl:items-stretch">
           <div className="mesh-card p-5 md:p-6">
-            <div className="relative z-10 space-y-5">
+            <div className="relative z-10 flex h-full flex-col gap-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-3">
+                <div className="max-w-xl space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0180FF,#3DB1FF)] text-white shadow-[0_14px_34px_-18px_rgba(1,128,255,0.65)]">
                       <CalendarCheck2 className="h-6 w-6" />
@@ -247,12 +291,12 @@ export function DailyCheckInCard() {
                       </p>
                     </div>
                   </div>
-                  <p className="max-w-xl text-sm leading-6 text-slate-600">
+                  <p className="text-sm leading-6 text-slate-600">
                     {t("checkin.confirmBody")}
                   </p>
                 </div>
 
-                <div className="subtle-panel min-w-[188px] bg-white/85 text-right">
+                <div className="subtle-panel min-w-[188px] bg-white/86 text-right">
                   <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
                     {t("checkin.todayReward")}
                   </p>
@@ -260,38 +304,25 @@ export function DailyCheckInCard() {
                     +10
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    {lastReward
-                      ? t("checkin.lastReward", {
-                          count: String(lastReward.points),
-                        })
-                      : t("checkin.rewardBody")}
+                    {lastRewardCopy}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-sky-100/80 bg-white/82 p-4 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.18)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      {t("checkin.actionCard")}
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-slate-950">
+              <div className="rounded-[24px] border border-sky-100/80 bg-white/84 p-4 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.18)]">
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] text-slate-700">
+                    <StatusIcon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-lg font-semibold text-slate-950">
                       {statusLabel}
                     </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {actionStatusMessage}
+                    </p>
                   </div>
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#ede9fe)] text-slate-700">
-                    {confirmedToday ? (
-                      <Sparkles className="h-5 w-5" />
-                    ) : pendingToday ? (
-                      <TimerReset className="h-5 w-5" />
-                    ) : (
-                      <Gem className="h-5 w-5" />
-                    )}
-                  </span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {statusMessage}
-                </p>
                 <Button
                   className="mt-5 h-[52px] w-full rounded-[20px] bg-[linear-gradient(135deg,#071a31,#0b75d5,#34d3ff)] text-base font-semibold text-white shadow-[0_20px_46px_-22px_rgba(11,117,213,0.58)] hover:translate-y-[-1px] disabled:bg-[linear-gradient(135deg,rgba(7,26,49,0.34),rgba(11,117,213,0.34),rgba(52,211,255,0.34))] disabled:text-white/90 disabled:opacity-100"
                   disabled={isDisabled}
@@ -428,63 +459,23 @@ export function DailyCheckInCard() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.currentStreak")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                  {profile.streak}
-                </p>
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            {streakStatItems.map((item) => (
+              <div
+                key={item.label}
+                className="subtle-panel flex min-h-[148px] flex-col justify-between"
+              >
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+                    {item.value}
+                  </p>
+                </div>
+                <p className="text-sm leading-6 text-slate-500">{item.body}</p>
               </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {t("checkin.daysInRow", { count: String(profile.streak) })}
-              </p>
-            </div>
-            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.longestStreak")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                  {profile.longestStreak}
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {t("checkin.bestSeries")}
-              </p>
-            </div>
-            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.totalCheckIns")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                  {profile.totalCheckIns}
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {t("checkin.totalCheckInsBody")}
-              </p>
-            </div>
-            <div className="subtle-panel flex min-h-[148px] flex-col justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  {t("checkin.todayReward")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-                  +10
-                </p>
-              </div>
-              <p className="text-sm leading-6 text-slate-500">
-                {lastReward
-                  ? t("checkin.lastReward", {
-                      count: String(lastReward.points),
-                    })
-                  : t("checkin.rewardBody")}
-              </p>
-            </div>
+            ))}
           </div>
         </div>
 

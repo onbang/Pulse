@@ -4,6 +4,7 @@ import { Address } from "@ton/core";
 import { useTonAddress } from "@tonconnect/ui-react";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -12,8 +13,8 @@ import {
 } from "react";
 
 import { useTelegramMiniApp } from "@/components/telegram/telegram-mini-app-provider";
+import { useDevPreviewWallet } from "@/hooks/use-dev-preview-wallet";
 import {
-  COMMENT_REACTION_EMOJIS,
   DEFAULT_PROFILE_BIO,
   type Achievement,
   type ActivityItem,
@@ -55,6 +56,7 @@ type StoredPublicProfile = {
 type CommunityContextValue = {
   isLoaded: boolean;
   isSyncing: boolean;
+  isPreviewMode: boolean;
   walletAddress: string;
   profile: UserProfile | null;
   achievements: Achievement[];
@@ -243,7 +245,12 @@ function writeStoredPublicProfile(
 }
 
 export function CommunityProvider({ children }: { children: ReactNode }) {
-  const walletAddress = useTonAddress();
+  const connectedWalletAddress = useTonAddress();
+  const { isPreviewMode: hasPreviewWallet, previewWalletAddress } =
+    useDevPreviewWallet();
+  const isPreviewMode = !connectedWalletAddress && hasPreviewWallet;
+  const walletAddress =
+    connectedWalletAddress || (isPreviewMode ? previewWalletAddress : "");
   const { user: telegramUser } = useTelegramMiniApp();
   const [store, setStore] = useState<CommunityStore>(defaultCommunityStore);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -260,31 +267,34 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const resolvedWalletAddress =
     profile?.walletAddress || normalizedConnectedWallet || walletAddress;
 
-  const resetTransientState = () => {
+  const resetTransientState = useCallback(() => {
     setStore(defaultCommunityStore);
     setProfile(null);
     setAchievements([]);
     setLeaderboard([]);
     setRecentActivity([]);
     setSettledPredictions([]);
-  };
+  }, []);
 
-  const applyPayload = (
-    payload: CommunityStatePayload,
-    requestedWalletAddress = walletAddress,
-  ) => {
-    const resolvedProfile = resolvePayloadProfile(
-      payload,
-      requestedWalletAddress,
-    );
+  const applyPayload = useCallback(
+    (
+      payload: CommunityStatePayload,
+      requestedWalletAddress = walletAddress,
+    ) => {
+      const resolvedProfile = resolvePayloadProfile(
+        payload,
+        requestedWalletAddress,
+      );
 
-    setStore(payload.store);
-    setProfile(resolvedProfile);
-    setAchievements(payload.achievements);
-    setLeaderboard(payload.leaderboard);
-    setRecentActivity(payload.recentActivity);
-    setSettledPredictions(payload.settlements ?? []);
-  };
+      setStore(payload.store);
+      setProfile(resolvedProfile);
+      setAchievements(payload.achievements);
+      setLeaderboard(payload.leaderboard);
+      setRecentActivity(payload.recentActivity);
+      setSettledPredictions(payload.settlements ?? []);
+    },
+    [walletAddress],
+  );
 
   const refresh = async () => {
     const requestId = latestRequestRef.current + 1;
@@ -337,6 +347,29 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
           if (!response.ok) {
             throw new Error("Failed to load anonymous community state");
+          }
+
+          if (latestRequestRef.current !== requestId) {
+            return;
+          }
+
+          applyPayload(
+            (await response.json()) as CommunityStatePayload,
+            walletAddress,
+          );
+          return;
+        }
+
+        if (isPreviewMode) {
+          const response = await fetchInternalApi(
+            `/api/community/state?wallet=${encodeURIComponent(walletAddress)}`,
+            {
+              cache: "no-store",
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to load preview community state");
           }
 
           if (latestRequestRef.current !== requestId) {
@@ -450,12 +483,18 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     };
 
     void bootstrap();
-  }, [telegramUser, walletAddress]);
+  }, [
+    applyPayload,
+    isPreviewMode,
+    resetTransientState,
+    telegramUser,
+    walletAddress,
+  ]);
 
   const updateProfile: CommunityContextValue["updateProfile"] = async (
     input,
   ) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return;
     }
 
@@ -485,7 +524,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const updateNotificationPreferences: CommunityContextValue["updateNotificationPreferences"] =
     async (input) => {
-      if (!walletAddress) {
+      if (!walletAddress || isPreviewMode) {
         return;
       }
 
@@ -510,7 +549,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     };
 
   const checkIn: CommunityContextValue["checkIn"] = async ({ txHash }) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return { ok: false, points: 0, syncStatus: "failed" };
     }
 
@@ -535,7 +574,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const syncCheckInTransaction: CommunityContextValue["syncCheckInTransaction"] =
     async ({ txHash }) => {
-      if (!walletAddress) {
+      if (!walletAddress || isPreviewMode) {
         return { ok: false, syncStatus: "missing" };
       }
 
@@ -576,7 +615,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     poolId,
     text,
   }) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return false;
     }
 
@@ -601,7 +640,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const toggleCommentReaction: CommunityContextValue["toggleCommentReaction"] =
     async ({ poolId, commentId, emoji }) => {
-      if (!walletAddress) {
+      if (!walletAddress || isPreviewMode) {
         return;
       }
 
@@ -627,7 +666,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const submitPrediction: CommunityContextValue["submitPrediction"] = async (
     input,
   ) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return { ok: false, syncStatus: "failed" };
     }
 
@@ -655,7 +694,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const syncPredictionTransaction: CommunityContextValue["syncPredictionTransaction"] =
     async ({ txHash }) => {
-      if (!walletAddress) {
+      if (!walletAddress || isPreviewMode) {
         return { ok: false, syncStatus: "missing" };
       }
 
@@ -698,7 +737,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const trackActivity: CommunityContextValue["trackActivity"] = async (
     track,
   ) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return;
     }
 
@@ -721,7 +760,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const settlePredictionRound: CommunityContextValue["settlePredictionRound"] =
     async (input) => {
-      if (!walletAddress) {
+      if (!walletAddress || isPreviewMode) {
         return false;
       }
 
@@ -756,7 +795,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const toggleWatchlist: CommunityContextValue["toggleWatchlist"] = async (
     input,
   ) => {
-    if (!walletAddress) {
+    if (!walletAddress || isPreviewMode) {
       return;
     }
 
@@ -793,6 +832,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       value={{
         isLoaded,
         isSyncing,
+        isPreviewMode,
         walletAddress: resolvedWalletAddress,
         profile,
         achievements:

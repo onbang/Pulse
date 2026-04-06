@@ -415,7 +415,10 @@ export const messages = {
     "profile.summary.save": "Save profile",
     "profile.summary.saving": "Saving...",
     "profile.summary.reset": "Reset",
+    "profile.previewMode": "Preview mode",
     "profile.summary.preview": "Profile preview",
+    "profile.summary.previewReadOnly":
+      "Editing is disabled while local profile preview mode is active.",
     "profile.summary.pulseId": "Pulse ID",
     "profile.summary.editorSynced": "Synced",
     "profile.summary.editorDirty": "Unsaved changes",
@@ -467,9 +470,11 @@ export const messages = {
     "profile.ton.eventFallback": "TON event",
     "profile.betHistory.title": "Prediction history",
     "profile.betHistory.subtitle":
-      "Your active, recent, and settled prediction positions in one place.",
-    "profile.betHistory.recent": "Active and recent bets",
+      "Open positions, recent activity, and settled rounds in one place.",
+    "profile.betHistory.recent": "Recent bets",
     "profile.betHistory.recentCount": "{count} entries",
+    "profile.betHistory.recentEmpty":
+      "Closed positions will start collecting here once your active rounds move into history.",
     "profile.betHistory.empty":
       "You have no prediction history yet. Start from swap and place your first market view.",
     "profile.betHistory.cta": "Go to swap",
@@ -542,6 +547,8 @@ export const messages = {
     "checkin.messageHashMissing":
       "Wallet did not return a transaction identifier, so the reward cannot be synced safely.",
     "checkin.txFailed": "Check-in confirmation failed",
+    "checkin.previewReadOnly":
+      "Check-in is disabled in preview mode. Connect a wallet to send the confirmation transaction.",
     "checkin.recentRewards": "Recent rewards",
     "checkin.recentRewardsEmpty":
       "Rewards history will appear after your first confirmed check-in.",
@@ -1089,7 +1096,10 @@ export const messages = {
     "profile.summary.save": "Сохранить профиль",
     "profile.summary.saving": "Сохраняем...",
     "profile.summary.reset": "Сбросить",
+    "profile.previewMode": "Режим превью",
     "profile.summary.preview": "Превью профиля",
+    "profile.summary.previewReadOnly":
+      "Редактирование отключено, пока активен локальный режим превью профиля.",
     "profile.summary.pulseId": "Pulse ID",
     "profile.summary.editorSynced": "Синхронизировано",
     "profile.summary.editorDirty": "Есть несохраненные изменения",
@@ -1144,9 +1154,11 @@ export const messages = {
     "profile.ton.eventFallback": "TON-событие",
     "profile.betHistory.title": "История прогнозов",
     "profile.betHistory.subtitle":
-      "Все активные, последние и завершенные прогнозы в одном месте.",
-    "profile.betHistory.recent": "Активные и последние ставки",
+      "Открытые позиции, последние ставки и завершенные раунды в одном месте.",
+    "profile.betHistory.recent": "Последние ставки",
     "profile.betHistory.recentCount": "{count} записей",
+    "profile.betHistory.recentEmpty":
+      "Здесь начнут собираться закрытые позиции, когда активные раунды перейдут в историю.",
     "profile.betHistory.empty":
       "Истории прогнозов пока нет. Начни с обмена и открой свой первый рыночный сценарий.",
     "profile.betHistory.cta": "Перейти в обмен",
@@ -1219,6 +1231,8 @@ export const messages = {
     "checkin.messageHashMissing":
       "Кошелек не вернул идентификатор транзакции, поэтому награду нельзя безопасно синхронизировать.",
     "checkin.txFailed": "Не удалось подтвердить чек-ин",
+    "checkin.previewReadOnly":
+      "Чек-ин отключен в режиме превью. Подключи кошелек, чтобы отправить подтверждающую транзакцию.",
     "checkin.recentRewards": "Последние награды",
     "checkin.recentRewardsEmpty":
       "История наград появится после первого подтвержденного check-in.",
