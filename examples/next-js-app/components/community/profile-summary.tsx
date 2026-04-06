@@ -1,6 +1,6 @@
 "use client";
 
-import { PenSquare, RotateCcw, Save, Sparkles } from "lucide-react";
+import { RotateCcw, Save, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -131,7 +131,7 @@ export function ProfileSummary() {
   };
 
   return (
-    <Card className="surface-panel h-full overflow-hidden border-white/75">
+    <Card className="surface-panel overflow-hidden border-white/75">
       <CardHeader className="border-b border-sky-100/70 bg-[radial-gradient(circle_at_top_right,rgba(1,128,255,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.985),rgba(247,250,255,0.96))]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-2xl">
@@ -190,7 +190,7 @@ export function ProfileSummary() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="subtle-panel min-h-[156px]">
+            <div className="subtle-panel min-h-[136px]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                 {t("profile.summary.pulseId")}
               </p>
@@ -202,7 +202,7 @@ export function ProfileSummary() {
               </p>
             </div>
 
-            <div className="subtle-panel min-h-[156px]">
+            <div className="subtle-panel min-h-[136px]">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                 {t("profile.summary.since")}
               </p>
@@ -284,22 +284,6 @@ export function ProfileSummary() {
                 {t("profile.summary.previewReadOnly")}
               </div>
             ) : null}
-
-            <div className="rounded-[22px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,250,255,0.86))] p-4">
-              <div className="flex items-start gap-3">
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#eff6ff,#dbeafe)] text-sky-700">
-                  <PenSquare className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {t("profile.summary.editorHintTitle")}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    {t("profile.summary.editorHintBody")}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </CardContent>

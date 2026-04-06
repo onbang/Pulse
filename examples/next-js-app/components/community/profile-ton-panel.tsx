@@ -107,6 +107,9 @@ export function ProfileTonPanel() {
     };
   }, [walletAddress]);
 
+  const topJettons = data?.jettons.slice(0, 3) ?? [];
+  const recentEvents = data?.events.slice(0, 3) ?? [];
+
   return (
     <Card className="surface-panel overflow-hidden border-white/70">
       <CardHeader className="border-b border-sky-100/70 bg-[radial-gradient(circle_at_top_right,rgba(1,128,255,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.96))]">
@@ -120,7 +123,7 @@ export function ProfileTonPanel() {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6 p-6">
+      <CardContent className="space-y-5 p-6">
         {error ? (
           <div className="empty-state-panel">
             <p className="empty-state-title">{t("profile.ton.title")}</p>
@@ -194,7 +197,7 @@ export function ProfileTonPanel() {
               </div>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)]">
+            <div className="grid gap-5 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)]">
               <div className="rounded-[28px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(247,250,255,0.92))] p-5 shadow-[0_22px_52px_-34px_rgba(15,23,42,0.16)] md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="max-w-xl">
@@ -207,7 +210,7 @@ export function ProfileTonPanel() {
                   </Badge>
                 </div>
 
-                {data.jettons.length === 0 ? (
+                {topJettons.length === 0 ? (
                   <div className="empty-state-panel mt-4">
                     <p className="text-sm leading-6 text-slate-600">
                       {t("profile.ton.jettonsEmpty")}
@@ -215,7 +218,7 @@ export function ProfileTonPanel() {
                   </div>
                 ) : (
                   <div className="mt-4 grid gap-3">
-                    {data.jettons.map((jetton) => (
+                    {topJettons.map((jetton) => (
                       <div
                         key={`${jetton.symbol}-${jetton.balance}`}
                         className="subtle-panel flex items-center justify-between gap-3 bg-white/88 p-4"
@@ -249,7 +252,7 @@ export function ProfileTonPanel() {
                   </Badge>
                 </div>
 
-                {data.events.length === 0 ? (
+                {recentEvents.length === 0 ? (
                   <div className="empty-state-panel mt-4">
                     <p className="text-sm leading-6 text-slate-600">
                       {t("profile.ton.eventsEmpty")}
@@ -257,7 +260,7 @@ export function ProfileTonPanel() {
                   </div>
                 ) : (
                   <div className="mt-4 grid gap-3">
-                    {data.events.map((event) => (
+                    {recentEvents.map((event) => (
                       <article
                         key={event.eventId}
                         className="rounded-[24px] border border-slate-200/80 bg-white/84 p-4 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.14)]"
@@ -277,16 +280,9 @@ export function ProfileTonPanel() {
                           </span>
                         </div>
 
-                        <div className="mt-4 space-y-2">
-                          {event.actions.map((action) => (
-                            <p
-                              key={`${event.eventId}-${action.type}`}
-                              className="text-sm leading-6 text-slate-600"
-                            >
-                              {action.description}
-                            </p>
-                          ))}
-                        </div>
+                        <p className="mt-4 text-sm leading-6 text-slate-600">
+                          {event.actions[0]?.description}
+                        </p>
                       </article>
                     ))}
                   </div>

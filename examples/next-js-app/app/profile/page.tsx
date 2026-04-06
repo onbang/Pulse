@@ -5,7 +5,6 @@ import { DailyCheckInCard } from "@/components/community/daily-check-in-card";
 import { ProfileBetHistory } from "@/components/community/profile-bet-history";
 import { ProfileSummary } from "@/components/community/profile-summary";
 import { ProfileTonPanel } from "@/components/community/profile-ton-panel";
-import { WatchlistPanel } from "@/components/community/watchlist-panel";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { PageIntro } from "@/components/page-intro";
 import { Badge } from "@/components/ui/badge";
@@ -166,12 +165,11 @@ export default function ProfilePage() {
           <ProfileSummary />
           <DailyCheckInCard />
         </div>
-        <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)] xl:items-start">
-          <WatchlistPanel />
-          <ProfileBetHistory />
+        <ProfileBetHistory />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+          <AchievementsPanel />
+          <ProfileTonPanel />
         </div>
-        <AchievementsPanel />
-        <ProfileTonPanel />
       </section>
     </WalletGuard>
   );

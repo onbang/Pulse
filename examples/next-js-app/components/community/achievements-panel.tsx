@@ -27,6 +27,7 @@ export function AchievementsPanel() {
 
     return rightProgress - leftProgress;
   });
+  const visibleAchievements = sortedAchievements.slice(0, 6);
 
   const tierBarClassName = (tier: string) => {
     switch (tier) {
@@ -51,10 +52,10 @@ export function AchievementsPanel() {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700/70">
               {t("profile.achievements.eyebrow")}
             </p>
-            <CardTitle className="mt-2">
+            <CardTitle className="mt-2 text-2xl">
               {t("profile.achievements.title")}
             </CardTitle>
-            <CardDescription className="mt-2 max-w-2xl">
+            <CardDescription className="mt-2 max-w-xl">
               {t("profile.achievements.subtitle")}
             </CardDescription>
           </div>
@@ -66,11 +67,11 @@ export function AchievementsPanel() {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
-        {sortedAchievements.map((achievement) => (
+      <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+        {visibleAchievements.map((achievement) => (
           <div
             key={achievement.id}
-            className={`h-full rounded-[26px] border p-5 transition-transform duration-200 hover:-translate-y-1 ${
+            className={`h-full rounded-[24px] border p-4 ${
               achievement.unlocked
                 ? "border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(242,249,255,0.94))] shadow-[0_22px_56px_-40px_rgba(15,23,42,0.2)]"
                 : "border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(248,250,252,0.74))] shadow-[0_18px_48px_-40px_rgba(15,23,42,0.22)]"
@@ -78,14 +79,14 @@ export function AchievementsPanel() {
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/85 text-2xl shadow-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/85 text-xl shadow-sm">
                   {achievement.icon}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                     {t(`profile.achievements.category.${achievement.category}`)}
                   </p>
-                  <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                  <h3 className="mt-1 text-base font-semibold tracking-tight text-slate-950">
                     {achievement.label}
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -104,8 +105,8 @@ export function AchievementsPanel() {
               </Badge>
             </div>
 
-            <div className="mt-5 flex items-end justify-between gap-3">
-              <p className="text-3xl font-semibold tracking-tight text-slate-950">
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <p className="text-2xl font-semibold tracking-tight text-slate-950">
                 {achievement.progress}
                 {achievement.suffix}
               </p>
@@ -125,7 +126,7 @@ export function AchievementsPanel() {
                 }}
               />
             </div>
-            {achievement.highlight ? (
+            {achievement.unlocked && achievement.highlight ? (
               <div className="mt-4 rounded-[18px] border border-white/70 bg-white/76 px-3 py-3 text-sm leading-6 text-slate-600">
                 {achievement.highlight}
               </div>
