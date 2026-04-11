@@ -41,10 +41,10 @@ function TonConnectProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (baseOrigin) {
-      return new URL("/api/tonconnect-manifest", baseOrigin).toString();
+      return new URL("/tonconnect-manifest.json", baseOrigin).toString();
     }
 
-    return "/api/tonconnect-manifest";
+    return "/tonconnect-manifest.json";
   }, []);
 
   return (

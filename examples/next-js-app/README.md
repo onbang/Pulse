@@ -54,6 +54,7 @@ pnpm --filter @ston-fi/sdk-example-next-js-app exec next build --webpack
 - `POST /api/community/track-activity`
 - `POST /api/telegram/auth`
 - `GET /api/ton/profile/[wallet]`
+- `GET /tonconnect-manifest.json`
 - `GET /api/tonconnect-manifest`
 - `GET /api/debug/runtime-logs`
 - `POST /api/debug/runtime-logs`
@@ -127,7 +128,8 @@ curl -s "http://localhost:3000/api/forecast-markets/ops?secret=your-secret"
 
 ## Deployment notes
 
-- Default TON Connect manifest is now served from `/api/tonconnect-manifest`
+- Default TON Connect manifest is now served from `/tonconnect-manifest.json`
+- `/api/tonconnect-manifest` remains available as a compatible alias with the same JSON payload
 - The app still uses SQLite through `node:sqlite`, but it can now mirror the shared runtime state into external Postgres
 - Set `STON_PULSE_DATABASE_URL` to a Postgres or Neon connection string to enable durable external persistence
 - If you already use Vercel Postgres or Neon env injection, `POSTGRES_URL_NON_POOLING`, `POSTGRES_URL`, and `DATABASE_URL` are also recognized automatically

@@ -66,7 +66,7 @@ This runs:
 - Do not rely on `STON_PULSE_DB_FILE` / `STON_PULSE_DATA_DIR` for SQLite durability on Vercel Functions because local filesystem storage there is temporary without external Postgres mirroring
 - Set `STON_PULSE_REQUIRE_DURABLE_STORAGE=true` in production if you want deploys to fail fast on ephemeral `/tmp` storage
 - Register Telegram bot commands with `pnpm --filter @ston-pulse/telegram-bot register`
-- Point TON Connect manifest to `/api/tonconnect-manifest` or your own production manifest URL
+- Point TON Connect manifest to `/tonconnect-manifest.json` or your own production manifest URL
 - Use `GET /api/health` for storage/auto-cycle health and `GET /api/forecast-markets/ops` for protected resolver diagnostics
 - Follow the full release flow in `docs/release-checklist.md`
 
